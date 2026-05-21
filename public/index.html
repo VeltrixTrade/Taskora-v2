@@ -896,6 +896,39 @@ function toast(text, type="info"){
 function escapeHtml(v){
   return String(v ?? "").replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[s]));
 }
+
+function renderDashError(error, section=""){
+  const msg = error && error.message ? error.message : String(error || "حدث خطأ غير معروف");
+  const box = document.getElementById("dashContent");
+  if(box){
+    box.innerHTML = `<div class="card">
+      <h3>تعذر فتح هذه الصفحة</h3>
+      <p>حدث خطأ أثناء تحميل ${section || "القائمة"}.</p>
+      <div class="error">${escapeHtml(msg)}</div>
+      <div class="admin-actions mt">
+        <button class="btn primary" onclick="loadMe()">إعادة تحميل اللوحة</button>
+        <button class="btn" onclick="setDash('overview')">العودة إلى النظرة العامة</button>
+      </div>
+    </div>`;
+  }
+  toast(msg, "error");
+}
+function runDashPage(name, fn){
+  try{
+    const result = fn();
+    if(result && typeof result.catch === "function"){
+      result.catch(e => renderDashError(e, name));
+    }
+  }catch(e){
+    renderDashError(e, name);
+  }
+}
+window.addEventListener("unhandledrejection", (event) => {
+  if(event && event.reason){
+    console.error(event.reason);
+    toast(event.reason.message || "حدث خطأ غير متوقع", "error");
+  }
+});
 async function openSecureFile(filePath){
   try{
     setLoading(true);
@@ -1107,20 +1140,26 @@ function setDash(t){
   document.getElementById("dashTitle").innerText = titles[t]?.[0] || "لوحة المستخدم";
   document.getElementById("dashSubtitle").innerText = titles[t]?.[1] || "";
   closeUserSide();
-  if(t==="overview") renderOverview();
-  if(t==="status") renderAccountStatus();
-  if(t==="profile") renderProfile();
-  if(t==="packages") renderPackages();
-  if(t==="tasks") renderTasks();
-  if(t==="wallet") renderWallet();
-  if(t==="referrals") renderReferrals();
-  if(t==="achievements") renderAchievements();
-  if(t==="transactions") renderTransactions();
-  if(t==="notifications") renderNotifications();
-  if(t==="settings") renderSettings();
-  if(t==="help") renderHelp();
-  if(t==="support") renderSupport();
-  if(t==="admin") renderAdmin();
+
+  const actions = {
+    overview: renderOverview,
+    status: renderAccountStatus,
+    profile: renderProfile,
+    packages: renderPackages,
+    tasks: renderTasks,
+    wallet: renderWallet,
+    referrals: renderReferrals,
+    achievements: renderAchievements,
+    transactions: renderTransactions,
+    notifications: renderNotifications,
+    settings: renderSettings,
+    help: renderHelp,
+    support: renderSupport,
+    admin: renderAdmin
+  };
+
+  const action = actions[t] || renderOverview;
+  runDashPage(t, action);
 }
 function renderProfile(){
   const kycInfo = me.kyc_status === "verified"
@@ -1206,7 +1245,7 @@ async function renderPackages(){
             <div><span>ربح المهام</span><b>${money(p.profit)}</b></div>
             <div><span>ربح المهمة</span><b>${money(p.per_task)}</b></div>
           </div>
-          <div class="admin-actions mt"><button class="btn primary" onclick="buyPackage(\'${p.id}\')">شراء</button><button class="btn" onclick="openPackageDetail(\'${p.id}\')">تفاصيل</button></div>
+          <div class="admin-actions mt"><button class="btn primary" onclick="buyPackage('${p.id}')">شراء</button><button class="btn" onclick="openPackageDetail('${p.id}')">تفاصيل</button></div>
         </div>`).join("")}
     </div>
     <div class="realistic-details">
@@ -1448,7 +1487,24 @@ if ("serviceWorker" in navigator) {
 
 
 async function renderAccountStatus(){
-  const d = await api("/api/account/status",{headers:headers()});
+  let d;
+  try{
+    d = await api("/api/account/status",{headers:headers()});
+  }catch(e){
+    d = {
+      level: "Beginner",
+      score: 0,
+      checks: [
+        {label:"البريد مؤكد", ok: !!me.email_verified},
+        {label:"الحساب موثق", ok: me.kyc_status === "verified"},
+        {label:"الباقة نشطة", ok: false},
+        {label:"لا توجد سحوبات معلقة", ok: true},
+        {label:"الحساب غير محظور", ok: me.status === "active"}
+      ],
+      missing: ["تعذر تحميل حالة الحساب من السيرفر. تأكد من اكتمال migrations ثم أعد المحاولة."],
+      stats: {completed_tasks:0,completed_packages:0,approved_deposits:0,referral_count:0}
+    };
+  }
   document.getElementById("dashContent").innerHTML = `
     <div class="account-status-grid">
       <div class="level-card">
@@ -1471,7 +1527,13 @@ async function renderAccountStatus(){
     </div>`;
 }
 async function renderReferrals(){
-  const d = await api("/api/referrals",{headers:headers()});
+  let d;
+  try{
+    d = await api("/api/referrals",{headers:headers()});
+  }catch(e){
+    d = { referral_code: me.referral_code || "TASKORA", invited: [], total_bonus: 0 };
+    toast("تعذر تحميل بيانات الدعوات من السيرفر، تم عرض البيانات الأساسية.", "error");
+  }
   const link = `${location.origin}/?ref=${d.referral_code}`;
   document.getElementById("dashContent").innerHTML = `
     <div class="referral-panel">
@@ -1496,11 +1558,19 @@ async function renderReferrals(){
     </div>`;
 }
 async function renderAchievements(){
-  const [s, tx, ref] = await Promise.all([
-    api("/api/account/status",{headers:headers()}),
-    api("/api/transactions",{headers:headers()}),
-    api("/api/referrals",{headers:headers()})
-  ]);
+  let s, tx, ref;
+  try{
+    [s, tx, ref] = await Promise.all([
+      api("/api/account/status",{headers:headers()}),
+      api("/api/transactions",{headers:headers()}),
+      api("/api/referrals",{headers:headers()})
+    ]);
+  }catch(e){
+    s = {level:"Beginner", stats:{completed_tasks:0,completed_packages:0}};
+    tx = {transactions:[]};
+    ref = {invited:[]};
+    toast("تعذر تحميل بعض بيانات الإنجازات، تم عرض البيانات المتاحة.", "error");
+  }
   const hasDeposit = tx.transactions.some(t=>String(t.type).includes("deposit"));
   const hasWithdrawal = tx.transactions.some(t=>String(t.type).includes("withdraw"));
   const list = [
