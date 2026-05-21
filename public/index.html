@@ -697,6 +697,76 @@
       }
     }
 
+
+    /* v12.5 country phone picker */
+    .phone-picker{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+      margin-top:8px;
+    }
+    .country-select-wrap{
+      position:relative;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.12);
+      background:linear-gradient(145deg,rgba(255,255,255,.08),rgba(255,255,255,.035));
+      overflow:hidden;
+    }
+    .country-select-wrap:before{
+      content:"🌍";
+      position:absolute;
+      right:16px;
+      top:50%;
+      transform:translateY(-50%);
+      z-index:1;
+      pointer-events:none;
+      font-size:20px;
+    }
+    .country-select-wrap select{
+      width:100%;
+      height:58px;
+      padding:0 52px 0 16px;
+      border:0;
+      outline:0;
+      background:transparent;
+      color:var(--text);
+      font-weight:900;
+      appearance:none;
+      cursor:pointer;
+    }
+    .country-select-wrap option{
+      background:#0b1628;
+      color:#eef6ff;
+    }
+    .phone-row{
+      display:grid;
+      grid-template-columns:110px 1fr;
+      gap:10px;
+    }
+    .dial-code-box{
+      height:58px;
+      border-radius:18px;
+      display:grid;
+      place-items:center;
+      border:1px solid rgba(147,197,253,.24);
+      background:linear-gradient(135deg,rgba(37,99,235,.18),rgba(6,182,212,.11));
+      direction:ltr;
+      font-family:Inter,Cairo,sans-serif;
+      font-weight:900;
+      color:#bfdbfe;
+    }
+    .phone-row input{
+      height:58px;
+    }
+    .auth-login-label-clean{
+      display:block;
+      margin-top:12px;
+    }
+    @media(max-width:560px){
+      .phone-row{grid-template-columns:1fr}
+      .dial-code-box{height:52px}
+    }
+
   </style>
   <link rel="manifest" href="/manifest.json">
 </head>
@@ -927,11 +997,41 @@
           <button class="tab" id="registerTab" onclick="setAuthMode('register')">إنشاء حساب</button>
         </div>
         <div id="registerFields" class="hidden">
-          <label>Username</label><input id="regUsername" placeholder="mustafa_123">
-          <label>رقم الهاتف</label><input id="regPhone" placeholder="+964...">
+          <label>الدولة ورقم الهاتف</label>
+          <div class="phone-picker">
+            <div class="country-select-wrap">
+              <select id="regCountry" onchange="updateDialCode()">
+                <option value="IQ" data-code="+964">🇮🇶 العراق +964</option>
+                <option value="SA" data-code="+966">🇸🇦 السعودية +966</option>
+                <option value="AE" data-code="+971">🇦🇪 الإمارات +971</option>
+                <option value="TR" data-code="+90">🇹🇷 تركيا +90</option>
+                <option value="JO" data-code="+962">🇯🇴 الأردن +962</option>
+                <option value="SY" data-code="+963">🇸🇾 سوريا +963</option>
+                <option value="LB" data-code="+961">🇱🇧 لبنان +961</option>
+                <option value="EG" data-code="+20">🇪🇬 مصر +20</option>
+                <option value="KW" data-code="+965">🇰🇼 الكويت +965</option>
+                <option value="QA" data-code="+974">🇶🇦 قطر +974</option>
+                <option value="BH" data-code="+973">🇧🇭 البحرين +973</option>
+                <option value="OM" data-code="+968">🇴🇲 عُمان +968</option>
+                <option value="YE" data-code="+967">🇾🇪 اليمن +967</option>
+                <option value="MA" data-code="+212">🇲🇦 المغرب +212</option>
+                <option value="DZ" data-code="+213">🇩🇿 الجزائر +213</option>
+                <option value="TN" data-code="+216">🇹🇳 تونس +216</option>
+                <option value="US" data-code="+1">🇺🇸 الولايات المتحدة +1</option>
+                <option value="GB" data-code="+44">🇬🇧 بريطانيا +44</option>
+                <option value="DE" data-code="+49">🇩🇪 ألمانيا +49</option>
+                <option value="FR" data-code="+33">🇫🇷 فرنسا +33</option>
+              </select>
+            </div>
+            <div class="phone-row">
+              <div class="dial-code-box" id="dialCodeBox">+964</div>
+              <input id="regPhoneLocal" inputmode="numeric" placeholder="7700000000">
+            </div>
+          </div>
+          <input id="regPhone" type="hidden">
           <label>كود الدعوة - اختياري</label><input id="regReferral" placeholder="CODE">
         </div>
-        <label>البريد أو username</label><input id="authLogin" placeholder="email أو username">
+        <label class="auth-login-label-clean">البريد الإلكتروني</label><input id="authLogin" placeholder="you@email.com">
         <label id="emailLabel" class="hidden">البريد الإلكتروني</label><input id="regEmail" class="hidden" placeholder="you@email.com">
         <label>كلمة المرور</label><input id="authPassword" type="password" placeholder="8 خانات، حروف وأرقام">
         <button class="btn primary full mt" onclick="submitAuth()">متابعة</button>
@@ -1076,6 +1176,8 @@ function forceRelogin(){
   localStorage.removeItem("taskora_token");
   showView("auth");
   renderNav();
+document.getElementById("regPhoneLocal")?.addEventListener("input", buildFullPhone);
+updateDialCode();
 }
 function ensureLoggedInForDash(name){
   const latestToken = localStorage.getItem("taskora_token") || token || "";
@@ -1201,6 +1303,29 @@ function renderNav(){
     ${token ? `<button class="btn primary" onclick="loadMe()">لوحتي</button><button class="btn red" onclick="logout()">خروج</button>` : `<button class="btn primary" onclick="showView('auth')">دخول</button>`}
   `;
 }
+
+function updateDialCode(){
+  const country = document.getElementById("regCountry");
+  const code = country?.selectedOptions?.[0]?.dataset?.code || "+964";
+  const box = document.getElementById("dialCodeBox");
+  if(box) box.textContent = code;
+  buildFullPhone();
+}
+function buildFullPhone(){
+  const country = document.getElementById("regCountry");
+  const code = country?.selectedOptions?.[0]?.dataset?.code || "+964";
+  const local = (document.getElementById("regPhoneLocal")?.value || "").replace(/[^\d]/g,"");
+  const full = local ? `${code}${local}` : "";
+  const hidden = document.getElementById("regPhone");
+  if(hidden) hidden.value = full;
+  return full;
+}
+function makeUsernameFromEmail(email){
+  const base = String(email || "user").split("@")[0].replace(/[^a-zA-Z0-9_]/g,"_").slice(0,18) || "user";
+  const suffix = Math.floor(1000 + Math.random()*9000);
+  return `${base}_${suffix}`;
+}
+
 function setAuthMode(m){
   authMode=m;
   document.getElementById("loginTab").classList.toggle("active",m==="login");
@@ -1208,7 +1333,10 @@ function setAuthMode(m){
   document.getElementById("registerFields").classList.toggle("hidden",m!=="register");
   document.getElementById("regEmail").classList.toggle("hidden",m!=="register");
   document.getElementById("emailLabel").classList.toggle("hidden",m!=="register");
-  document.getElementById("authTitle").innerText = m==="login" ? "تسجيل الدخول" : "إنشاء حساب حقيقي";
+  document.getElementById("authTitle").innerText = m==="login" ? "تسجيل الدخول" : "إنشاء حساب";
+  document.querySelector(".auth-login-label-clean").innerText = m==="login" ? "البريد الإلكتروني" : "البريد الإلكتروني";
+  document.getElementById("authLogin").placeholder = m==="login" ? "you@email.com" : "you@email.com";
+  setTimeout(updateDialCode, 0);
 }
 async function api(path, opts={}){
   setLoading(true);
@@ -1239,10 +1367,13 @@ async function submitAuth(){
       const data = await api("/api/auth/login",{method:"POST",headers:headers(),body:JSON.stringify({login,password})});
       token=data.token; localStorage.setItem("taskora_token",token); await loadMe();
     }else{
+      const email = document.getElementById("regEmail").value;
+      const phone = buildFullPhone();
       const payload = {
-        username: document.getElementById("regUsername").value,
-        email: document.getElementById("regEmail").value,
-        phone: document.getElementById("regPhone").value,
+        username: makeUsernameFromEmail(email),
+        email,
+        phone,
+        country: document.getElementById("regCountry").value,
         password,
         referral_code: document.getElementById("regReferral").value
       };
