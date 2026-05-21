@@ -900,8 +900,17 @@ function escapeHtml(v){
 function renderDashError(error, section=""){
   const msg = error && error.message ? error.message : String(error || "حدث خطأ غير معروف");
   const box = document.getElementById("dashContent");
+  const isAuth = error && (error.isAuth || error.status === 401 || msg === "Unauthorized");
   if(box){
-    box.innerHTML = `<div class="card">
+    box.innerHTML = isAuth ? `<div class="card">
+      <h3>انتهت الجلسة أو التوكن غير صالح</h3>
+      <p>لأمان الحساب، يجب تسجيل الدخول مرة أخرى حتى تعمل صفحة ${section || "القائمة"} بشكل صحيح.</p>
+      <div class="error">Unauthorized</div>
+      <div class="admin-actions mt">
+        <button class="btn primary" onclick="forceRelogin()">تسجيل الدخول من جديد</button>
+        <button class="btn" onclick="setDash('overview')">العودة إلى النظرة العامة</button>
+      </div>
+    </div>` : `<div class="card">
       <h3>تعذر فتح هذه الصفحة</h3>
       <p>حدث خطأ أثناء تحميل ${section || "القائمة"}.</p>
       <div class="error">${escapeHtml(msg)}</div>
@@ -911,9 +920,25 @@ function renderDashError(error, section=""){
       </div>
     </div>`;
   }
-  toast(msg, "error");
+  toast(isAuth ? "يجب تسجيل الدخول من جديد" : msg, "error");
+}
+function forceRelogin(){
+  token = "";
+  localStorage.removeItem("taskora_token");
+  showView("auth");
+  renderNav();
+}
+function ensureLoggedInForDash(name){
+  const latestToken = localStorage.getItem("taskora_token") || token || "";
+  if(!latestToken && !["overview","help"].includes(name)){
+    renderDashError({isAuth:true, message:"Unauthorized", status:401}, name);
+    return false;
+  }
+  token = latestToken;
+  return true;
 }
 function runDashPage(name, fn){
+  if(!ensureLoggedInForDash(name)) return;
   try{
     const result = fn();
     if(result && typeof result.catch === "function"){
@@ -944,7 +969,14 @@ async function openSecureFile(filePath){
 
 
 function money(v){ return "$" + Number(v || 0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}); }
-function headers(json=true){ const h = {}; if(token) h.Authorization = "Bearer " + token; if(json) h["Content-Type"]="application/json"; return h; }
+function headers(json=true){
+  const latestToken = localStorage.getItem("taskora_token") || token || "";
+  token = latestToken;
+  const h = {};
+  if(latestToken){ h.Authorization = "Bearer " + latestToken; h["x-taskora-token"] = latestToken; }
+  if(json) h["Content-Type"]="application/json";
+  return h;
+}
 function prettyKycStatus(status){ return ({verified:"موثق",pending:"قيد المراجعة",rejected:"مرفوض",not_verified:"غير موثق"})[status || "not_verified"] || status; }
 function setAvatarElements(avatarUrl, username){
   const img = document.getElementById("userAvatarImg");
@@ -1032,9 +1064,18 @@ function setAuthMode(m){
 async function api(path, opts={}){
   setLoading(true);
   try{
+    opts.headers = opts.headers || headers();
     const res = await fetch(API+path, opts);
     const data = await res.json().catch(()=>({}));
-    if(!res.ok) throw new Error(data.error || "حدث خطأ");
+    if(!res.ok){
+      const err = new Error(data.error || "حدث خطأ");
+      err.status = res.status;
+      err.path = path;
+      if(res.status === 401 || data.error === "Unauthorized" || data.error === "Invalid token."){
+        err.isAuth = true;
+      }
+      throw err;
+    }
     return data;
   } finally {
     setLoading(false);
@@ -1089,7 +1130,14 @@ async function loadMe(){
     me = data.user;
     showView("dashboard");
     renderDashboard(data);
-  }catch(e){ logout(); showView("auth"); }
+  }catch(e){
+    if(e.isAuth || e.status === 401){
+      forceRelogin();
+    }else{
+      toast(e.message || "تعذر تحميل الحساب", "error");
+      showView(token ? "dashboard" : "auth");
+    }
+  }
 }
 async function renderDashboard(dataFromMe){
   const data = dataFromMe || await api("/api/me",{headers:headers()});

@@ -444,7 +444,8 @@ async function addTransaction(client, userId, type, amount, description) {
 async function auth(req, res, next) {
   try {
     const header = req.headers.authorization || "";
-    const token = header.startsWith("Bearer ") ? header.slice(7) : null;
+    const altToken = req.headers["x-taskora-token"] || req.query.token || "";
+    const token = header.startsWith("Bearer ") ? header.slice(7) : (altToken || null);
     if (!token) return res.status(401).json({ error: "Unauthorized" });
     const payload = jwt.verify(token, JWT_SECRET);
     const result = await query("SELECT * FROM users WHERE id=$1", [payload.id]);

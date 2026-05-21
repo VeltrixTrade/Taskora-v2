@@ -1,7 +1,7 @@
 {
   "name": "taskora-real-railway",
-  "version": "2.0.1",
-  "description": "Taskora v12.1 menu and navigation fixes",
+  "version": "2.0.2",
+  "description": "Taskora v12.2 unauthorized/session fix for protected menus",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
