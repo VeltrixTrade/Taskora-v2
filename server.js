@@ -823,9 +823,7 @@ app.get("/api/dashboard", auth, async (req, res) => {
     package: pkg.rows[0] || null,
     daily_tasks: DAILY_TASKS.map((title, index) => ({ number: index + 1, title })),
     transactions: transactions.rows,
-    golden_tasks: golden.rows,
-    notes: notes.rows,
-    login_activity: loginActivity.rows
+    golden_tasks: golden.rows
   });
 });
 

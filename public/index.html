@@ -1269,31 +1269,63 @@ async function submitKyc(){
     await loadMe();
   }catch(e){ toast(e.message, "error"); }
 }
+
+function getFallbackPackages(){
+  return [
+    {id:"bronze",name:"البرونزية",price:10,profit:1,per_task:0.08},
+    {id:"silver",name:"الفضية",price:25,profit:2.5,per_task:0.21},
+    {id:"gold",name:"الذهبية",price:50,profit:5,per_task:0.42},
+    {id:"platinum",name:"البلاتينيوم",price:100,profit:10,per_task:0.83},
+    {id:"vip",name:"VIP",price:500,profit:50,per_task:4.17},
+    {id:"diamond",name:"الماسية",price:1000,profit:100,per_task:8.33}
+  ];
+}
+
 async function renderPackages(){
-  const d = await api("/api/packages");
-  window.__packages = d.packages;
-  const dashData = await api("/api/dashboard",{headers:headers()});
+  let d;
+  try{
+    d = await api("/api/packages", { headers: headers(false) });
+  }catch(e){
+    d = { packages: getFallbackPackages() };
+    toast("تم عرض الباقات الافتراضية مؤقتًا.", "info");
+  }
+
+  let dashData = { package: null };
+  try{
+    dashData = await api("/api/dashboard",{headers:headers()});
+  }catch(e){
+    // Do not block the packages page if dashboard has an issue.
+    dashData = { package: null };
+  }
+
+  const packages = (d.packages && d.packages.length) ? d.packages : getFallbackPackages();
   const active = dashData.package;
+  window.__packages = packages;
   window.__activePackage = active;
+
   document.getElementById("dashContent").innerHTML = `
     <div class="public-title" style="text-align:right;margin-bottom:18px">
       <h2>اختر باقتك</h2>
-      <p>كل باقة تحتوي 12 مهمة. بعد اكتمال المهام يتم تحويل رصيد الباقة والربح إلى الرصيد المتاح.</p>
+      <p>كل باقة تحتوي 12 مهمة على مدار 4 أيام. بعد اكتمال المهام يتم تحويل رصيد الباقة والربح إلى الرصيد المتاح.</p>
     </div>
     ${active ? `<div class="success">لديك باقة حالية: <b>${active.package_name}</b> — التقدم ${active.completed_count}/12 — الحالة ${active.status}</div>` : ""}
     <div class="package-pro-grid mt">
-      ${d.packages.map(p=>`
+      ${packages.map(p=>`
         <div class="card package-pro-card">
           <span class="package-badge">12 مهمة • 4 أيام • عائد مستهدف 10%</span>
           <h3>${p.name}</h3>
           <div class="package-pro-price">${money(p.price)}</div>
-          <p>تظهر 3 مهام يوميًا. ربح المهام المتوقع ${money(p.profit)}.</p>
+          <p>تظهر 3 مهام يوميًا. ربح المهام المستهدف ${money(p.profit)} حسب شروط الباقة.</p>
           <div class="package-feature-list">
             <div><span>المهام</span><b>12</b></div>
-            <div><span>ربح المهام</span><b>${money(p.profit)}</b></div>
-            <div><span>ربح المهمة</span><b>${money(p.per_task)}</b></div>
+            <div><span>المدة</span><b>4 أيام</b></div>
+            <div><span>ربح مستهدف</span><b>${money(p.profit)}</b></div>
+            <div><span>ربح المهمة</span><b>${money(p.per_task || (p.profit/12))}</b></div>
           </div>
-          <div class="admin-actions mt"><button class="btn primary" onclick="buyPackage('${p.id}')">شراء</button><button class="btn" onclick="openPackageDetail('${p.id}')">تفاصيل</button></div>
+          <div class="admin-actions mt">
+            <button class="btn primary" onclick="buyPackage('${p.id}')">شراء</button>
+            <button class="btn" onclick="openPackageDetail('${p.id}')">تفاصيل</button>
+          </div>
         </div>`).join("")}
     </div>
     <div class="realistic-details">
@@ -1304,24 +1336,61 @@ async function renderPackages(){
 }
 
 async function renderTasks(){
-  const data = await api("/api/dashboard",{headers:headers()});
-  const pkg = data.package;
-  if(!pkg){
-    document.getElementById("dashContent").innerHTML = `<div class="card"><h3>لا توجد باقة نشطة</h3><p>اختر باقة أولًا حتى تظهر لك المهام اليومية.</p><button class="btn primary" onclick="setDash('packages')">الذهاب إلى الباقات</button></div>`;
+  let data;
+  try{
+    data = await api("/api/dashboard",{headers:headers()});
+  }catch(e){
+    document.getElementById("dashContent").innerHTML = `<div class="card">
+      <h3>تعذر تحميل بيانات المهام</h3>
+      <p>قد تكون الجلسة قديمة أو حدث خطأ مؤقت في السيرفر.</p>
+      <div class="error">${escapeHtml(e.message || "Dashboard error")}</div>
+      <div class="admin-actions mt">
+        <button class="btn primary" onclick="loadMe()">إعادة تحميل الحساب</button>
+        <button class="btn" onclick="setDash('packages')">الذهاب إلى الباقات</button>
+      </div>
+    </div>`;
     return;
   }
-  const percent = Math.min(100, Math.round((Number(pkg.completed_count || 0) / 12) * 100));
+
+  const pkg = data.package;
+  if(!pkg){
+    document.getElementById("dashContent").innerHTML = `<div class="card">
+      <h3>لا توجد باقة نشطة</h3>
+      <p>اختر باقة أولًا حتى تظهر لك المهام اليومية.</p>
+      <button class="btn primary" onclick="setDash('packages')">الذهاب إلى الباقات</button>
+    </div>`;
+    return;
+  }
+
+  const completedCount = Number(pkg.completed_count || 0);
+  const completedTasks = Array.isArray(pkg.completed_tasks) ? pkg.completed_tasks : [];
+  const percent = Math.min(100, Math.round((completedCount / 12) * 100));
+  const tasks = (data.daily_tasks && data.daily_tasks.length) ? data.daily_tasks : [
+    "بيع تذكرة مباريات","إكمال طلب سحب","بيع تذكرة فيلم","بيع تذكرة حفلة","تأكيد طلب شراء","مراجعة طلب خدمة","بيع تذكرة سفر","إكمال طلب دفع","تنفيذ طلب متجر","تأكيد عملية محفظة","بيع قسيمة رقمية","إكمال طلب نهائي"
+  ].map((title,index)=>({number:index+1,title}));
+
   document.getElementById("dashContent").innerHTML = `
     <div class="card">
       <h3>${pkg.package_name}</h3>
-      <p>التقدم: ${pkg.completed_count}/12 — الحالة: ${pkg.status}</p>
+      <p>التقدم: ${completedCount}/12 — الحالة: ${pkg.status}</p>
       <div class="progress-shell"><div class="progress-fill" style="width:${percent}%"></div></div>
       <div class="timeline">
-        ${[1,2,3,4].map(day=>{ const base=(day-1)*3; return `<div class="timeline-day"><div class="day-num">اليوم ${day}</div><div><b>3 مهام</b><p>تقدم اليوم داخل الباقة.</p><div class="mini-task-dots">${[1,2,3].map(n=>`<span class="${Number(pkg.completed_count||0) >= base+n ? "done" : ""}">${base+n}</span>`).join("")}</div></div><b>${Math.min(Math.max(Number(pkg.completed_count||0)-base,0),3)}/3</b></div>` }).join("")}
+        ${[1,2,3,4].map(day=>{
+          const base=(day-1)*3;
+          return `<div class="timeline-day">
+            <div class="day-num">اليوم ${day}</div>
+            <div><b>3 مهام</b><p>تقدم اليوم داخل الباقة.</p><div class="mini-task-dots">${[1,2,3].map(n=>{
+              const taskNo = base+n;
+              const done = completedTasks.includes(taskNo) || completedCount >= taskNo;
+              return `<span class="${done ? "done" : ""}">${taskNo}</span>`;
+            }).join("")}</div></div>
+            <b>${Math.min(Math.max(completedCount-base,0),3)}/3</b>
+          </div>`;
+        }).join("")}
       </div>
     </div>
     <div class="task-board mt">
-      ${data.daily_tasks.map(t=>`
+      ${tasks.map(t=>`
         <div class="card task-card-pro">
           <div>
             <div class="task-number">${t.number}</div>
@@ -1333,7 +1402,17 @@ async function renderTasks(){
     </div>`;
 }
 
-async function buyPackage(id){ try{ await api("/api/packages/"+id+"/buy",{method:"POST",headers:headers(),body:"{}"}); toast("تم شراء الباقة", "success"); await loadMe(); setDash("tasks"); }catch(e){ toast(e.message, "error"); } }
+async function buyPackage(id){
+  try{
+    await api("/api/packages/"+id+"/buy",{method:"POST",headers:headers(),body:"{}"});
+    toast("تم شراء الباقة", "success");
+    await loadMe();
+    setDash("tasks");
+  }catch(e){
+    toast(e.message || "تعذر شراء الباقة", "error");
+    if(e.isAuth || e.status===401) renderDashError(e, "packages");
+  }
+}
 async function completeTask(n){ try{ await api("/api/tasks/daily/"+n+"/complete",{method:"POST",headers:headers(),body:"{}"}); toast("تم إكمال المهمة", "success"); await loadMe(); setDash("tasks"); }catch(e){ toast(e.message, "error"); } }
 async function renderWallet(){
   const w = await api("/api/wallets");
@@ -1638,8 +1717,9 @@ async function renderAchievements(){
     </div>`;
 }
 function openPackageDetail(id){
-  const p = (window.__packages || []).find(x => String(x.id) === String(id));
-  if(!p) return;
+  const list = (window.__packages && window.__packages.length) ? window.__packages : getFallbackPackages();
+  const p = list.find(x => String(x.id) === String(id));
+  if(!p){ toast("لم يتم العثور على تفاصيل الباقة", "error"); return; }
   const active = window.__activePackage;
   document.getElementById("adminModal").innerHTML = `<div class="modal package-detail-modal">
     <h2>${p.name}</h2>
