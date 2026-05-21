@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta name="taskora-version" content="v11-premium-homepage">
+  <meta name="taskora-version" content="v12.4-public-launch-polish">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Taskora منصة مهام وباقات حقيقية مع تسجيل، توثيق، محفظة، ولوحة أدمن." />
@@ -540,6 +540,163 @@
     @media(max-width:1000px){.wallet-pro-grid,.referral-panel,.account-status-grid,.package-detail-grid{grid-template-columns:1fr}.achievements-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.timeline-day{grid-template-columns:1fr}}
     @media(max-width:640px){.achievements-grid{grid-template-columns:1fr}.detail-metric-grid{grid-template-columns:1fr}}
 
+
+    /* v12.4 public launch polish */
+    .dash-subtitle,
+    .public-title p,
+    .hero-copy > p,
+    .section-subtitle,
+    .launch-copy,
+    .small-explain {
+      display:none !important;
+    }
+
+    .public-title {
+      margin-bottom: 28px !important;
+    }
+
+    .public-title h2,
+    .hero-copy h1,
+    #dashTitle,
+    .card h3,
+    .package-pro-card h3 {
+      letter-spacing: -.02em;
+      line-height: 1.35;
+    }
+
+    #dashTitle {
+      margin-bottom: 0;
+      font-size: clamp(28px, 3.2vw, 44px);
+    }
+
+    .dashboard-head {
+      align-items:center;
+      min-height: 76px;
+    }
+
+    .card,
+    .package-pro-card,
+    .user-stat,
+    .chart-card,
+    .wallet-balance-card,
+    .admin-overview-card,
+    .faq-box,
+    .premium-visual,
+    .modern-image-card {
+      text-wrap: balance;
+    }
+
+    .card p,
+    .package-pro-card p,
+    .premium-visual p,
+    .faq-box p,
+    .mock-label p,
+    .detail-chip,
+    .notice,
+    .success,
+    .error {
+      line-height: 1.9;
+    }
+
+    .package-pro-grid,
+    .task-board,
+    .grid-2,
+    .wallet-layout,
+    .settings-grid,
+    .profile-grid {
+      align-items: stretch;
+    }
+
+    .package-pro-card,
+    .task-card-pro,
+    .card {
+      overflow-wrap: anywhere;
+    }
+
+    .package-feature-list div,
+    .detail-chip,
+    .admin-summary-chip,
+    .detail-metric,
+    .quick-action {
+      min-height: 74px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .btn,
+    .mini-btn,
+    .file-btn,
+    .admin-subtab,
+    .quick-action {
+      white-space: nowrap;
+      line-height: 1.4;
+    }
+
+    .hero-pro {
+      padding-top: 88px;
+      padding-bottom: 72px;
+    }
+
+    .hero-copy h1 {
+      max-width: 820px;
+      margin-inline: auto;
+      text-align: center;
+    }
+
+    .hero-actions {
+      justify-content:center;
+    }
+
+    .safe-profit {
+      margin-inline:auto;
+    }
+
+    .stats {
+      margin-top: 34px;
+    }
+
+    .card h3,
+    .chart-card h3,
+    .faq-box h3,
+    .premium-visual h3 {
+      margin-bottom: 14px;
+    }
+
+    .user-stat {
+      min-height: 118px;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .user-stat span,
+    .user-stat strong {
+      display:block;
+      width:100%;
+    }
+
+    .table-wrap table th,
+    .table-wrap table td {
+      line-height:1.75;
+      vertical-align:middle;
+    }
+
+    @media(max-width:720px){
+      .hero-pro {
+        padding-top: 56px;
+        padding-bottom: 48px;
+      }
+      .hero-actions {
+        display:grid;
+        grid-template-columns:1fr;
+      }
+      .btn,
+      .mini-btn,
+      .file-btn {
+        white-space:normal;
+      }
+    }
+
   </style>
   <link rel="manifest" href="/manifest.json">
 </head>
@@ -566,7 +723,6 @@
         <div class="hero-copy">
           <div class="badge">منصة مهام وباقات رقمية</div>
           <h1>أنجز مهامك اليومية داخل <span>Taskora</span> بطريقة منظمة وآمنة</h1>
-          <p>واجهة حديثة للمهام والباقات والمحفظة الرقمية. تابع رصيدك، ارفع توثيقك، أرسل طلبات الإيداع والسحب، وشاهد تقدمك اليومي داخل تجربة مصممة باحتراف.</p>
           <div class="safe-profit">📈 عوائد مستهدفة حتى 10% حسب شروط الباقة وإكمال المهام</div>
           <div class="hero-actions">
             <button class="btn primary" onclick="showView('auth'); setAuthMode('register')">ابدأ الآن</button>
@@ -617,7 +773,6 @@
     <section class="investment-showcase container">
       <div class="public-title">
         <h2>نظام باقات بعائد مستهدف 10%</h2>
-        <p>Taskora تعرض تجربة منظمة للباقات والمهام اليومية، حيث يظهر العائد المستهدف بعد إكمال شروط الباقة والمهام المطلوبة.</p>
       </div>
       <div class="investment-grid">
         <div class="investment-card">
@@ -636,10 +791,10 @@
         </div>
         <div>
           <div class="premium-visual-grid">
-            <div class="premium-visual"><div class="icon3d">💼</div><h3>اختيار الباقة</h3><p>باقات واضحة بأسعار مختلفة، وكل باقة تعرض المهام والربح المستهدف.</p></div>
-            <div class="premium-visual"><div class="icon3d">🎯</div><h3>مهام يومية</h3><p>تظهر المهام بشكل منظم داخل الحساب مع شريط تقدم واضح.</p></div>
-            <div class="premium-visual"><div class="icon3d">🛡️</div><h3>توثيق الحساب</h3><p>التوثيق شرط أساسي قبل طلب السحب لحماية الحسابات ومنع التكرار.</p></div>
-            <div class="premium-visual"><div class="icon3d">💳</div><h3>سحب وإيداع</h3><p>محافظ واضحة، QR Code، ومراجعة إدارية لكل عملية.</p></div>
+            <div class="premium-visual"><div class="icon3d">💼</div><h3>اختيار الباقة</h3></div>
+            <div class="premium-visual"><div class="icon3d">🎯</div><h3>مهام يومية</h3></div>
+            <div class="premium-visual"><div class="icon3d">🛡️</div><h3>توثيق الحساب</h3></div>
+            <div class="premium-visual"><div class="icon3d">💳</div><h3>سحب وإيداع</h3></div>
           </div>
           <div class="profit-path">
             <div class="profit-step"><span>شراء باقة مناسبة من الرصيد</span><b>Step 01</b></div>
@@ -654,7 +809,6 @@
     <section class="public-section container">
       <div class="public-title">
         <h2>كيف تبدأ داخل Taskora؟</h2>
-        <p>خطوات بسيطة وواضحة من إنشاء الحساب حتى إرسال طلب السحب.</p>
       </div>
       <div class="steps-pro">
         <div class="card step-pro"><div class="step-number">01</div><h3>أنشئ حسابك</h3><p>سجل باسم مستخدم وبريد ورقم هاتف وكلمة مرور آمنة.</p></div>
@@ -667,7 +821,6 @@
     <section class="public-section container">
       <div class="public-title">
         <h2>الإيداع والسحب بواجهة واضحة</h2>
-        <p>كل عملية لها حالة واضحة: قيد المراجعة، مقبولة، أو مرفوضة.</p>
       </div>
       <div class="payment-grid">
         <div class="payment-visual">
@@ -692,7 +845,6 @@
     <section class="public-section container">
       <div class="public-title">
         <h2>آراء وتجارب من واجهة العرض</h2>
-        <p>نماذج تعليقات توضيحية تساعد على عرض شكل قسم التقييمات داخل الموقع.</p>
       </div>
       <div class="testimonial-wall">
         <div class="card testimonial-card"><div class="avatar">A</div><b>أحمد</b><div class="stars">★★★★★</div><p>الواجهة مرتبة وواضحة، وخطوات الإيداع والسحب مفهومة من أول استخدام.</p></div>
@@ -708,7 +860,6 @@
     <section class="public-section container">
       <div class="public-title">
         <h2>تجربة بصرية جاهزة للويب والتطبيق</h2>
-        <p>تصميم حديث يناسب الموقع اليوم، ويمكن تحويله لاحقًا إلى تطبيق جوال.</p>
       </div>
       <div class="gallery-grid">
         <div class="gallery-tile tall"><div class="tile-content"><h3>لوحة مهام</h3><p>متابعة تقدم يومي وبطاقات منظمة.</p></div></div>
@@ -721,20 +872,18 @@
     <section class="image-strip container">
       <div class="public-title">
         <h2>واجهة حديثة غنية بالحركة والتفاصيل</h2>
-        <p>تصميم بصري جديد يناسب منصة ويب احترافية ويمكن البناء عليه لاحقًا كتطبيق جوال.</p>
       </div>
       <div class="image-strip-grid">
-        <div class="modern-image-card tall"><div class="mock-label"><h3>لوحة مهام تفاعلية</h3><p>تقدم يومي، كروت متحركة، ومؤشرات واضحة.</p></div></div>
+        <div class="modern-image-card tall"><div class="mock-label"><h3>لوحة مهام تفاعلية</h3></div></div>
         <div class="modern-image-card"><div class="mock-label"><h3>مستخدمون نشطون</h3><div class="floating-users"><span>A</span><span>S</span><span>M</span><span>N</span></div></div></div>
-        <div class="modern-image-card tall"><div class="mock-label"><h3>محفظة رقمية</h3><p>إيداع، سحب، QR، وسجل معاملات منظم.</p></div></div>
-        <div class="modern-image-card"><div class="mock-label"><h3>توثيق آمن</h3><p>حماية قبل السحب ومنع تكرار الهوية.</p></div></div>
+        <div class="modern-image-card tall"><div class="mock-label"><h3>محفظة رقمية</h3></div></div>
+        <div class="modern-image-card"><div class="mock-label"><h3>توثيق آمن</h3></div></div>
       </div>
     </section>
 
 <section class="legal-section container">
       <div class="public-title">
         <h2>مركز الثقة والسياسات</h2>
-        <p>صفحات واضحة تساعد المستخدم على فهم شروط الإيداع والسحب والتوثيق قبل إنشاء الحساب.</p>
       </div>
       <div class="legal-grid">
         <div class="card legal-card"><h3>الشروط والأحكام</h3><p>القواعد العامة لاستخدام Taskora، الحسابات، الباقات، والمهام.</p><button class="btn primary" onclick="openPolicy('terms')">عرض</button></div>
@@ -746,12 +895,11 @@
 <section class="public-section container">
       <div class="public-title">
         <h2>أسئلة شائعة</h2>
-        <p>إجابات مختصرة قبل إنشاء الحساب.</p>
       </div>
       <div class="help-grid">
-        <div class="faq-box"><h3>هل السحب متاح مباشرة؟</h3><p>السحب يتطلب توثيق الحساب وقبول الطلب من الإدارة.</p></div>
-        <div class="faq-box"><h3>ما العملات المدعومة؟</h3><p>USDT و BNB و ETH و BTC حسب عناوين المحافظ المتاحة.</p></div>
-        <div class="faq-box"><h3>هل يمكن تثبيت الموقع كتطبيق؟</h3><p>نعم، النسخة تدعم PWA ويمكن تثبيتها من المتصفح عند توفر الخيار.</p></div>
+        <div class="faq-box"><h3>هل السحب متاح مباشرة؟</h3></div>
+        <div class="faq-box"><h3>ما العملات المدعومة؟</h3></div>
+        <div class="faq-box"><h3>هل يمكن تثبيت الموقع كتطبيق؟</h3></div>
       </div>
     </section>
 </main>
@@ -869,9 +1017,10 @@
   </section>
 
   <div id="adminModal" class="modal-backdrop"></div>
-  <footer>Taskora Real MVP - Railway + PostgreSQL</footer>
+  <footer>Taskora</footer>
 
 <script>
+document.body.classList.add("public-launch");
 const API = "";
 let token = localStorage.getItem("taskora_token") || "";
 let me = null;
@@ -1159,7 +1308,7 @@ async function renderDashboard(dataFromMe){
     <div class="user-stat"><span>ربح الباقة</span><strong>${money(me.package_profit)}</strong></div>
     <div class="user-stat"><span>التوثيق</span><strong>${me.kyc_status}</strong></div>
   `;
-  document.getElementById("dashMsg").innerHTML = me.kyc_status==="verified" ? `<div class="success">حسابك موثق. يمكنك طلب السحب عند توفر رصيد متاح.</div>` : `<div class="notice"><div>قم بتوثيق الحساب للحصول على بونص 10$</div><div class="mt">لايمكن سحب الأرباح إلا بعد توثيق الحساب</div></div>`;
+  document.getElementById("dashMsg").innerHTML = me.kyc_status==="verified" ? `<div class="success">حسابك موثق وجاهز للسحب عند توفر الرصيد.</div>` : `<div class="notice"><div>قم بتوثيق الحساب للحصول على بونص 10$</div><div class="mt">لا يمكن سحب الأرباح إلا بعد توثيق الحساب</div></div>`;
   if(dash === "packages") setDash("packages");
   else if(dash === "tasks") setDash("tasks");
   else if(dash === "overview") setDash("overview");
@@ -1170,20 +1319,20 @@ function setDash(t){
   document.querySelectorAll(".user-nav").forEach(b=>b.classList.toggle("active",b.dataset.dash===t));
   document.querySelectorAll("[data-mobile-dash]").forEach(b=>b.classList.toggle("active",b.dataset.mobileDash===t));
   const titles = {
-    overview:["نظرة عامة","ملخص حسابك ونشاطك داخل Taskora."],
-    status:["حالة الحساب","تأكد من جاهزية حسابك للتوثيق والباقات والسحب."],
-    profile:["الملف والتوثيق","أكمل بياناتك واطلب مراجعة الهوية أو جواز السفر."],
-    packages:["الباقات","اختر الباقة المناسبة لتفعيل مهامك اليومية."],
-    tasks:["المهام اليومية","أكمل مهام الباقة بالترتيب حسب الأيام المتاحة."],
-    wallet:["الإيداع والسحب","إدارة طلبات الإيداع والسحب مع عرض المحافظ حسب العملة."],
-    transactions:["سجل المعاملات","تابع كل الحركات المالية داخل حسابك."],
-    referrals:["الدعوات","رابط الدعوة، المدعوون، وسجل بونص الدعوات."],
-    achievements:["الإنجازات","شارات التقدم التي حصلت عليها داخل المنصة."],
-    notifications:["الإشعارات","آخر التحديثات المهمة على حسابك."],
-    settings:["الأمان وتأكيد البريد","تحكم بكلمة المرور وتأكيد البريد الإلكتروني."],
-    help:["مركز المساعدة","إجابات سريعة وخطوات استخدام المنصة."],
-    support:["الدعم الفني","أرسل تذكرة دعم وتابع الردود من الإدارة."],
-    admin:["لوحة الأدمن","مركز التحكم الإداري الاحترافي."]
+    overview:["نظرة عامة",""],
+    status:["حالة الحساب",""],
+    profile:["الملف والتوثيق",""],
+    packages:["الباقات",""],
+    tasks:["المهام اليومية",""],
+    wallet:["الإيداع والسحب",""],
+    transactions:["سجل المعاملات",""],
+    referrals:["الدعوات",""],
+    achievements:["الإنجازات",""],
+    notifications:["الإشعارات",""],
+    settings:["الأمان وتأكيد البريد",""],
+    help:["مركز المساعدة",""],
+    support:["الدعم الفني",""],
+    admin:["لوحة الأدمن",""]
   };
   document.getElementById("dashTitle").innerText = titles[t]?.[0] || "لوحة المستخدم";
   document.getElementById("dashSubtitle").innerText = titles[t]?.[1] || "";
@@ -1586,12 +1735,12 @@ function renderHelp(){
   document.getElementById("dashContent").innerHTML = `
     <h3>مركز المساعدة</h3>
     <div class="help-grid">
-      <div class="faq-box"><h3>كيف أبدأ؟</h3><p>أنشئ حسابك، أكمل التوثيق، ثم أرسل إيداعك أو اختر باقة عندما يتوفر رصيد.</p></div>
-      <div class="faq-box"><h3>لماذا السحب مغلق؟</h3><p>السحب يتطلب حسابًا موثقًا ورصيدًا متاحًا، مع تأكيد عنوان المحفظة.</p></div>
-      <div class="faq-box"><h3>كيف تعمل المهام؟</h3><p>كل باقة تحتوي 12 مهمة، وتظهر المهام حسب جدول الباقة اليومي.</p></div>
-      <div class="faq-box"><h3>ما العملات المدعومة؟</h3><p>USDT و BNB و ETH و BTC حسب المحافظ التي يحددها الأدمن.</p></div>
-      <div class="faq-box"><h3>ماذا يحدث عند رفض السحب؟</h3><p>يتم إرجاع المبلغ المحجوز إلى الرصيد المتاح مع إشعار بسبب الرفض.</p></div>
-      <div class="faq-box"><h3>كيف أستعيد كلمة المرور؟</h3><p>من صفحة الدخول اضغط نسيت كلمة المرور وأنشئ رابط استعادة.</p></div>
+      <div class="faq-box"><h3>كيف أبدأ؟</h3></div>
+      <div class="faq-box"><h3>لماذا السحب مغلق؟</h3></div>
+      <div class="faq-box"><h3>كيف تعمل المهام؟</h3></div>
+      <div class="faq-box"><h3>ما العملات المدعومة؟</h3></div>
+      <div class="faq-box"><h3>ماذا يحدث عند رفض السحب؟</h3></div>
+      <div class="faq-box"><h3>كيف أستعيد كلمة المرور؟</h3></div>
     </div>`;
 }
 let deferredInstallPrompt = null;

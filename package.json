@@ -1,7 +1,7 @@
 {
   "name": "taskora-real-railway",
-  "version": "2.0.3",
-  "description": "Taskora v12.3 packages and tasks display fix",
+  "version": "2.0.4",
+  "description": "Taskora v12.4 public launch polish: cleaner texts, consistent layout, launch-ready UI",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
