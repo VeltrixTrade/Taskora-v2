@@ -15,7 +15,30 @@ const { Pool } = require("pg");
 const QRCode = require("qrcode");
 
 const app = express();
-const APP_VERSION = "v10.9-hard-route-fix";
+const APP_VERSION = "v12.7-cache-deploy-fix";
+
+// Prevent Railway/browser/PWA from serving an old frontend after deployment.
+app.use((req, res, next) => {
+  if (
+    req.path === "/" ||
+    req.path === "/index.html" ||
+    req.path === "/sw.js" ||
+    req.path.startsWith("/assets/") ||
+    req.path === "/manifest.json"
+  ) {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+    res.setHeader("Surrogate-Control", "no-store");
+  }
+  next();
+});
+
+app.get("/api/version", (_req, res) => {
+  res.json({ version: APP_VERSION, updated: true });
+});
+
+
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "dev-only-change-me";
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -513,6 +536,7 @@ app.get("/health", async (_req, res) => {
   const payload = {
     status: "ok",
     app: "Taskora Real MVP",
+    version: APP_VERSION,
     version: APP_VERSION,
     uptime: process.uptime(),
     database: "unchecked",

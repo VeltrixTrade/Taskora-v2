@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta name="taskora-version" content="v12.4-public-launch-polish">
+  <meta name="taskora-version" content="v12.7-cache-deploy-fix">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Taskora منصة مهام وباقات حقيقية مع تسجيل، توثيق، محفظة، ولوحة أدمن." />
@@ -802,7 +802,7 @@
 
     <section class="hero-pro">
       <div class="container hero-pro-grid">
-        <div class="hero-copy"><img class="brand-logo-img" src="/assets/taskora-logo.svg" alt="Taskora" style="margin:0 auto 18px;">
+        <div class="hero-copy"><img class="brand-logo-img" src="/assets/taskora-logo.svg?v=v12.7-cache-deploy-fix" alt="Taskora" style="margin:0 auto 18px;">
           <div class="badge">منصة مهام وباقات رقمية</div>
           <h1>أنجز مهامك اليومية داخل <span>Taskora</span> بطريقة منظمة وآمنة</h1>
           <div class="safe-profit">📈 عوائد مستهدفة حتى 10% حسب شروط الباقة وإكمال المهام</div>
@@ -1129,9 +1129,20 @@
   </section>
 
   <div id="adminModal" class="modal-backdrop"></div>
-  <footer>Taskora</footer>
+  <footer>Taskora <span id="deployVersionBadge" style="opacity:.55;font-size:12px;margin-inline-start:8px">v12.7-cache-deploy-fix</span></footer>
 
 <script>
+
+const DEPLOY_VERSION = "v12.7-cache-deploy-fix";
+(function verifyDeployVersion(){
+  try{
+    const old = localStorage.getItem("taskora_deploy_version");
+    if(old && old !== DEPLOY_VERSION){
+      if("caches" in window) caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+    }
+    localStorage.setItem("taskora_deploy_version", DEPLOY_VERSION);
+  }catch(e){}
+})();
 document.body.classList.add("public-launch");
 
 const I18N={en:{"الرئيسية":"Home","دخول":"Login","خروج":"Logout","لوحتي":"Dashboard","تسجيل الدخول":"Login","إنشاء حساب":"Create account","متابعة":"Continue","نسيت كلمة المرور؟":"Forgot password?","البريد الإلكتروني":"Email","كلمة المرور":"Password","الدولة ورقم الهاتف":"Country and phone number","كود الدعوة - اختياري":"Referral code - optional","نظرة عامة":"Overview","حالة الحساب":"Account status","الملف والتوثيق":"Profile & KYC","الباقات":"Packages","المهام اليومية":"Daily tasks","الإيداع والسحب":"Deposit & Withdraw","سجل المعاملات":"Transactions","الدعوات":"Referrals","الإنجازات":"Achievements","الإشعارات":"Notifications","الأمان وتأكيد البريد":"Security","مركز المساعدة":"Help center","الدعم الفني":"Support","لوحة الأدمن":"Admin","اختر باقتك":"Choose your package","شراء":"Buy","تفاصيل":"Details","المهام":"Tasks","المدة":"Duration","ربح مستهدف":"Target return","ربح المهمة":"Task return","لا توجد باقة نشطة":"No active package","الذهاب إلى الباقات":"Go to packages","إكمال المهمة":"Complete task","محفظتي":"My wallet","الرصيد المتاح":"Available balance","الرصيد المقفل":"Locked balance","الربح":"Profit","إجمالي الإيداعات":"Total deposits","إجمالي السحوبات":"Total withdrawals","طلب إيداع":"Deposit request","طلب سحب":"Withdraw request","إرسال للمراجعة":"Submit for review","عنوان محفظتك":"Wallet address","تأكيد عنوان المحفظة":"Confirm wallet address","طلب السحب":"Request withdrawal","مستواك الحالي":"Current level","الخطوات الناقصة":"Missing steps","حسابك جاهز بالكامل.":"Your account is fully ready.","رابط دعوتك":"Your referral link","نسخ الرابط":"Copy link","المدعوون":"Invited users","لوحة الإنجازات":"Achievements board","تم فتحها":"Unlocked","لم تفتح بعد":"Locked","الشروط":"Terms","الخصوصية":"Privacy","الأمان":"Security","المخاطر":"Risk","البونص":"Bonus","الهوية":"Identity"},es:{"الرئيسية":"Inicio","دخول":"Entrar","خروج":"Salir","لوحتي":"Panel","تسجيل الدخول":"Iniciar sesión","إنشاء حساب":"Crear cuenta","متابعة":"Continuar","نسيت كلمة المرور؟":"¿Olvidaste tu contraseña?","البريد الإلكتروني":"Correo electrónico","كلمة المرور":"Contraseña","الدولة ورقم الهاتف":"País y teléfono","كود الدعوة - اختياري":"Código de invitación - opcional","نظرة عامة":"Resumen","حالة الحساب":"Estado de cuenta","الملف والتوثيق":"Perfil y verificación","الباقات":"Paquetes","المهام اليومية":"Tareas diarias","الإيداع والسحب":"Depósito y retiro","سجل المعاملات":"Transacciones","الدعوات":"Invitaciones","الإنجازات":"Logros","الإشعارات":"Notificaciones","الأمان وتأكيد البريد":"Seguridad","مركز المساعدة":"Ayuda","الدعم الفني":"Soporte","لوحة الأدمن":"Admin","اختر باقتك":"Elige tu paquete","شراء":"Comprar","تفاصيل":"Detalles","المهام":"Tareas","المدة":"Duración","ربح مستهدف":"Retorno objetivo","ربح المهمة":"Retorno por tarea","لا توجد باقة نشطة":"No hay paquete activo","الذهاب إلى الباقات":"Ir a paquetes","إكمال المهمة":"Completar tarea","محفظتي":"Mi billetera","الرصيد المتاح":"Saldo disponible","الرصيد المقفل":"Saldo bloqueado","الربح":"Ganancia","إجمالي الإيداعات":"Depósitos totales","إجمالي السحوبات":"Retiros totales","طلب إيداع":"Solicitud de depósito","طلب سحب":"Solicitud de retiro","إرسال للمراجعة":"Enviar a revisión","عنوان محفظتك":"Dirección de billetera","تأكيد عنوان المحفظة":"Confirmar dirección","طلب السحب":"Solicitar retiro","مستواك الحالي":"Nivel actual","الخطوات الناقصة":"Pasos pendientes","حسابك جاهز بالكامل.":"Tu cuenta está lista.","رابط دعوتك":"Tu enlace de invitación","نسخ الرابط":"Copiar enlace","المدعوون":"Invitados","لوحة الإنجازات":"Panel de logros","تم فتحها":"Desbloqueado","لم تفتح بعد":"Bloqueado","الشروط":"Términos","الخصوصية":"Privacidad","الأمان":"Seguridad","المخاطر":"Riesgo","البونص":"Bono","الهوية":"Identidad"}};

@@ -1,7 +1,7 @@
 {
   "name": "taskora-real-railway",
-  "version": "2.0.6",
-  "description": "Taskora v12.6 brand logo, multilingual UI, dark and light theme",
+  "version": "2.0.7",
+  "description": "Taskora v12.7 deployment cache fix with visible version verification",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {

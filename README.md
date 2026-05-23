@@ -481,3 +481,22 @@ service unavailable
 - إضافة Dark mode و Light mode.
 - حفظ اللغة والثيم في localStorage.
 - دعم RTL للعربية وLTR للإنجليزية والإسبانية.
+
+
+## تحديث v12.7-cache-deploy-fix
+
+هذه نسخة مخصصة لحل مشكلة عدم ظهور التحديث بعد الرفع.
+
+تمت إضافة:
+- كسر كاش المتصفح وService Worker.
+- حذف كاش PWA القديم تلقائيًا.
+- منع تخزين `index.html`, `sw.js`, `assets`, و`manifest.json`.
+- إضافة `/api/version` للتأكد من أن Railway يشغل النسخة الجديدة.
+- إظهار رقم النسخة في الفوتر: `v12.7-cache-deploy-fix`.
+
+بعد النشر افتح:
+- `/api/version`
+- `/health`
+
+وتأكد من ظهور:
+`v12.7-cache-deploy-fix`
