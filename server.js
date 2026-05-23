@@ -15,18 +15,7 @@ const { Pool } = require("pg");
 const QRCode = require("qrcode");
 
 const app = express();
-const APP_VERSION = "v12-4-taskora-brand-board";
-
-app.use((req,res,next)=>{
-  if(req.path==="/" || req.path==="/index.html" || req.path==="/sw.js" || req.path==="/manifest.json" || req.path.startsWith("/assets/")){
-    res.setHeader("Cache-Control","no-store, no-cache, must-revalidate, proxy-revalidate");
-    res.setHeader("Pragma","no-cache");
-    res.setHeader("Expires","0");
-  }
-  next();
-});
-app.get("/api/version", (_req,res)=>res.json({version:APP_VERSION,updated:true}));
-
+const APP_VERSION = "v10.9-hard-route-fix";
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "dev-only-change-me";
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -547,15 +536,19 @@ app.get("/health", async (_req, res) => {
 
 app.post("/api/auth/register", async (req, res) => {
   try {
-    const username = normalize(req.body.username);
     const email = lower(req.body.email);
     const phone = normalize(req.body.phone);
     const password = normalize(req.body.password);
     const referral = normalize(req.body.referral_code);
 
-    if (!/^[a-zA-Z0-9_]{3,30}$/.test(username)) {
-      return res.status(422).json({ error: "Username must be 3-30 characters: letters, numbers, underscore." });
+    let username = normalize(req.body.username);
+    if (!username) {
+      const emailBase = (email.split("@")[0] || "user").replace(/[^a-zA-Z0-9_]/g, "_").slice(0, 18) || "user";
+      username = `${emailBase}_${Math.floor(1000 + Math.random() * 9000)}`;
     }
+    username = username.replace(/[^a-zA-Z0-9_]/g, "_").slice(0, 30);
+    if (username.length < 3) username = `user_${Math.floor(1000 + Math.random() * 9000)}`;
+
     if (!/^\S+@\S+\.\S+$/.test(email)) {
       return res.status(422).json({ error: "Invalid email." });
     }
@@ -566,12 +559,18 @@ app.post("/api/auth/register", async (req, res) => {
       return res.status(422).json({ error: "Password must be at least 8 characters and contain letters and numbers." });
     }
 
-    const duplicate = await query(
-      "SELECT username,email,phone FROM users WHERE lower(username)=lower($1) OR lower(email)=lower($2) OR phone=$3 LIMIT 1",
-      [username, email, phone]
+    const duplicateEmailPhone = await query(
+      "SELECT email,phone FROM users WHERE lower(email)=lower($1) OR phone=$2 LIMIT 1",
+      [email, phone]
     );
-    if (duplicate.rowCount > 0) {
-      return res.status(409).json({ error: "Username, email, or phone already exists." });
+    if (duplicateEmailPhone.rowCount > 0) {
+      return res.status(409).json({ error: "Email or phone already exists." });
+    }
+
+    for (let i = 0; i < 8; i++) {
+      const exists = await query("SELECT id FROM users WHERE lower(username)=lower($1) LIMIT 1", [username]);
+      if (exists.rowCount === 0) break;
+      username = `${username.slice(0, 20)}_${Math.floor(1000 + Math.random() * 9000)}`;
     }
 
     let referredBy = null;

@@ -1,7 +1,7 @@
 {
   "name": "taskora-real-railway",
-  "version": "2.4.0",
-  "description": "Taskora brand board update: logo, colors, Tajawal/Inter fonts",
+  "version": "2.0.5",
+  "description": "Taskora v12.5 country phone picker and username-free registration",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
