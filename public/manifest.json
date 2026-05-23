@@ -2,7 +2,7 @@
   "name": "Taskora",
   "short_name": "Taskora",
   "description": "Taskora platform dashboard",
-  "start_url": "/?v=v12.7-cache-deploy-fix",
+  "start_url": "/?v=v12-3-lang-theme-upgrade",
   "display": "standalone",
   "background_color": "#0B1220",
   "theme_color": "#6C4DFF",
