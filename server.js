@@ -15,7 +15,7 @@ const { Pool } = require("pg");
 const QRCode = require("qrcode");
 
 const app = express();
-const APP_VERSION = "v12.7-cache-deploy-fix";
+const APP_VERSION = "v13.2-fonts-3d-premium";
 
 // Prevent Railway/browser/PWA from serving an old frontend after deployment.
 app.use((req, res, next) => {

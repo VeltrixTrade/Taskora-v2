@@ -500,3 +500,34 @@ service unavailable
 
 وتأكد من ظهور:
 `v12.7-cache-deploy-fix`
+
+
+## v13 New Brand Rebuild
+
+واجهة جديدة بالكامل مبنية على هوية Taskora، مع Dark/Light Mode، وثلاث لغات، وتصميم نظيف للنشر العام.
+
+
+## v13.1 Premium Design
+
+- تحسين كبير للخلفيات والأنيميشن.
+- كروت Glassmorphism أكثر احترافية.
+- تحسين الهيدر والأزرار والداشبورد.
+- تحسين الباقات والإحصائيات.
+- إضافة قسم ثقة جديد في الصفحة الرئيسية.
+- تحسين Light/Dark Mode.
+
+
+## v13.2 Typography + 3D Premium
+
+- اعتماد تركيبة الخطوط:
+  - Noto Kufi Arabic للعناوين.
+  - Tajawal + IBM Plex Sans Arabic للنصوص.
+  - Inter للأرقام والمبالغ.
+- إضافة نماذج 3D متحركة:
+  - Cube
+  - Coin
+  - Ring
+  - Pyramid
+- تحسين الخلفية بشبكة Premium متحركة.
+- تحسين كروت Glassmorphism.
+- تحسين الصفحة الرئيسية والمظهر العام.

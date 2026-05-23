@@ -1,7 +1,7 @@
 {
   "name": "taskora-real-railway",
-  "version": "2.0.7",
-  "description": "Taskora v12.7 deployment cache fix with visible version verification",
+  "version": "3.2.0",
+  "description": "Taskora v13.2 Arabic typography and high-end animated 3D models",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
