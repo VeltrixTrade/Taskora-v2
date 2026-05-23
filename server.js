@@ -15,7 +15,7 @@ const { Pool } = require("pg");
 const QRCode = require("qrcode");
 
 const app = express();
-const APP_VERSION = "v12-3-lang-theme-upgrade";
+const APP_VERSION = "v12-4-taskora-brand-board";
 
 app.use((req,res,next)=>{
   if(req.path==="/" || req.path==="/index.html" || req.path==="/sw.js" || req.path==="/manifest.json" || req.path.startsWith("/assets/")){

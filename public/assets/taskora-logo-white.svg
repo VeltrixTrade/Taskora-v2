@@ -1,8 +1,8 @@
 <svg width="330" height="92" viewBox="0 0 330 92" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect x="8" y="14" width="64" height="64" rx="18" fill="#0B1220"/>
+  <rect x="8" y="14" width="64" height="64" rx="18" fill="#FFFFFF"/>
   <path d="M23 31C23 27.2 26.2 24 30 24H63C66.8 24 69.2 28.1 67.2 31.4L62.8 38.8C60.9 42.1 57.3 44.1 53.5 44.1H47L40.9 67.9C40.1 71.2 35.6 71.6 34.2 68.5L28.7 56.4L36.8 39.9H27C23.2 39.9 20.8 35.8 22.8 32.5L24 30.4C23.7 30.8 23.4 31 23 31Z" fill="url(#g)"/>
   <path d="M19.5 55.6L31.9 46.4L28.3 63.3L20.7 60.3C18.6 59.5 17.7 56.9 19.5 55.6Z" fill="#F7B500"/>
-  <text x="92" y="56" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="850" fill="#0B1220">Taskora</text>
-  <text x="94" y="77" font-family="Tajawal, Arial, sans-serif" font-size="14" font-weight="600" fill="#475569">مهامك اليومية، أرباحك المستقبلية</text>
+  <text x="92" y="56" font-family="Inter, Arial, sans-serif" font-size="42" font-weight="850" fill="#FFFFFF">Taskora</text>
+  <text x="94" y="77" font-family="Tajawal, Arial, sans-serif" font-size="14" font-weight="600" fill="#CBD5E1">مهامك اليومية، أرباحك المستقبلية</text>
   <defs><linearGradient id="g" x1="23" y1="24" x2="62" y2="69" gradientUnits="userSpaceOnUse"><stop stop-color="#6C4DFF"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient></defs>
 </svg>
