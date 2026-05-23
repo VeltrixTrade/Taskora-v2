@@ -1,7 +1,7 @@
 {
   "name": "taskora-real-railway",
-  "version": "2.0.5",
-  "description": "Taskora v12.5 country phone picker and username-free registration",
+  "version": "2.0.6",
+  "description": "Taskora v12.6 brand logo, multilingual UI, dark and light theme",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {

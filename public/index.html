@@ -767,6 +767,18 @@
       .dial-code-box{height:52px}
     }
 
+
+    /* v12.6 brand, languages and theme */
+    :root{--brand-navy:#0B1220;--brand-purple:#6C4DFF;--brand-violet:#8B5CF6;--brand-gold:#F7B500;--brand-soft:#F1F3F5}
+    body.theme-light{--bg:#F1F3F5;--panel:#fff;--panel2:#f8fafc;--text:#0B1220;--muted:#475569;--border:rgba(11,18,32,.12);--shadow:0 24px 70px rgba(11,18,32,.12);color:#0B1220;background:radial-gradient(circle at 10% -10%,rgba(108,77,255,.12),transparent 28%),radial-gradient(circle at 90% 0%,rgba(247,181,0,.10),transparent 30%),#F1F3F5}
+    body.theme-light .site-header,body.theme-light .auth-box,body.theme-light .card,body.theme-light .user-side,body.theme-light .modal,body.theme-light .user-stat,body.theme-light .chart-card,body.theme-light .package-pro-card,body.theme-light .wallet-balance-card,body.theme-light .admin-shell,body.theme-light .admin-panel,body.theme-light .table-wrap,body.theme-light .faq-box{background:rgba(255,255,255,.9)!important;border-color:rgba(11,18,32,.12)!important;color:#0B1220!important;box-shadow:0 22px 55px rgba(11,18,32,.10)}
+    body.theme-light input,body.theme-light select,body.theme-light textarea{background:#fff!important;color:#0B1220!important;border-color:rgba(11,18,32,.16)!important}
+    body.theme-light .muted,body.theme-light p,body.theme-light label{color:#475569!important}
+    .brand-logo-lockup{display:flex;align-items:center;gap:10px;cursor:pointer}.brand-word{font-family:Inter,Tajawal,Cairo,sans-serif;font-weight:900;font-size:24px;letter-spacing:-.03em}.brand-mark{width:42px;height:42px;border-radius:14px;background:#0B1220;display:grid;place-items:center;overflow:hidden;box-shadow:0 14px 34px rgba(108,77,255,.22)}.brand-mark img{width:100%;height:100%}.brand-logo-img{height:46px;width:auto;display:block}
+    .top-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.language-select,.theme-toggle{height:42px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.07);color:var(--text);padding:0 12px;font-weight:900;cursor:pointer}.language-select option{background:#0B1220;color:#fff}.theme-toggle{min-width:46px;display:grid;place-items:center;padding:0 13px}body.theme-light .language-select,body.theme-light .theme-toggle{border-color:rgba(11,18,32,.12);background:#fff;color:#0B1220}body.theme-light .language-select option{background:#fff;color:#0B1220}
+    html[dir=ltr] body{direction:ltr;text-align:left;font-family:Inter,Tajawal,Cairo,sans-serif}html[dir=ltr] .site-header,html[dir=ltr] .nav-actions,html[dir=ltr] .top-controls,html[dir=ltr] .admin-actions,html[dir=ltr] .hero-actions{direction:ltr}html[dir=ltr] .user-dashboard-shell,html[dir=ltr] .admin-shell{direction:ltr}html[dir=ltr] .package-pro-price,html[dir=ltr] .money-cell,html[dir=ltr] .wallet-big,html[dir=ltr] .detail-metric b{direction:ltr;text-align:left}
+    @media(max-width:720px){.top-controls{width:100%;justify-content:center}.language-select,.theme-toggle{height:40px}.brand-word{font-size:21px}}
+
   </style>
   <link rel="manifest" href="/manifest.json">
 </head>
@@ -790,7 +802,7 @@
 
     <section class="hero-pro">
       <div class="container hero-pro-grid">
-        <div class="hero-copy">
+        <div class="hero-copy"><img class="brand-logo-img" src="/assets/taskora-logo.svg" alt="Taskora" style="margin:0 auto 18px;">
           <div class="badge">منصة مهام وباقات رقمية</div>
           <h1>أنجز مهامك اليومية داخل <span>Taskora</span> بطريقة منظمة وآمنة</h1>
           <div class="safe-profit">📈 عوائد مستهدفة حتى 10% حسب شروط الباقة وإكمال المهام</div>
@@ -1121,6 +1133,16 @@
 
 <script>
 document.body.classList.add("public-launch");
+
+const I18N={en:{"الرئيسية":"Home","دخول":"Login","خروج":"Logout","لوحتي":"Dashboard","تسجيل الدخول":"Login","إنشاء حساب":"Create account","متابعة":"Continue","نسيت كلمة المرور؟":"Forgot password?","البريد الإلكتروني":"Email","كلمة المرور":"Password","الدولة ورقم الهاتف":"Country and phone number","كود الدعوة - اختياري":"Referral code - optional","نظرة عامة":"Overview","حالة الحساب":"Account status","الملف والتوثيق":"Profile & KYC","الباقات":"Packages","المهام اليومية":"Daily tasks","الإيداع والسحب":"Deposit & Withdraw","سجل المعاملات":"Transactions","الدعوات":"Referrals","الإنجازات":"Achievements","الإشعارات":"Notifications","الأمان وتأكيد البريد":"Security","مركز المساعدة":"Help center","الدعم الفني":"Support","لوحة الأدمن":"Admin","اختر باقتك":"Choose your package","شراء":"Buy","تفاصيل":"Details","المهام":"Tasks","المدة":"Duration","ربح مستهدف":"Target return","ربح المهمة":"Task return","لا توجد باقة نشطة":"No active package","الذهاب إلى الباقات":"Go to packages","إكمال المهمة":"Complete task","محفظتي":"My wallet","الرصيد المتاح":"Available balance","الرصيد المقفل":"Locked balance","الربح":"Profit","إجمالي الإيداعات":"Total deposits","إجمالي السحوبات":"Total withdrawals","طلب إيداع":"Deposit request","طلب سحب":"Withdraw request","إرسال للمراجعة":"Submit for review","عنوان محفظتك":"Wallet address","تأكيد عنوان المحفظة":"Confirm wallet address","طلب السحب":"Request withdrawal","مستواك الحالي":"Current level","الخطوات الناقصة":"Missing steps","حسابك جاهز بالكامل.":"Your account is fully ready.","رابط دعوتك":"Your referral link","نسخ الرابط":"Copy link","المدعوون":"Invited users","لوحة الإنجازات":"Achievements board","تم فتحها":"Unlocked","لم تفتح بعد":"Locked","الشروط":"Terms","الخصوصية":"Privacy","الأمان":"Security","المخاطر":"Risk","البونص":"Bonus","الهوية":"Identity"},es:{"الرئيسية":"Inicio","دخول":"Entrar","خروج":"Salir","لوحتي":"Panel","تسجيل الدخول":"Iniciar sesión","إنشاء حساب":"Crear cuenta","متابعة":"Continuar","نسيت كلمة المرور؟":"¿Olvidaste tu contraseña?","البريد الإلكتروني":"Correo electrónico","كلمة المرور":"Contraseña","الدولة ورقم الهاتف":"País y teléfono","كود الدعوة - اختياري":"Código de invitación - opcional","نظرة عامة":"Resumen","حالة الحساب":"Estado de cuenta","الملف والتوثيق":"Perfil y verificación","الباقات":"Paquetes","المهام اليومية":"Tareas diarias","الإيداع والسحب":"Depósito y retiro","سجل المعاملات":"Transacciones","الدعوات":"Invitaciones","الإنجازات":"Logros","الإشعارات":"Notificaciones","الأمان وتأكيد البريد":"Seguridad","مركز المساعدة":"Ayuda","الدعم الفني":"Soporte","لوحة الأدمن":"Admin","اختر باقتك":"Elige tu paquete","شراء":"Comprar","تفاصيل":"Detalles","المهام":"Tareas","المدة":"Duración","ربح مستهدف":"Retorno objetivo","ربح المهمة":"Retorno por tarea","لا توجد باقة نشطة":"No hay paquete activo","الذهاب إلى الباقات":"Ir a paquetes","إكمال المهمة":"Completar tarea","محفظتي":"Mi billetera","الرصيد المتاح":"Saldo disponible","الرصيد المقفل":"Saldo bloqueado","الربح":"Ganancia","إجمالي الإيداعات":"Depósitos totales","إجمالي السحوبات":"Retiros totales","طلب إيداع":"Solicitud de depósito","طلب سحب":"Solicitud de retiro","إرسال للمراجعة":"Enviar a revisión","عنوان محفظتك":"Dirección de billetera","تأكيد عنوان المحفظة":"Confirmar dirección","طلب السحب":"Solicitar retiro","مستواك الحالي":"Nivel actual","الخطوات الناقصة":"Pasos pendientes","حسابك جاهز بالكامل.":"Tu cuenta está lista.","رابط دعوتك":"Tu enlace de invitación","نسخ الرابط":"Copiar enlace","المدعوون":"Invitados","لوحة الإنجازات":"Panel de logros","تم فتحها":"Desbloqueado","لم تفتح بعد":"Bloqueado","الشروط":"Términos","الخصوصية":"Privacidad","الأمان":"Seguridad","المخاطر":"Riesgo","البونص":"Bono","الهوية":"Identidad"}};
+const AR_TEXT_CACHE=new WeakMap();let currentLang=localStorage.getItem("taskora_lang")||"ar";let currentTheme=localStorage.getItem("taskora_theme")||"dark";
+function translateTextValue(text){if(currentLang==="ar")return text;const trimmed=text.trim();if(!trimmed)return text;const translated=I18N[currentLang]?.[trimmed];return translated?text.replace(trimmed,translated):text}
+function applyLanguage(root=document.body){document.documentElement.lang=currentLang;document.documentElement.dir=currentLang==="ar"?"rtl":"ltr";const sel=document.getElementById("languageSelect");if(sel)sel.value=currentLang;const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode(node){const p=node.parentElement;if(!p||["SCRIPT","STYLE","OPTION"].includes(p.tagName))return NodeFilter.FILTER_REJECT;if(!node.nodeValue.trim())return NodeFilter.FILTER_REJECT;return NodeFilter.FILTER_ACCEPT}});const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);nodes.forEach(node=>{if(!AR_TEXT_CACHE.has(node))AR_TEXT_CACHE.set(node,node.nodeValue);const original=AR_TEXT_CACHE.get(node);node.nodeValue=currentLang==="ar"?original:translateTextValue(original)})}
+function setLanguage(lang){currentLang=["ar","en","es"].includes(lang)?lang:"ar";localStorage.setItem("taskora_lang",currentLang);applyLanguage()}
+function applyTheme(){document.body.classList.toggle("theme-light",currentTheme==="light");document.body.classList.toggle("theme-dark",currentTheme!=="light");const btn=document.getElementById("themeToggle");if(btn)btn.textContent=currentTheme==="light"?"☀️":"🌙"}
+function toggleTheme(){currentTheme=currentTheme==="light"?"dark":"light";localStorage.setItem("taskora_theme",currentTheme);applyTheme()}
+function refreshUI(){applyTheme();applyLanguage()}
+
 const API = "";
 let token = localStorage.getItem("taskora_token") || "";
 let me = null;
@@ -1178,6 +1200,7 @@ function forceRelogin(){
   renderNav();
 document.getElementById("regPhoneLocal")?.addEventListener("input", buildFullPhone);
 updateDialCode();
+refreshUI();
 }
 function ensureLoggedInForDash(name){
   const latestToken = localStorage.getItem("taskora_token") || token || "";
@@ -1291,6 +1314,7 @@ function showView(v){
     }
   });
   renderNav();
+  setTimeout(refreshUI,0);
 }
 function toggleUserSide(){ document.getElementById("userSide")?.classList.toggle("open"); document.getElementById("userOverlay")?.classList.toggle("open"); }
 function closeUserSide(){ document.getElementById("userSide")?.classList.remove("open"); document.getElementById("userOverlay")?.classList.remove("open"); }
@@ -1302,6 +1326,7 @@ function renderNav(){
     <button class="btn" onclick="showView('home')">الرئيسية</button>
     ${token ? `<button class="btn primary" onclick="loadMe()">لوحتي</button><button class="btn red" onclick="logout()">خروج</button>` : `<button class="btn primary" onclick="showView('auth')">دخول</button>`}
   `;
+  setTimeout(refreshUI,0);
 }
 
 function updateDialCode(){

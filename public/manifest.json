@@ -4,8 +4,8 @@
   "description": "Taskora platform dashboard",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#07111f",
-  "theme_color": "#07111f",
+  "background_color": "#0B1220",
+  "theme_color": "#6C4DFF",
   "icons": [
     {
       "src": "/assets/taskora-app-icon-192.png",
