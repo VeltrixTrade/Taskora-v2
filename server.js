@@ -15,7 +15,15 @@ const { Pool } = require("pg");
 const QRCode = require("qrcode");
 
 const app = express();
-const APP_VERSION = "google-rewarded-ads-json-parse-fix";
+const APP_VERSION = "hard-json-html-api-fix-v2";
+
+app.get("/api/health", (_req, res) => {
+  res.json({ ok: true, version: APP_VERSION, api: true });
+});
+app.get("/api/version", (_req, res) => {
+  res.json({ version: APP_VERSION, updated: true, api: true, note: "If this is JSON, backend is connected." });
+});
+
 
 app.get("/api/version", (_req, res) => {
   res.json({ version: APP_VERSION, updated: true, fix: "json-parse" });
@@ -1696,6 +1704,13 @@ app.get("/__debug", (_req, res) => {
   });
 });
 
+
+// Hard API guard: API routes must never return index.html.
+app.use("/api", (req, res, next) => {
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  next();
+});
+
 app.use(express.static(publicDir, {
   index: false,
   fallthrough: true,
@@ -1721,9 +1736,19 @@ app.use((req, res, next) => {
   next();
 });
 
+
+// Final API JSON 404. Must appear before any frontend fallback.
+app.use("/api", (req, res) => {
+  res.status(404).json({
+    error: "API route not found",
+    path: req.originalUrl,
+    version: APP_VERSION
+  });
+});
+
 // SPA fallback: serve frontend for all non-API routes.
 app.get("*", (req, res, next) => {
-  if (req.path === "/health" || req.path === "/__debug" || req.path.startsWith("/api/")) {
+  if (req.path === "/health" || req.path === "/__debug" || req.path === "/api" || req.path.startsWith("/api/")) {
     return next();
   }
   return sendFrontend(req, res);

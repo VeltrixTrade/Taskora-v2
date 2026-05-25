@@ -486,3 +486,18 @@ service unavailable
 - منع قراءة HTML كـ JSON.
 - توضيح الخطأ إذا كان مسار API يرجع صفحة HTML.
 - ضمان أن مسارات `/api` لا ترجع HTML.
+
+
+## hard-json-html-api-fix-v2
+
+إصلاح قوي لخطأ:
+`Unexpected token '<', "<!DOCTYPE html>" is not valid JSON`
+
+مهم:
+هذا الخطأ ليس من رقم الناشر غالبًا. السبب أن API يرجع HTML بدل JSON.
+
+اختبر بعد الرفع:
+- `/api/health`
+- `/api/version`
+
+إذا لم يرجعا JSON، فالمشكلة في نشر السيرفر أو إعداد Railway.

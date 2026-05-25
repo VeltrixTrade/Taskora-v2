@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta name="taskora-version" content="google-rewarded-ads-json-parse-fix">
+  <meta name="taskora-version" content="hard-json-html-api-fix-v2">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Taskora منصة استثمار رقمية مع تسجيل، توثيق، محفظة، ولوحة أدمن." />
@@ -2721,6 +2721,58 @@
   <script async src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"></script>
   <meta name="google-adsense-account" content="ca-pub-3936169440487132">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3936169440487132" crossorigin="anonymous"></script>
+
+<script>
+/* Hard guard: prevent Unexpected token '<' when an API returns HTML instead of JSON. */
+(function(){
+  if(window.__taskoraHardJsonGuardInstalled) return;
+  window.__taskoraHardJsonGuardInstalled = true;
+
+  const originalFetch = window.fetch.bind(window);
+  window.fetch = async function(input, init){
+    const response = await originalFetch(input, init);
+    const url = typeof input === "string" ? input : (input && input.url ? input.url : "");
+    const isApi = url.includes("/api/") || url.startsWith("/api/");
+
+    if(!isApi) return response;
+
+    const contentType = (response.headers.get("content-type") || "").toLowerCase();
+    if(contentType.includes("text/html")){
+      const htmlText = await response.clone().text().catch(()=>"");
+      const cleanBody = {
+        error: "API returned HTML instead of JSON",
+        message_ar: "مسار API يرجع صفحة HTML بدل JSON. هذا يعني أن السيرفر الخلفي غير متصل أو أن المسار غير موجود.",
+        path: url,
+        status: response.status,
+        preview: htmlText.slice(0, 120).replace(/\s+/g, " ")
+      };
+      return new Response(JSON.stringify(cleanBody), {
+        status: response.status === 200 ? 502 : response.status,
+        statusText: "API returned HTML",
+        headers: { "Content-Type": "application/json; charset=utf-8" }
+      });
+    }
+
+    return response;
+  };
+
+  const originalJson = Response.prototype.json;
+  Response.prototype.json = async function(){
+    const contentType = (this.headers.get("content-type") || "").toLowerCase();
+    if(contentType.includes("text/html")){
+      const text = await this.clone().text().catch(()=>"");
+      return {
+        error: "API returned HTML instead of JSON",
+        message_ar: "الرد من السيرفر HTML وليس JSON.",
+        status: this.status,
+        preview: text.slice(0, 120).replace(/\s+/g, " ")
+      };
+    }
+    return originalJson.call(this);
+  };
+})();
+</script>
+
 </head>
 <body>
   <!-- ====== INTRO SCREEN ====== -->
@@ -5922,6 +5974,22 @@ if(typeof taskoraOriginalSetDash === "function"){
   }
 }
 window.addEventListener("load", () => setTimeout(taskoraConvertExistingTaskButtons, 250));
+</script>
+
+
+<script>
+async function taskoraCheckApiConnection(){
+  try{
+    const res = await fetch("/api/version", { cache: "no-store" });
+    const data = await res.json();
+    console.log("Taskora API check:", data);
+    return data;
+  }catch(e){
+    console.error("Taskora API connection failed:", e);
+    return null;
+  }
+}
+window.addEventListener("load", () => setTimeout(taskoraCheckApiConnection, 800));
 </script>
 
 </body>

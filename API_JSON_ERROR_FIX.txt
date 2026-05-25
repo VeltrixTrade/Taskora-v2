@@ -1,0 +1,28 @@
+Unexpected token '<' fix
+
+هذا الخطأ ليس من رقم الناشر غالبًا.
+الرقم ca-pub-3936169440487132 قد يكون صحيحًا كرقم ناشر AdSense، لكنه ليس سبب:
+Unexpected token '<', "<!DOCTYPE html>" is not valid JSON
+
+السبب الحقيقي:
+الواجهة تطلب /api/... لكن الرد يكون صفحة HTML بدل JSON.
+
+بعد رفع هذه النسخة على Railway افتح:
+1) /api/health
+2) /api/version
+
+النتيجة الصحيحة يجب أن تكون JSON مثل:
+{"ok":true,"version":"hard-json-html-api-fix-v2","api":true}
+
+إذا ظهرت صفحة الموقع أو <!DOCTYPE html>:
+- أنت لا تشغل السيرفر Node/Express.
+- أو Railway يرفع مجلدًا خطأ.
+- أو المشروع يعمل كـ Static Site فقط.
+- أو start command غير صحيح.
+
+هذه النسخة أضافت:
+- حماية frontend تمنع انهيار JSON.
+- /api/health
+- /api/version
+- API 404 JSON.
+- Railway healthcheck على /api/health.
