@@ -2715,6 +2715,37 @@
     .task-ad-status.error{border-color:rgba(239,68,68,.28);background:rgba(239,68,68,.10)}
     .task-ad-watch-btn,.task-ad-complete-btn{width:100%}
     .task-ad-complete-btn:disabled{opacity:.55;cursor:not-allowed;filter:grayscale(.2)}
+    .taskora-adsense-unit{
+      margin:18px 0;
+      min-height:92px;
+      display:grid;
+      place-items:center;
+      border:1px dashed rgba(255,255,255,.14);
+      border-radius:22px;
+      background:linear-gradient(135deg,rgba(255,255,255,.035),rgba(255,255,255,.01));
+      color:var(--text);
+      overflow:hidden;
+      text-align:center;
+    }
+    .taskora-adsense-unit .adsbygoogle{width:100%;min-height:92px}
+    .taskora-adsense-pending{padding:16px}
+    .taskora-adsense-pending span{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:26px;
+      padding:4px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.06);
+      color:#d4d4d8;
+      font-family:Inter,Tajawal,sans-serif;
+      font-size:12px;
+      font-weight:900;
+      direction:ltr;
+    }
+    .taskora-adsense-pending b{display:block;margin-top:8px;font-size:15px}
+    .taskora-adsense-pending small{display:block;margin-top:4px;color:var(--muted);line-height:1.6}
+    .dashboard-ad-anchor:empty{display:none}
 
   </style>
   <link rel="manifest" href="/manifest.json">
@@ -2724,6 +2755,13 @@
     window.TASKORA_GOOGLE_PUBLISHER_ID = window.TASKORA_ADSENSE_CLIENT_ID;
     window.TASKORA_AD_MANAGER_NETWORK_CODE = "3936169440487132";
     window.TASKORA_REWARDED_AD_UNIT_PATH = window.TASKORA_REWARDED_AD_UNIT_PATH || "/3936169440487132/taskora_tasks_rewarded";
+    window.TASKORA_ADSENSE_SLOTS = window.TASKORA_ADSENSE_SLOTS || {
+      home: "",
+      dashboardTop: "",
+      packagesBottom: "",
+      tasksBottom: "",
+      walletBottom: ""
+    };
     window.googletag = window.googletag || { cmd: [] };
   </script>
   <script async src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"></script>
@@ -4001,6 +4039,7 @@
           </div>
 
           <div id="dashStats" class="user-stats-grid"></div>
+          <div id="dashTopAd" class="dashboard-ad-anchor"></div>
           <div id="dashMsg" class="mt"></div>
           <div id="dashContent" class="user-panel"></div>
         </main>
@@ -4257,7 +4296,9 @@ function runDashPage(name, fn){
   try{
     const result = fn();
     if(result && typeof result.catch === "function"){
-      result.catch(e => renderDashError(e, name));
+      result.then(() => taskoraAfterRenderAds()).catch(e => renderDashError(e, name));
+    }else{
+      taskoraAfterRenderAds();
     }
   }catch(e){
     renderDashError(e, name);
@@ -4297,6 +4338,73 @@ function headers(json=true){
   if(latestToken){ h.Authorization = "Bearer " + latestToken; h["x-taskora-token"] = latestToken; }
   if(json) h["Content-Type"]="application/json";
   return h;
+}
+
+function taskoraLangText(ar, en){
+  return document.documentElement.lang === "en" ? en : ar;
+}
+
+function taskoraGetAdsenseSlot(key){
+  return (window.TASKORA_ADSENSE_SLOTS && window.TASKORA_ADSENSE_SLOTS[key]) || "";
+}
+
+function taskoraAdsenseUnit(key, label){
+  const slot = taskoraGetAdsenseSlot(key);
+  const safeKey = escapeHtml(key);
+  const safeLabel = escapeHtml(label || "AdSense");
+  if(!slot){
+    return `<div class="taskora-adsense-unit taskora-adsense-pending" id="taskora-ad-${safeKey}" data-ad-key="${safeKey}">
+      <div>
+        <span>AdSense</span>
+        <b>${taskoraLangText("الإعلانات قيد التجهيز", "Ads are being prepared")}</b>
+        <small>${safeLabel} - ${taskoraLangText("أضف data-ad-slot لاحقًا من حساب AdSense لتظهر الإعلانات هنا.", "Add the AdSense data-ad-slot later to show ads here.")}</small>
+      </div>
+    </div>`;
+  }
+  return `<div class="taskora-adsense-unit" id="taskora-ad-${safeKey}" data-ad-key="${safeKey}" aria-label="${safeLabel}">
+    <ins class="adsbygoogle"
+      data-taskora-ad="true"
+      style="display:block"
+      data-ad-client="${escapeHtml(window.TASKORA_ADSENSE_CLIENT_ID || "ca-pub-3936169440487132")}"
+      data-ad-slot="${escapeHtml(slot)}"
+      data-ad-format="auto"
+      data-full-width-responsive="true"></ins>
+  </div>`;
+}
+
+function taskoraMountStaticAds(){
+  const home = document.getElementById("homeView");
+  if(home && !document.getElementById("taskoraHomeAdWrap")){
+    const html = `<div class="container" id="taskoraHomeAdWrap">${taskoraAdsenseUnit("home", taskoraLangText("الصفحة الرئيسية", "Home page"))}</div>`;
+    const firstSection = home.querySelector("section");
+    if(firstSection) firstSection.insertAdjacentHTML("afterend", html);
+    else home.insertAdjacentHTML("beforeend", html);
+  }
+  const dashTopAd = document.getElementById("dashTopAd");
+  if(dashTopAd && !dashTopAd.dataset.taskoraReady){
+    dashTopAd.innerHTML = taskoraAdsenseUnit("dashboardTop", taskoraLangText("أعلى لوحة المستخدم", "User dashboard top"));
+    dashTopAd.dataset.taskoraReady = "1";
+  }
+}
+
+function taskoraInitAdsenseBlocks(){
+  document.querySelectorAll("ins.adsbygoogle[data-taskora-ad]:not([data-taskora-requested])").forEach(ad => {
+    if(!ad.getAttribute("data-ad-slot")) return;
+    ad.dataset.taskoraRequested = "1";
+    try{
+      window.adsbygoogle = window.adsbygoogle || [];
+      window.adsbygoogle.push({});
+    }catch(e){
+      console.warn("AdSense is not ready yet:", e);
+    }
+  });
+}
+
+function taskoraAfterRenderAds(){
+  setTimeout(() => {
+    taskoraMountStaticAds();
+    taskoraInitAdsenseBlocks();
+  }, 80);
 }
 function prettyKycStatus(status){ return ({verified:"موثق",pending:"قيد المراجعة",rejected:"مرفوض",not_verified:"غير موثق"})[status || "not_verified"] || status; }
 function setAvatarElements(avatarUrl, username){
@@ -4386,6 +4494,7 @@ function showView(v){
   // Tagline visibility helper
   updateBrandSubVisibility(v);
   renderNav();
+  taskoraAfterRenderAds();
 }
 function toggleUserSide(){ document.getElementById("userSide")?.classList.toggle("open"); document.getElementById("userOverlay")?.classList.toggle("open"); }
 function closeUserSide(){ document.getElementById("userSide")?.classList.remove("open"); document.getElementById("userOverlay")?.classList.remove("open"); }
@@ -4774,6 +4883,7 @@ async function renderPackages(){
           </div>
         </div>`).join("")}
     </div>
+    ${taskoraAdsenseUnit("packagesBottom", taskoraLangText("أسفل صفحة الباقات", "Packages page bottom"))}
     <div class="realistic-details">
       <div class="detail-chip"><b>التفعيل</b>يتم خصم قيمة الباقة من الرصيد المتاح ونقلها إلى رصيد الباقة.</div>
       <div class="detail-chip"><b>التقدم</b>تظهر 3 مهام يوميًا حتى اكتمال 12 مهمة.</div>
@@ -4850,7 +4960,8 @@ async function renderTasks(){
           </div>
           ${taskoraRewardedTaskButtons(t.number)}
         </div>`).join("")}
-    </div>`;
+    </div>
+    ${taskoraAdsenseUnit("tasksBottom", taskoraLangText("أسفل صفحة المهام", "Tasks page bottom"))}`;
 }
 
 async function buyPackage(id){
@@ -4885,7 +4996,8 @@ async function renderWallet(){
         <button class="btn primary full mt" onclick="withdraw()">طلب السحب</button>
         <div class="notice mt">لا يمكن السحب إلا بعد قبول التوثيق من الإدارة.</div>
       </div>
-    </div>`;
+    </div>
+    ${taskoraAdsenseUnit("walletBottom", taskoraLangText("صفحة المحفظة", "Wallet page"))}`;
   window.__wallets = w.wallets;
   showDepositWallet();
 }
@@ -5932,6 +6044,13 @@ window.TASKORA_ADSENSE_PUBLISHER_ID = window.TASKORA_ADSENSE_PUBLISHER_ID || "pu
 window.TASKORA_ADSENSE_CLIENT_ID = window.TASKORA_ADSENSE_CLIENT_ID || "ca-pub-3936169440487132";
 window.TASKORA_GOOGLE_PUBLISHER_ID = window.TASKORA_GOOGLE_PUBLISHER_ID || window.TASKORA_ADSENSE_CLIENT_ID;
 window.TASKORA_AD_MANAGER_NETWORK_CODE = window.TASKORA_AD_MANAGER_NETWORK_CODE || "3936169440487132";
+window.TASKORA_ADSENSE_SLOTS = window.TASKORA_ADSENSE_SLOTS || {
+  home: "",
+  dashboardTop: "",
+  packagesBottom: "",
+  tasksBottom: "",
+  walletBottom: ""
+};
 window.TASKORA_REWARDED_AD_UNIT_PATH = window.TASKORA_REWARDED_AD_UNIT_PATH || "/3936169440487132/taskora_tasks_rewarded";
 window.TASKORA_REWARDED_AD_MOCK_MODE = window.TASKORA_REWARDED_AD_MOCK_MODE ?? false;
 window.googletag = window.googletag || { cmd: [] };
@@ -5940,6 +6059,9 @@ const taskoraAdWatchedTasks = new Set();
 let taskoraRewardedSlot = null;
 let taskoraRewardedTaskNumber = null;
 let taskoraRewardGranted = false;
+let taskoraRewardedAdTimeout = null;
+const taskoraRewardedAdTimeoutMs = 12000;
+let taskoraRewardedAttemptId = 0;
 
 function taskoraSetAdStatus(taskNumber, message, state=""){
   const box = document.querySelector(`[data-ad-status="${taskNumber}"]`);
@@ -5949,19 +6071,24 @@ function taskoraSetAdStatus(taskNumber, message, state=""){
   box.textContent = message;
 }
 
-function taskoraUnlockTaskAfterAd(taskNumber){
+function taskoraUnlockTaskAfterAd(taskNumber, options={}){
+  const adUnavailable = !!options.adUnavailable;
   taskoraAdWatchedTasks.add(String(taskNumber));
   const completeBtn = document.querySelector(`[data-complete-task="${taskNumber}"]`);
   const watchBtn = document.querySelector(`[data-watch-task="${taskNumber}"]`);
   if(completeBtn){
     completeBtn.disabled = false;
-    completeBtn.textContent = document.documentElement.lang === "en" ? "Complete task" : "إكمال المهمة";
+    completeBtn.textContent = taskoraLangText("إكمال المهمة", "Complete task");
   }
   if(watchBtn){
     watchBtn.disabled = true;
-    watchBtn.textContent = document.documentElement.lang === "en" ? "Ad watched" : "تمت مشاهدة الإعلان";
+    watchBtn.textContent = adUnavailable ? taskoraLangText("الإعلانات قيد التجهيز", "Ads pending") : taskoraLangText("تمت مشاهدة الإعلان", "Ad watched");
   }
-  taskoraSetAdStatus(taskNumber, document.documentElement.lang === "en" ? "Ad completed. You can now complete the task." : "تمت مشاهدة الإعلان. يمكنك الآن إكمال المهمة.", "ready");
+  taskoraSetAdStatus(taskNumber, adUnavailable
+    ? taskoraLangText("الإعلانات قيد التجهيز. يمكنك إكمال المهمة الآن.", "Ads are being prepared. You can complete the task now.")
+    : taskoraLangText("تمت مشاهدة الإعلان. يمكنك الآن إكمال المهمة.", "Ad completed. You can now complete the task."),
+    "ready"
+  );
 }
 
 function taskoraShowMockRewardedAd(taskNumber){
@@ -5972,19 +6099,51 @@ function taskoraShowMockRewardedAd(taskNumber){
   setTimeout(()=>taskoraUnlockTaskAfterAd(taskNumber), 1800);
 }
 
+function taskoraClearRewardedTimeout(){
+  if(taskoraRewardedAdTimeout){
+    clearTimeout(taskoraRewardedAdTimeout);
+    taskoraRewardedAdTimeout = null;
+  }
+}
+
+function taskoraDestroyRewardedSlot(){
+  if(taskoraRewardedSlot && window.googletag && googletag.destroySlots){
+    try{ googletag.destroySlots([taskoraRewardedSlot]); }catch(e){ console.warn("Rewarded slot cleanup failed:", e); }
+  }
+  taskoraRewardedSlot = null;
+}
+
+function taskoraRewardedAdUnavailable(taskNumber, reason){
+  console.warn("Rewarded ad unavailable:", reason || "unknown");
+  taskoraRewardedAttemptId += 1;
+  taskoraClearRewardedTimeout();
+  taskoraDestroyRewardedSlot();
+  taskoraUnlockTaskAfterAd(taskNumber, { adUnavailable: true });
+}
 
 function taskoraFallbackToMockAd(taskNumber, reason){
   console.warn("Rewarded ad fallback:", reason || "unknown");
-  taskoraSetAdStatus(taskNumber, document.documentElement.lang === "en" ? "Google ad is not available. Running test mode..." : "إعلان Google غير متاح الآن. تشغيل الوضع التجريبي...");
-  setTimeout(()=>taskoraShowMockRewardedAd(taskNumber), 700);
+  if(window.TASKORA_REWARDED_AD_MOCK_MODE){
+    taskoraSetAdStatus(taskNumber, taskoraLangText("إعلان Google غير متاح الآن. تشغيل الوضع التجريبي...", "Google ad is not available. Running test mode..."));
+    setTimeout(()=>taskoraShowMockRewardedAd(taskNumber), 700);
+    return;
+  }
+  taskoraRewardedAdUnavailable(taskNumber, reason);
 }
 
 function taskoraWatchRewardedAd(taskNumber){
   taskoraRewardedTaskNumber = taskNumber;
   taskoraRewardGranted = false;
+  const rewardedAttemptId = ++taskoraRewardedAttemptId;
+  const rewardedPath = window.TASKORA_REWARDED_AD_UNIT_PATH || "";
 
-  if(window.TASKORA_REWARDED_AD_MOCK_MODE || window.TASKORA_REWARDED_AD_UNIT_PATH.includes("YOUR_NETWORK_CODE")){
+  if(window.TASKORA_REWARDED_AD_MOCK_MODE){
     taskoraShowMockRewardedAd(taskNumber);
+    return;
+  }
+
+  if(!rewardedPath || rewardedPath.includes("YOUR_NETWORK_CODE")){
+    taskoraFallbackToMockAd(taskNumber, "rewarded ad unit path is not configured");
     return;
   }
 
@@ -5996,11 +6155,19 @@ function taskoraWatchRewardedAd(taskNumber){
   const watchBtn = document.querySelector(`[data-watch-task="${taskNumber}"]`);
   if(watchBtn) watchBtn.disabled = true;
   taskoraSetAdStatus(taskNumber, document.documentElement.lang === "en" ? "Loading Google rewarded ad..." : "جاري تحميل إعلان Google...");
+  taskoraClearRewardedTimeout();
+  taskoraDestroyRewardedSlot();
+  taskoraRewardedAdTimeout = setTimeout(() => {
+    if(rewardedAttemptId === taskoraRewardedAttemptId && !taskoraRewardGranted){
+      taskoraRewardedAdUnavailable(taskNumber, "rewarded ad load timeout");
+    }
+  }, taskoraRewardedAdTimeoutMs);
 
   googletag.cmd.push(function(){
     try{
+      if(rewardedAttemptId !== taskoraRewardedAttemptId) return;
       taskoraRewardedSlot = googletag.defineOutOfPageSlot(
-        window.TASKORA_REWARDED_AD_UNIT_PATH,
+        rewardedPath,
         googletag.enums.OutOfPageFormat.REWARDED
       );
       if(!taskoraRewardedSlot){
@@ -6011,23 +6178,33 @@ function taskoraWatchRewardedAd(taskNumber){
       taskoraRewardedSlot.addService(googletag.pubads());
 
       googletag.pubads().addEventListener("rewardedSlotReady", function(event){
+        if(rewardedAttemptId !== taskoraRewardedAttemptId) return;
+        taskoraClearRewardedTimeout();
         taskoraSetAdStatus(taskNumber, document.documentElement.lang === "en" ? "Ad is ready..." : "الإعلان جاهز...");
         event.makeRewardedVisible();
       });
 
       googletag.pubads().addEventListener("rewardedSlotGranted", function(){
+        if(rewardedAttemptId !== taskoraRewardedAttemptId) return;
+        taskoraClearRewardedTimeout();
         taskoraRewardGranted = true;
         taskoraUnlockTaskAfterAd(taskoraRewardedTaskNumber);
       });
 
       googletag.pubads().addEventListener("rewardedSlotClosed", function(){
+        if(rewardedAttemptId !== taskoraRewardedAttemptId) return;
+        taskoraClearRewardedTimeout();
         if(!taskoraRewardGranted){
-          taskoraSetAdStatus(taskNumber, document.documentElement.lang === "en" ? "Watch the ad to unlock this task." : "شاهد الإعلان لفتح إكمال المهمة.", "error");
-          if(watchBtn) watchBtn.disabled = false;
+          taskoraRewardedAdUnavailable(taskNumber, "rewarded ad closed before reward");
+          return;
         }
-        if(taskoraRewardedSlot){
-          googletag.destroySlots([taskoraRewardedSlot]);
-          taskoraRewardedSlot = null;
+        taskoraDestroyRewardedSlot();
+      });
+
+      googletag.pubads().addEventListener("slotRenderEnded", function(event){
+        if(rewardedAttemptId !== taskoraRewardedAttemptId) return;
+        if(event && event.slot === taskoraRewardedSlot && event.isEmpty && !taskoraRewardGranted){
+          taskoraRewardedAdUnavailable(taskNumber, "rewarded ad slot returned empty");
         }
       });
 
