@@ -453,52 +453,13 @@ service unavailable
 - إضافة fallback لقائمة المهام اليومية.
 
 
-## v12-3-lang-theme-upgrade
+## Google Rewarded Ads Task Buttons
 
-تمت إضافة:
-- اللغة العربية والإنجليزية.
-- زر تبديل اللغة.
-- الوضع الفاتح والوضع الغامق.
-- حفظ اختيار المستخدم في المتصفح.
-- دعم RTL للعربية و LTR للإنجليزية.
-- كسر كاش المتصفح و Service Worker.
-- رابط فحص النسخة: `/api/version`.
+تم تعديل أزرار المهام فقط:
+- زر شاهد الإعلان.
+- زر إكمال المهمة يكون مقفلًا حتى انتهاء الإعلان.
+- Mock Mode للتجربة.
+- مكان جاهز لإضافة Google Ad Manager Rewarded Ad Unit Path.
 
-
-## v12-4-taskora-brand-board
-
-تم تحديث الهوية البصرية حسب الصورة المرسلة:
-- اعتماد شعار Taskora الجديد داخل `/public/assets`.
-- اعتماد الألوان:
-  - `#0B1220`
-  - `#6C4DFF`
-  - `#8B5CF6`
-  - `#F7B500`
-  - `#F1F3F5`
-- اعتماد الخطوط:
-  - Tajawal للعربية
-  - Inter للإنجليزية والأرقام
-- تحديث ألوان الأزرار والكروت والعناصر الأساسية.
-- تحديث Manifest و Service Worker.
-- إضافة `/api/version` للتحقق من النسخة.
-
-
-## v12-5-logo-image-update
-
-تم تحديث شعار الموقع حسب الصور المرسلة:
-- `public/assets/taskora-logo.png`
-- `public/assets/taskora-icon.png`
-- `public/assets/taskora-mark.png`
-- تحديث مراجع الشعار داخل الواجهة.
-- تحديث Manifest لاستخدام الأيقونة الجديدة.
-- إضافة كسر كاش للمتصفح و Service Worker.
-
-
-## v12-6-force-logo-update
-
-إصلاح إجباري لمشكلة عدم تغير الشعار:
-- استبدال كل أسماء ملفات الشعار القديمة.
-- تحديث `taskora-logo-showcase.png`, `taskora-wordmark.png`, `taskora-logo.png`.
-- تحديث كل أيقونات التطبيق.
-- إضافة CSS force لاستخدام الشعار الجديد.
-- كسر الكاش للصور والـ Service Worker.
+راجع:
+`GOOGLE_REWARDED_ADS_SETUP.txt`

@@ -1,0 +1,19 @@
+Google Rewarded Ads setup
+
+تم تعديل أزرار المهام فقط.
+
+خطوات الربط الحقيقي:
+1) افتح public/index.html
+2) ابحث عن:
+   window.TASKORA_REWARDED_AD_UNIT_PATH
+3) ضع Ad Unit Path الحقيقي من Google Ad Manager، مثال:
+   /123456789/taskora_tasks_rewarded
+4) بعد وضع المسار الحقيقي، غيّر:
+   window.TASKORA_REWARDED_AD_MOCK_MODE = true
+   إلى:
+   window.TASKORA_REWARDED_AD_MOCK_MODE = false
+
+مهم:
+- استخدم Google Ad Manager Rewarded Ads فقط.
+- لا تستخدم AdSense العادي للمكافآت.
+- الزر الآن يعمل تجريبيًا Mock Mode إلى أن تضع كود Google الحقيقي.

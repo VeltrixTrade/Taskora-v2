@@ -1,7 +1,7 @@
 {
   "name": "taskora-real-railway",
-  "version": "2.6.0",
-  "description": "Taskora force logo update replacing all old logo assets",
+  "version": "2.0.3",
+  "description": "Task buttons updated for Google Rewarded Ads",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {

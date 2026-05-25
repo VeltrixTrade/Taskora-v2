@@ -15,18 +15,7 @@ const { Pool } = require("pg");
 const QRCode = require("qrcode");
 
 const app = express();
-const APP_VERSION = "v12-6-force-logo-update";
-
-app.use((req,res,next)=>{
-  if(req.path==="/" || req.path==="/index.html" || req.path==="/sw.js" || req.path==="/manifest.json" || req.path.startsWith("/assets/")){
-    res.setHeader("Cache-Control","no-store, no-cache, must-revalidate, proxy-revalidate");
-    res.setHeader("Pragma","no-cache");
-    res.setHeader("Expires","0");
-  }
-  next();
-});
-app.get("/api/version", (_req,res)=>res.json({version:APP_VERSION,updated:true}));
-
+const APP_VERSION = "google-rewarded-task-buttons-v2";
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "dev-only-change-me";
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -322,6 +311,9 @@ async function migrate() {
     );
   `);
 
+  await query(`ALTER TABLE user_packages ADD COLUMN IF NOT EXISTS original_started_at TIMESTAMPTZ NOT NULL DEFAULT NOW();`);
+  await query(`ALTER TABLE user_packages ADD COLUMN IF NOT EXISTS cycle_count INTEGER NOT NULL DEFAULT 0;`);
+
   await query(`
     CREATE TABLE IF NOT EXISTS golden_tasks (
       id BIGSERIAL PRIMARY KEY,
@@ -502,7 +494,9 @@ const PACKAGES = [
   { id: "gold", name: "الذهبية", price: 50, tasks: 12 },
   { id: "platinum", name: "البلاتينيوم", price: 100, tasks: 12 },
   { id: "vip", name: "VIP", price: 500, tasks: 12 },
-  { id: "diamond", name: "الماسية", price: 1000, tasks: 12 }
+  { id: "diamond", name: "VIP النخبة", price: 1000, tasks: 12, monthly: true },
+  { id: "crown_vip", name: "VIP التاج", price: 2000, tasks: 12, monthly: true },
+  { id: "royal_vip", name: "VIP الملكية", price: 5000, tasks: 12, monthly: true }
 ];
 
 const DAILY_TASKS = [
@@ -517,7 +511,11 @@ const DAILY_TASKS = [
   "محاكاة مراجعة طلب تذكرة VIP",
   "محاكاة إغلاق طلب حجز فعالية",
   "محاكاة تأكيد تذكرة مهرجان",
-  "محاكاة مراجعة طلب تذكرة رياضية"
+  "محاكاة مراجعة طلب تذكرة رياضية",
+  "محاكاة تأكيد حجز تذكرة طيران",
+  "محاكاة معالجة طلب اشتراك برونزي",
+  "محاكاة بيع تذكرة عرض كوميدي",
+  "محاكاة مراجعة حجز قاعة مؤتمرات"
 ];
 
 app.get("/health", async (_req, res) => {
@@ -870,20 +868,41 @@ app.post("/api/tasks/daily/:number/complete", auth, async (req, res) => {
     const newCompleted = [...completed, taskNumber].sort((a,b) => a-b);
     const newCount = newCompleted.length;
 
+    const isMonthly = ["diamond", "crown_vip", "royal_vip"].includes(pkg.package_id);
+    const originalStart = pkg.original_started_at ? new Date(pkg.original_started_at).getTime() : new Date(pkg.started_at).getTime();
+    const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+    const monthlyExpired = isMonthly && (Date.now() - originalStart >= thirtyDays);
+
     if (newCount >= 12) {
       const userRes = await client.query("SELECT balance, package_balance, package_profit FROM users WHERE id=$1 FOR UPDATE", [req.user.id]);
       const user = userRes.rows[0];
       const updatedProfit = Number(user.package_profit) + reward;
-      const unlocked = Number(user.package_balance) + updatedProfit;
-      const before = Number(user.balance);
-      const after = before + unlocked;
 
-      await client.query("UPDATE users SET balance=$1, package_balance=0, package_profit=0 WHERE id=$2", [after, req.user.id]);
-      await client.query("UPDATE user_packages SET completed_tasks=$1, completed_count=12, status='completed', completed_at=NOW() WHERE id=$2", [JSON.stringify(newCompleted), pkg.id]);
-      await client.query(`
-        INSERT INTO transactions (user_id, type, amount, description, balance_before, balance_after)
-        VALUES ($1,'package_unlocked',$2,'تحويل رصيد الباقة والربح إلى الرصيد المتاح بعد إكمال 12 مهمة',$3,$4)
-      `, [req.user.id, unlocked, before, after]);
+      if (isMonthly && !monthlyExpired) {
+        const before = Number(user.balance);
+        const after = before + updatedProfit;
+        
+        await client.query("UPDATE users SET balance=$1, package_profit=0 WHERE id=$2", [after, req.user.id]);
+        await client.query("UPDATE user_packages SET completed_tasks='[]', completed_count=0, started_at=NOW(), cycle_count=cycle_count+1 WHERE id=$1", [pkg.id]);
+        await client.query(`
+          INSERT INTO transactions (user_id, type, amount, description, balance_before, balance_after)
+          VALUES ($1,'package_cycle_profit',$2,'تحويل ربح دورة الباقة الشهرية إلى الرصيد المتاح بعد إكمال 12 مهمة',$3,$4)
+        `, [req.user.id, updatedProfit, before, after]);
+        
+        await client.query("COMMIT");
+        return res.json({ success: true, completed_count: 0, cycle_completed: true });
+      } else {
+        const unlocked = Number(user.package_balance) + updatedProfit;
+        const before = Number(user.balance);
+        const after = before + unlocked;
+
+        await client.query("UPDATE users SET balance=$1, package_balance=0, package_profit=0 WHERE id=$2", [after, req.user.id]);
+        await client.query("UPDATE user_packages SET completed_tasks=$1, completed_count=12, status='completed', completed_at=NOW() WHERE id=$2", [JSON.stringify(newCompleted), pkg.id]);
+        await client.query(`
+          INSERT INTO transactions (user_id, type, amount, description, balance_before, balance_after)
+          VALUES ($1,'package_unlocked',$2,$3,$4,$5)
+        `, [req.user.id, unlocked, isMonthly ? 'انتهاء الباقة الشهرية بالكامل وتحرير رأس المال والأرباح' : 'تحويل رصيد الباقة والربح إلى الرصيد المتاح بعد إكمال 12 مهمة', before, after]);
+      }
     } else {
       await client.query("UPDATE users SET package_profit=package_profit+$1 WHERE id=$2", [reward, req.user.id]);
       await client.query("UPDATE user_packages SET completed_tasks=$1, completed_count=$2 WHERE id=$3", [JSON.stringify(newCompleted), newCount, pkg.id]);
@@ -1148,11 +1167,8 @@ app.get("/api/transactions", auth, async (req, res) => {
 app.get("/api/public/avatar/:filename", async (req, res) => {
   try {
     const filename = path.basename(req.params.filename);
-    const apiPath = `/api/public/avatar/${filename}`;
-    const exists = await query("SELECT id FROM users WHERE avatar_url=$1 LIMIT 1", [apiPath]);
-    if (exists.rowCount === 0) return res.status(404).json({ error: "Avatar not found." });
     const filePath = path.join(uploadDir, filename);
-    if (!filePath.startsWith(uploadDir) || !fs.existsSync(filePath)) {
+    if (!filePath.toLowerCase().startsWith(uploadDir.toLowerCase()) || !fs.existsSync(filePath)) {
       return res.status(404).json({ error: "Avatar file not found." });
     }
     return res.sendFile(filePath);
@@ -1166,7 +1182,7 @@ app.get("/api/files/:filename", auth, async (req, res) => {
   try {
     const filename = path.basename(req.params.filename);
     const filePath = path.join(uploadDir, filename);
-    if (!filePath.startsWith(uploadDir) || !fs.existsSync(filePath)) {
+    if (!filePath.toLowerCase().startsWith(uploadDir.toLowerCase()) || !fs.existsSync(filePath)) {
       return res.status(404).json({ error: "File not found." });
     }
 
