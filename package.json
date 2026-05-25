@@ -1,7 +1,7 @@
 {
   "name": "taskora-real-railway",
   "version": "2.0.3",
-  "description": "Task buttons updated for Google Rewarded Ads",
+  "description": "Taskora Google Rewarded Ads configured with publisher ID",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {

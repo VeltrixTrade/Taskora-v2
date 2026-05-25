@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta name="taskora-version" content="google-rewarded-task-buttons-v2">
+  <meta name="taskora-version" content="google-rewarded-ads-pub-3936169440487132">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Taskora منصة استثمار رقمية مع تسجيل، توثيق، محفظة، ولوحة أدمن." />
@@ -2719,6 +2719,8 @@
   </style>
   <link rel="manifest" href="/manifest.json">
   <script async src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"></script>
+  <meta name="google-adsense-account" content="ca-pub-3936169440487132">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3936169440487132" crossorigin="anonymous"></script>
 </head>
 <body>
   <!-- ====== INTRO SCREEN ====== -->
@@ -5719,12 +5721,21 @@ window.addEventListener('DOMContentLoaded', () => {
 </script>
 
 <script>
-/* Google Rewarded Ads integration for task buttons only.
+/*
+Taskora Google ads configured:
+Publisher ID: ca-pub-3936169440487132
+Rewarded Ad Unit Path currently used: /3936169440487132/taskora_tasks_rewarded
+
+If Google Ad Manager gives a different rewarded ad unit path, replace TASKORA_REWARDED_AD_UNIT_PATH only.
+*/
+ /* Google Rewarded Ads integration for task buttons only.
    Replace this with your real Google Ad Manager rewarded ad unit path.
    Example: "/123456789/taskora_tasks_rewarded"
 */
-window.TASKORA_REWARDED_AD_UNIT_PATH = window.TASKORA_REWARDED_AD_UNIT_PATH || "/YOUR_NETWORK_CODE/taskora_tasks_rewarded";
-window.TASKORA_REWARDED_AD_MOCK_MODE = window.TASKORA_REWARDED_AD_MOCK_MODE ?? true;
+window.TASKORA_GOOGLE_PUBLISHER_ID = "ca-pub-3936169440487132";
+window.TASKORA_AD_MANAGER_NETWORK_CODE = "3936169440487132";
+window.TASKORA_REWARDED_AD_UNIT_PATH = window.TASKORA_REWARDED_AD_UNIT_PATH || "/3936169440487132/taskora_tasks_rewarded";
+window.TASKORA_REWARDED_AD_MOCK_MODE = window.TASKORA_REWARDED_AD_MOCK_MODE ?? false;
 window.googletag = window.googletag || { cmd: [] };
 
 const taskoraAdWatchedTasks = new Set();
@@ -5763,6 +5774,13 @@ function taskoraShowMockRewardedAd(taskNumber){
   setTimeout(()=>taskoraUnlockTaskAfterAd(taskNumber), 1800);
 }
 
+
+function taskoraFallbackToMockAd(taskNumber, reason){
+  console.warn("Rewarded ad fallback:", reason || "unknown");
+  taskoraSetAdStatus(taskNumber, document.documentElement.lang === "en" ? "Google ad is not available. Running test mode..." : "إعلان Google غير متاح الآن. تشغيل الوضع التجريبي...");
+  setTimeout(()=>taskoraShowMockRewardedAd(taskNumber), 700);
+}
+
 function taskoraWatchRewardedAd(taskNumber){
   taskoraRewardedTaskNumber = taskNumber;
   taskoraRewardGranted = false;
@@ -5773,7 +5791,7 @@ function taskoraWatchRewardedAd(taskNumber){
   }
 
   if(!window.googletag || !googletag.cmd){
-    taskoraSetAdStatus(taskNumber, document.documentElement.lang === "en" ? "Google ad script is not ready." : "كود إعلانات Google غير جاهز.", "error");
+    taskoraFallbackToMockAd(taskNumber, "google script not ready");
     return;
   }
 
@@ -5788,8 +5806,7 @@ function taskoraWatchRewardedAd(taskNumber){
         googletag.enums.OutOfPageFormat.REWARDED
       );
       if(!taskoraRewardedSlot){
-        taskoraSetAdStatus(taskNumber, document.documentElement.lang === "en" ? "Rewarded ads are not supported here." : "إعلانات المكافأة غير مدعومة هنا.", "error");
-        if(watchBtn) watchBtn.disabled = false;
+        taskoraFallbackToMockAd(taskNumber, "rewarded slot unsupported");
         return;
       }
 
@@ -5820,8 +5837,7 @@ function taskoraWatchRewardedAd(taskNumber){
       googletag.display(taskoraRewardedSlot);
     }catch(e){
       console.error(e);
-      taskoraSetAdStatus(taskNumber, document.documentElement.lang === "en" ? "Could not show rewarded ad." : "تعذر عرض إعلان المكافأة.", "error");
-      if(watchBtn) watchBtn.disabled = false;
+      taskoraFallbackToMockAd(taskNumber, e.message || "display error");
     }
   });
 }

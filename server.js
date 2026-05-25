@@ -15,7 +15,7 @@ const { Pool } = require("pg");
 const QRCode = require("qrcode");
 
 const app = express();
-const APP_VERSION = "google-rewarded-task-buttons-v2";
+const APP_VERSION = "google-rewarded-ads-pub-3936169440487132";
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "dev-only-change-me";
 const DATABASE_URL = process.env.DATABASE_URL;

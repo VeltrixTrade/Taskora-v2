@@ -463,3 +463,14 @@ service unavailable
 
 راجع:
 `GOOGLE_REWARDED_ADS_SETUP.txt`
+
+
+## Google Ads configured
+
+- Publisher ID: `ca-pub-3936169440487132`
+- Rewarded Ad Unit Path الحالي: `/3936169440487132/taskora_tasks_rewarded`
+- Mock Mode: `false`
+- يوجد fallback تجريبي إذا لم يتوفر إعلان Google.
+
+راجع:
+`GOOGLE_REWARDED_ADS_SETUP.txt`
