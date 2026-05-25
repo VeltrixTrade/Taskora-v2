@@ -535,3 +535,8 @@ service unavailable
 ## no-native-json-token-error-v6
 
 منع خطأ Unexpected token '<' من الواجهة، مع إبقاء تشخيص URL.
+
+
+## remove-native-res-json-v7
+
+إزالة استخدام res.json() المباشر من الواجهة لمنع خطأ Unexpected token '<'.

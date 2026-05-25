@@ -1,7 +1,7 @@
 {
   "name": "taskora-real-railway",
   "version": "2.0.3",
-  "description": "Taskora no native JSON token error v6",
+  "description": "Taskora remove native res.json JSON parse error v7",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
