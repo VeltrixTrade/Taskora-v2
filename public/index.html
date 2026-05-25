@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta name="taskora-version" content="google-rewarded-ads-pub-3936169440487132">
+  <meta name="taskora-version" content="google-rewarded-ads-json-parse-fix">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Taskora منصة استثمار رقمية مع تسجيل، توثيق، محفظة، ولوحة أدمن." />
@@ -4167,7 +4167,7 @@ async function uploadAvatar(input){
     const fd = new FormData();
     fd.append("avatar", file);
     const res = await fetch(API + "/api/profile/avatar", { method:"POST", headers: headers(false), body: fd });
-    const data = await res.json().catch(()=>({}));
+    const data = await taskoraReadJsonResponse(res, "/api/profile/avatar").catch(()=>({}));
     if(!res.ok) throw new Error(data.error || "فشل رفع الصورة");
     me.avatar_url = data.avatar_url;
     setAvatarElements(me.avatar_url, me.username);
@@ -4267,14 +4267,47 @@ function setAuthMode(m){
   document.getElementById("loginFields").classList.toggle("hidden",m!=="login");
   document.getElementById("authTitle").innerText = m==="login" ? "تسجيل الدخول" : "إنشاء حساب حقيقي";
 }
+
+async function taskoraReadJsonResponse(res, path=""){
+  const contentType = (res.headers.get("content-type") || "").toLowerCase();
+  const text = await res.text();
+  if(!text) return {};
+  if(!contentType.includes("application/json")){
+    const preview = text.slice(0, 80).replace(/\s+/g, " ");
+    const err = new Error(
+      path && path.startsWith("/api/")
+        ? `مسار API يرجع HTML وليس JSON: ${path}`
+        : `الرد ليس JSON: ${preview}`
+    );
+    err.status = res.status;
+    err.rawPreview = preview;
+    throw err;
+  }
+  try{
+    return JSON.parse(text);
+  }catch(e){
+    const err = new Error("رد JSON غير صالح من السيرفر.");
+    err.status = res.status;
+    err.rawPreview = text.slice(0, 120);
+    throw err;
+  }
+}
+
 async function api(path, opts={}){
-
-
   setLoading(true);
   try{
     opts.headers = opts.headers || headers();
     const res = await fetch(API+path, opts);
-    const data = await res.json().catch(()=>({}));
+    let data = {};
+    try{
+      data = await taskoraReadJsonResponse(res, path);
+    }catch(parseErr){
+      if(res.ok) throw parseErr;
+      const err = new Error(parseErr.message || "حدث خطأ في قراءة رد السيرفر");
+      err.status = res.status;
+      err.path = path;
+      throw err;
+    }
     if(!res.ok){
       const err = new Error(data.error || "حدث خطأ");
       err.status = res.status;

@@ -18,3 +18,11 @@ window.TASKORA_REWARDED_AD_UNIT_PATH
 
 Mock Mode مضبوط حاليًا على false.
 لكن تمت إضافة fallback تجريبي إذا لم يكن إعلان Google متاحًا حتى لا تتعطل المهام.
+
+
+JSON parse fix:
+تم إصلاح خطأ:
+Unexpected token '<', "<!DOCTYPE html>" is not valid JSON
+
+السبب كان أن الواجهة حاولت قراءة رد HTML كأنه JSON.
+الآن أي مسار API غير صحيح سيظهر برسالة واضحة بدل تعطل الصفحة.

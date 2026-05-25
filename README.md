@@ -474,3 +474,15 @@ service unavailable
 
 راجع:
 `GOOGLE_REWARDED_ADS_SETUP.txt`
+
+
+## google-rewarded-ads-json-parse-fix
+
+تم إصلاح خطأ:
+`Unexpected token '<', "<!DOCTYPE html>" is not valid JSON`
+
+الإصلاح:
+- إضافة قارئ JSON آمن في الواجهة.
+- منع قراءة HTML كـ JSON.
+- توضيح الخطأ إذا كان مسار API يرجع صفحة HTML.
+- ضمان أن مسارات `/api` لا ترجع HTML.

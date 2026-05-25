@@ -15,7 +15,12 @@ const { Pool } = require("pg");
 const QRCode = require("qrcode");
 
 const app = express();
-const APP_VERSION = "google-rewarded-ads-pub-3936169440487132";
+const APP_VERSION = "google-rewarded-ads-json-parse-fix";
+
+app.get("/api/version", (_req, res) => {
+  res.json({ version: APP_VERSION, updated: true, fix: "json-parse" });
+});
+
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "dev-only-change-me";
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -1706,6 +1711,15 @@ function sendFrontend(req, res) {
 
 app.get("/", sendFrontend);
 app.get("/index.html", sendFrontend);
+
+
+// API routes must never return frontend HTML.
+app.use((req, res, next) => {
+  if (req.path.startsWith("/api/")) {
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+  }
+  next();
+});
 
 // SPA fallback: serve frontend for all non-API routes.
 app.get("*", (req, res, next) => {

@@ -1,7 +1,7 @@
 {
   "name": "taskora-real-railway",
   "version": "2.0.3",
-  "description": "Taskora Google Rewarded Ads configured with publisher ID",
+  "description": "Taskora Google Rewarded Ads configured with JSON parse fix",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
