@@ -15,7 +15,18 @@ const { Pool } = require("pg");
 const QRCode = require("qrcode");
 
 const app = express();
-const APP_VERSION = "hard-json-html-api-fix-v2";
+const APP_VERSION = "final-json-html-guard-v3";
+
+// Early API health/version routes for Railway diagnostics.
+app.get("/api/health", (_req, res) => {
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.json({ ok: true, api: true, version: APP_VERSION });
+});
+app.get("/api/version", (_req, res) => {
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.json({ version: APP_VERSION, updated: true, api: true });
+});
+
 
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true, version: APP_VERSION, api: true });
@@ -1711,6 +1722,15 @@ app.use("/api", (req, res, next) => {
   next();
 });
 
+
+// Do not let static frontend answer API requests.
+app.use((req, res, next) => {
+  if (req.path === "/api" || req.path.startsWith("/api/")) {
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+  }
+  next();
+});
+
 app.use(express.static(publicDir, {
   index: false,
   fallthrough: true,
@@ -1739,6 +1759,18 @@ app.use((req, res, next) => {
 
 // Final API JSON 404. Must appear before any frontend fallback.
 app.use("/api", (req, res) => {
+  res.status(404).json({
+    error: "API route not found",
+    path: req.originalUrl,
+    version: APP_VERSION
+  });
+});
+
+
+// Strong API JSON 404 before SPA fallback.
+app.use("/api", (req, res, next) => {
+  if (res.headersSent) return next();
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.status(404).json({
     error: "API route not found",
     path: req.originalUrl,

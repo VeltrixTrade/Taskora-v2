@@ -1,0 +1,24 @@
+Final JSON/API Fix
+
+الخطأ:
+Unexpected token '<', "<!DOCTYPE html>" is not valid JSON
+
+ليس من رقم الناشر.
+
+إذا استمر بعد هذه النسخة، افتح على الدومين:
+  /api/health
+
+إذا ظهر HTML أو صفحة الموقع بدل JSON:
+- Railway لا يشغل server.js
+- أو رفعت مجلدًا خطأ
+- أو عندك Static deployment بدل Node service
+
+هذه النسخة تجبر Railway على:
+  node server.js
+
+وتضيف:
+  railway.json
+  Procfile
+  nixpacks.toml
+
+وتضيف حماية frontend تمنع انهيار JSON.

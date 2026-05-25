@@ -501,3 +501,17 @@ service unavailable
 - `/api/version`
 
 إذا لم يرجعا JSON، فالمشكلة في نشر السيرفر أو إعداد Railway.
+
+
+## final-json-html-guard-v3
+
+إصلاح نهائي لمحاولة قراءة HTML كـ JSON.
+أضفنا:
+- حارس قوي على fetch و Response.json.
+- `/api/health`
+- `/api/version`
+- railway.json لتشغيل `node server.js`
+- Procfile
+- nixpacks.toml
+
+بعد الرفع اختبر `/api/health`.
