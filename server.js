@@ -1750,6 +1750,13 @@ app.use((req, res, next) => {
   next();
 });
 
+app.get("/sw.js", (_req, res) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  res.type("application/javascript").sendFile(path.join(publicDir, "sw.js"));
+});
+
 app.use(express.static(publicDir, {
   index: false,
   fallthrough: true,
@@ -1760,6 +1767,9 @@ function sendFrontend(req, res) {
   if (!fs.existsSync(indexFile)) {
     return res.status(500).send("Frontend file missing: public/index.html");
   }
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
   res.sendFile(indexFile);
 }
 
