@@ -1,6 +1,5 @@
-const CACHE_NAME = "taskora-v9-cache";
+const CACHE_NAME = "taskora-v10-cache";
 const ASSETS = [
-  "/",
   "/manifest.json",
   "/assets/taskora-icon.png",
   "/assets/taskora-app-icon-192.png",
@@ -21,12 +20,17 @@ self.addEventListener("fetch", event => {
   const req = event.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
-  if (url.pathname.startsWith("/api/")) return;
+  if (url.origin !== self.location.origin) return;
+  if (url.pathname === "/api" || url.pathname.startsWith("/api/")) return;
+  if (req.mode === "navigate" || req.destination === "document") return;
   event.respondWith(
     fetch(req).then(res => {
+      if (!res || !res.ok || res.type !== "basic") return res;
+      const contentType = (res.headers.get("content-type") || "").toLowerCase();
+      if (contentType.includes("text/html")) return res;
       const copy = res.clone();
       caches.open(CACHE_NAME).then(cache => cache.put(req, copy)).catch(() => null);
       return res;
-    }).catch(() => caches.match(req).then(cached => cached || caches.match("/")))
+    }).catch(() => caches.match(req))
   );
 });
