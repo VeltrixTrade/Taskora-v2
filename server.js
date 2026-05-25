@@ -15,7 +15,7 @@ const { Pool } = require("pg");
 const QRCode = require("qrcode");
 
 const app = express();
-const APP_VERSION = "api-diagnostic-exact-url-v5";
+const APP_VERSION = "no-native-json-token-error-v6";
 
 // ABSOLUTE_API_JSON_FIX_ROUTES
 

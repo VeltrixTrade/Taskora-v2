@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta name="taskora-version" content="hard-json-html-api-fix-v2">
+  <meta name="taskora-version" content="no-native-json-token-error-v6">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Taskora منصة استثمار رقمية مع تسجيل، توثيق، محفظة، ولوحة أدمن." />
@@ -2722,53 +2722,106 @@
   <meta name="google-adsense-account" content="ca-pub-3936169440487132">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3936169440487132" crossorigin="anonymous"></script>
 
+
+
+
 <script>
-/* Hard guard: prevent Unexpected token '<' when an API returns HTML instead of JSON. */
+/* api-diagnostic-exact-url-v5: shows the exact API URL returning HTML. */
 (function(){
-  if(window.__taskoraHardJsonGuardInstalled) return;
-  window.__taskoraHardJsonGuardInstalled = true;
+  if(window.__TASKORA_API_DIAGNOSTIC_V5__) return;
+  window.__TASKORA_API_DIAGNOSTIC_V5__ = true;
+  window.__TASKORA_LAST_API_ERRORS__ = [];
+
+  function looksHtml(text){
+    return /^\s*<!doctype\s+html/i.test(text || "") || /^\s*<html/i.test(text || "");
+  }
+
+  function showApiDiagnostic(payload){
+    window.__TASKORA_LAST_API_ERRORS__.push(payload);
+    console.error("TASKORA API DIAGNOSTIC:", payload);
+
+    let box = document.getElementById("taskoraApiDiagnosticBox");
+    if(!box){
+      box = document.createElement("div");
+      box.id = "taskoraApiDiagnosticBox";
+      box.style.cssText = "position:fixed;z-index:999999;left:16px;right:16px;bottom:16px;max-width:760px;margin:auto;background:#120b16;color:#fff;border:1px solid #ef4444;border-radius:18px;padding:14px 16px;font-family:Arial,sans-serif;box-shadow:0 24px 80px rgba(0,0,0,.45);direction:ltr;text-align:left;line-height:1.55";
+      document.body.appendChild(box);
+    }
+
+    box.innerHTML = `
+      <b style="color:#fca5a5">API returned HTML instead of JSON</b>
+      <div style="margin-top:6px">URL: <code style="color:#fde68a">${payload.url || ""}</code></div>
+      <div>Status: <code>${payload.status}</code></div>
+      <div style="margin-top:6px;color:#cbd5e1">Preview:</div>
+      <pre style="white-space:pre-wrap;max-height:110px;overflow:auto;background:#0b1220;padding:8px;border-radius:10px;color:#e5e7eb">${payload.preview || ""}</pre>
+      <button onclick="document.getElementById('taskoraApiDiagnosticBox').remove()" style="margin-top:8px;border:0;border-radius:10px;padding:8px 12px;background:#ef4444;color:#fff;font-weight:700">Close</button>
+    `;
+  }
+
+  function jsonResponse(payload, status){
+    return new Response(JSON.stringify(payload), {
+      status: status || 502,
+      headers: { "content-type": "application/json; charset=utf-8", "x-taskora-json-guard": "v5" }
+    });
+  }
 
   const originalFetch = window.fetch.bind(window);
   window.fetch = async function(input, init){
-    const response = await originalFetch(input, init);
     const url = typeof input === "string" ? input : (input && input.url ? input.url : "");
-    const isApi = url.includes("/api/") || url.startsWith("/api/");
+    const res = await originalFetch(input, init);
 
-    if(!isApi) return response;
+    const isApi = url.startsWith("/api") || url.includes("/api/");
+    if(!isApi) return res;
 
-    const contentType = (response.headers.get("content-type") || "").toLowerCase();
-    if(contentType.includes("text/html")){
-      const htmlText = await response.clone().text().catch(()=>"");
-      const cleanBody = {
-        error: "API returned HTML instead of JSON",
-        message_ar: "مسار API يرجع صفحة HTML بدل JSON. هذا يعني أن السيرفر الخلفي غير متصل أو أن المسار غير موجود.",
-        path: url,
-        status: response.status,
-        preview: htmlText.slice(0, 120).replace(/\s+/g, " ")
+    const text = await res.clone().text().catch(() => "");
+    const ct = (res.headers.get("content-type") || "").toLowerCase();
+
+    if(looksHtml(text) || ct.includes("text/html")){
+      const payload = {
+        error: "API_HTML_RESPONSE",
+        message_ar: "هذا المسار يرجع HTML بدل JSON.",
+        url,
+        status: res.status,
+        content_type: ct,
+        preview: (text || "").slice(0, 300).replace(/\s+/g, " ")
       };
-      return new Response(JSON.stringify(cleanBody), {
-        status: response.status === 200 ? 502 : response.status,
-        statusText: "API returned HTML",
-        headers: { "Content-Type": "application/json; charset=utf-8" }
-      });
+      showApiDiagnostic(payload);
+      return jsonResponse(payload, res.status >= 400 ? res.status : 502);
     }
 
-    return response;
+    return res;
   };
 
   const originalJson = Response.prototype.json;
   Response.prototype.json = async function(){
-    const contentType = (this.headers.get("content-type") || "").toLowerCase();
-    if(contentType.includes("text/html")){
-      const text = await this.clone().text().catch(()=>"");
-      return {
-        error: "API returned HTML instead of JSON",
-        message_ar: "الرد من السيرفر HTML وليس JSON.",
+    const text = await this.clone().text().catch(() => "");
+    if(!text) return {};
+
+    if(looksHtml(text)){
+      const payload = {
+        error: "HTML_INSTEAD_OF_JSON",
         status: this.status,
-        preview: text.slice(0, 120).replace(/\s+/g, " ")
+        preview: text.slice(0,300).replace(/\s+/g, " ")
+      };
+      showApiDiagnostic(payload);
+      return payload;
+    }
+
+    try {
+      return JSON.parse(text);
+    } catch(e){
+      return {
+        error: "INVALID_JSON_RESPONSE",
+        message_ar: "رد السيرفر ليس JSON صالح.",
+        status: this.status,
+        preview: text.slice(0,300).replace(/\\s+/g, " ")
       };
     }
-    return originalJson.call(this);
+  };
+
+  window.taskoraApiDiagnostics = function(){
+    console.table(window.__TASKORA_LAST_API_ERRORS__);
+    return window.__TASKORA_LAST_API_ERRORS__;
   };
 })();
 </script>
@@ -4322,26 +4375,31 @@ function setAuthMode(m){
 
 async function taskoraReadJsonResponse(res, path=""){
   const contentType = (res.headers.get("content-type") || "").toLowerCase();
-  const text = await res.text();
+  const text = await res.text().catch(()=>"");
   if(!text) return {};
-  if(!contentType.includes("application/json")){
-    const preview = text.slice(0, 80).replace(/\s+/g, " ");
-    const err = new Error(
-      path && path.startsWith("/api/")
-        ? `مسار API يرجع HTML وليس JSON: ${path}`
-        : `الرد ليس JSON: ${preview}`
-    );
-    err.status = res.status;
-    err.rawPreview = preview;
-    throw err;
+
+  const isHtml = /^\\s*<!doctype\\s+html/i.test(text) || /^\\s*<html/i.test(text) || contentType.includes("text/html");
+  if(isHtml){
+    return {
+      error: "API_HTML_RESPONSE",
+      message_ar: "مسار API يرجع HTML بدل JSON.",
+      path,
+      status: res.status,
+      content_type: contentType,
+      preview: text.slice(0,300).replace(/\\s+/g," ")
+    };
   }
+
   try{
     return JSON.parse(text);
   }catch(e){
-    const err = new Error("رد JSON غير صالح من السيرفر.");
-    err.status = res.status;
-    err.rawPreview = text.slice(0, 120);
-    throw err;
+    return {
+      error: "INVALID_JSON_RESPONSE",
+      message_ar: "رد السيرفر ليس JSON صالح.",
+      path,
+      status: res.status,
+      preview: text.slice(0,300).replace(/\\s+/g," ")
+    };
   }
 }
 
@@ -4350,18 +4408,19 @@ async function api(path, opts={}){
   try{
     opts.headers = opts.headers || headers();
     const res = await fetch(API+path, opts);
-    let data = {};
-    try{
-      data = await taskoraReadJsonResponse(res, path);
-    }catch(parseErr){
-      if(res.ok) throw parseErr;
-      const err = new Error(parseErr.message || "حدث خطأ في قراءة رد السيرفر");
-      err.status = res.status;
+    const data = await res.json().catch(()=>({ error:"INVALID_RESPONSE", message_ar:"تعذر قراءة رد السيرفر." }));
+
+    if(data && (data.error === "API_HTML_RESPONSE" || data.error === "HTML_INSTEAD_OF_JSON" || data.error === "INVALID_JSON_RESPONSE")){
+      const err = new Error(data.message_ar || "API returned HTML instead of JSON");
+      err.status = data.status || res.status;
       err.path = path;
+      err.preview = data.preview;
+      console.error("Taskora API HTML response:", data);
       throw err;
     }
+
     if(!res.ok){
-      const err = new Error(data.error || "حدث خطأ");
+      const err = new Error(data.message_ar || data.error || "حدث خطأ");
       err.status = res.status;
       err.path = path;
       if(res.status === 401 || data.error === "Unauthorized" || data.error === "Invalid token."){
@@ -5977,20 +6036,38 @@ window.addEventListener("load", () => setTimeout(taskoraConvertExistingTaskButto
 </script>
 
 
+
+
 <script>
-async function taskoraCheckApiConnection(){
+window.taskoraApiSelfTest = async function(){
+  const url = "/api/health?check=absolute-api-json-fix-v4";
   try{
-    const res = await fetch("/api/version", { cache: "no-store" });
+    const res = await fetch(url, { cache:"no-store" });
     const data = await res.json();
-    console.log("Taskora API check:", data);
+    console.log("Taskora API self-test:", data);
     return data;
   }catch(e){
-    console.error("Taskora API connection failed:", e);
-    return null;
+    console.error("Taskora API self-test failed:", e);
+    return { error:String(e) };
   }
-}
-window.addEventListener("load", () => setTimeout(taskoraCheckApiConnection, 800));
+};
+window.addEventListener("load", () => setTimeout(window.taskoraApiSelfTest, 500));
 </script>
 
+<script>
+window.addEventListener("error", function(event){
+  if(event && event.message && event.message.includes("Unexpected token '<'")){
+    console.error("Taskora caught native JSON parse error. Run taskoraApiDiagnostics() in Console for the failing URL.", event);
+    event.preventDefault();
+  }
+});
+window.addEventListener("unhandledrejection", function(event){
+  const msg = String(event.reason && (event.reason.message || event.reason) || "");
+  if(msg.includes("Unexpected token '<'")){
+    console.error("Taskora caught unhandled JSON parse rejection:", event.reason);
+    event.preventDefault();
+  }
+});
+</script>
 </body>
 </html>

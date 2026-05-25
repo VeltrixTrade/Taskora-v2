@@ -530,3 +530,8 @@ service unavailable
 
 بما أن `/api/health` يعمل، هذه نسخة تشخيص تعرض المسار الحقيقي الذي يرجع HTML بدل JSON.
 عند ظهور المشكلة، سيظهر مربع أحمر فيه URL المطلوب إصلاحه.
+
+
+## no-native-json-token-error-v6
+
+منع خطأ Unexpected token '<' من الواجهة، مع إبقاء تشخيص URL.
