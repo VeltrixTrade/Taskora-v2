@@ -15,7 +15,26 @@ const { Pool } = require("pg");
 const QRCode = require("qrcode");
 
 const app = express();
-const APP_VERSION = "final-json-html-guard-v3";
+const APP_VERSION = "api-diagnostic-exact-url-v5";
+
+// ABSOLUTE_API_JSON_FIX_ROUTES
+
+app.get("/api/diagnostic", (_req, res) => {
+  res.json({
+    ok: true,
+    version: APP_VERSION,
+    message: "API diagnostic route is working",
+    next_step: "If the browser shows an API_HTML_RESPONSE box, copy the URL from it."
+  });
+});
+
+app.get("/api/health", (_req, res) => {
+  res.type("application/json").json({ ok: true, api: true, version: APP_VERSION });
+});
+app.get("/api/version", (_req, res) => {
+  res.type("application/json").json({ version: APP_VERSION, updated: true, api: true });
+});
+
 
 // Early API health/version routes for Railway diagnostics.
 app.get("/api/health", (_req, res) => {
@@ -1778,9 +1797,26 @@ app.use("/api", (req, res, next) => {
   });
 });
 
+
+// ABSOLUTE_API_JSON_FINAL_404
+app.use("/api", (req, res) => {
+  res.type("application/json").status(404).json({
+    error: "API_ROUTE_NOT_FOUND",
+    path: req.originalUrl,
+    version: APP_VERSION
+  });
+});
+
 // SPA fallback: serve frontend for all non-API routes.
 app.get("*", (req, res, next) => {
-  if (req.path === "/health" || req.path === "/__debug" || req.path === "/api" || req.path.startsWith("/api/")) {
+  if (req.path === "/api" || req.path.startsWith("/api/")) {
+    return res.type("application/json").status(404).json({
+      error: "API_ROUTE_NOT_FOUND",
+      path: req.originalUrl,
+      version: APP_VERSION
+    });
+  }
+  if (req.path === "/health" || req.path === "/__debug") {
     return next();
   }
   return sendFrontend(req, res);

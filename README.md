@@ -515,3 +515,18 @@ service unavailable
 - nixpacks.toml
 
 بعد الرفع اختبر `/api/health`.
+
+
+## absolute-api-json-fix-v4
+
+إصلاح مطلق لمشكلة HTML بدل JSON.
+بعد الرفع يجب اختبار:
+`/api/health`
+
+إذا لم يرجع JSON فالمشكلة إعداد Railway وليس رقم الناشر.
+
+
+## api-diagnostic-exact-url-v5
+
+بما أن `/api/health` يعمل، هذه نسخة تشخيص تعرض المسار الحقيقي الذي يرجع HTML بدل JSON.
+عند ظهور المشكلة، سيظهر مربع أحمر فيه URL المطلوب إصلاحه.

@@ -1,0 +1,22 @@
+إذا استمر الخطأ بعد هذه النسخة:
+
+افتح هذه الروابط على دومين Railway:
+
+1) /api/health
+2) /api/version
+
+النتيجة الصحيحة يجب أن تكون JSON.
+
+إذا ظهرت صفحة الموقع أو <!DOCTYPE html>:
+المشكلة ليست من رقم الناشر ولا من Google Ads.
+المشكلة أن Railway لا يشغل server.js أو أنك رفعت مجلدًا داخليًا خطأ.
+
+الحل في Railway:
+- Root Directory يجب أن يكون المجلد الذي يحتوي package.json و server.js.
+- Start Command يجب أن يكون:
+  node server.js
+- Healthcheck Path:
+  /api/health
+
+نسخة الملف:
+absolute-api-json-fix-v4
