@@ -2718,7 +2718,17 @@
 
   </style>
   <link rel="manifest" href="/manifest.json">
+  <script>
+    window.TASKORA_ADSENSE_PUBLISHER_ID = "pub-3936169440487132";
+    window.TASKORA_ADSENSE_CLIENT_ID = "ca-pub-3936169440487132";
+    window.TASKORA_GOOGLE_PUBLISHER_ID = window.TASKORA_ADSENSE_CLIENT_ID;
+    window.TASKORA_AD_MANAGER_NETWORK_CODE = "3936169440487132";
+    window.TASKORA_REWARDED_AD_UNIT_PATH = window.TASKORA_REWARDED_AD_UNIT_PATH || "/3936169440487132/taskora_tasks_rewarded";
+    window.googletag = window.googletag || { cmd: [] };
+  </script>
   <script async src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"></script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3936169440487132"
+     crossorigin="anonymous"></script>
   <meta name="google-adsense-account" content="ca-pub-3936169440487132">
 
 
@@ -5906,10 +5916,6 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-<!-- Google AdSense script for the task watch-ad area -->
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3936169440487132"
-     crossorigin="anonymous"></script>
-
 <script>
 /*
 Taskora Google ads configured:
@@ -5922,8 +5928,10 @@ If Google Ad Manager gives a different rewarded ad unit path, replace TASKORA_RE
    Replace this with your real Google Ad Manager rewarded ad unit path.
    Example: "/123456789/taskora_tasks_rewarded"
 */
-window.TASKORA_GOOGLE_PUBLISHER_ID = "ca-pub-3936169440487132";
-window.TASKORA_AD_MANAGER_NETWORK_CODE = "3936169440487132";
+window.TASKORA_ADSENSE_PUBLISHER_ID = window.TASKORA_ADSENSE_PUBLISHER_ID || "pub-3936169440487132";
+window.TASKORA_ADSENSE_CLIENT_ID = window.TASKORA_ADSENSE_CLIENT_ID || "ca-pub-3936169440487132";
+window.TASKORA_GOOGLE_PUBLISHER_ID = window.TASKORA_GOOGLE_PUBLISHER_ID || window.TASKORA_ADSENSE_CLIENT_ID;
+window.TASKORA_AD_MANAGER_NETWORK_CODE = window.TASKORA_AD_MANAGER_NETWORK_CODE || "3936169440487132";
 window.TASKORA_REWARDED_AD_UNIT_PATH = window.TASKORA_REWARDED_AD_UNIT_PATH || "/3936169440487132/taskora_tasks_rewarded";
 window.TASKORA_REWARDED_AD_MOCK_MODE = window.TASKORA_REWARDED_AD_MOCK_MODE ?? false;
 window.googletag = window.googletag || { cmd: [] };
