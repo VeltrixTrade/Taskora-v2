@@ -13,9 +13,54 @@ const rateLimit = require("express-rate-limit");
 const compression = require("compression");
 const { Pool } = require("pg");
 const QRCode = require("qrcode");
+const emailService = require("./emailService");
 
 const app = express();
-const APP_VERSION = "v10.9-hard-route-fix";
+const APP_VERSION = "remove-native-res-json-v7";
+
+
+// ABSOLUTE_API_JSON_FIX_ROUTES
+
+app.get("/api/diagnostic", (_req, res) => {
+  res.json({
+    ok: true,
+    version: APP_VERSION,
+    message: "API diagnostic route is working",
+    next_step: "If the browser shows an API_HTML_RESPONSE box, copy the URL from it."
+  });
+});
+
+app.get("/api/health", (_req, res) => {
+  res.type("application/json").json({ ok: true, api: true, version: APP_VERSION });
+});
+app.get("/api/version", (_req, res) => {
+  res.type("application/json").json({ version: APP_VERSION, updated: true, api: true });
+});
+
+
+// Early API health/version routes for Railway diagnostics.
+app.get("/api/health", (_req, res) => {
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.json({ ok: true, api: true, version: APP_VERSION });
+});
+app.get("/api/version", (_req, res) => {
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.json({ version: APP_VERSION, updated: true, api: true });
+});
+
+
+app.get("/api/health", (_req, res) => {
+  res.json({ ok: true, version: APP_VERSION, api: true });
+});
+app.get("/api/version", (_req, res) => {
+  res.json({ version: APP_VERSION, updated: true, api: true, note: "If this is JSON, backend is connected." });
+});
+
+
+app.get("/api/version", (_req, res) => {
+  res.json({ version: APP_VERSION, updated: true, fix: "json-parse" });
+});
+
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "dev-only-change-me";
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -125,197 +170,10 @@ function makeToken() {
   return crypto.randomBytes(32).toString("hex");
 }
 
-// ─── OTP System ───────────────────────────────────────────────────────────────
-function generateOTP() {
-  return crypto.randomInt(100000, 999999).toString();
-}
-
-// In-memory OTP store — stores { otp, expiresAt, attempts, lastSent }
-const otpStore = new Map();
-
-function storeOTP(email, otp) {
-  otpStore.set(email.toLowerCase(), {
-    otp,
-    expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
-    attempts: 0,
-    lastSent: Date.now()
-  });
-}
-
-function verifyStoredOTP(email, inputOTP) {
-  const record = otpStore.get(email.toLowerCase());
-  if (!record) return { valid: false, reason: "لا يوجد كود لهذا البريد الإلكتروني." };
-  if (Date.now() > record.expiresAt) {
-    otpStore.delete(email.toLowerCase());
-    return { valid: false, reason: "انتهت صلاحية الكود، يرجى طلب كود جديد." };
-  }
-  if (record.attempts >= 5) {
-    otpStore.delete(email.toLowerCase());
-    return { valid: false, reason: "تجاوزت عدد المحاولات المسموحة." };
-  }
-  if (record.otp !== String(inputOTP)) {
-    otpStore.set(email.toLowerCase(), { ...record, attempts: record.attempts + 1 });
-    return { valid: false, reason: "الكود غير صحيح." };
-  }
-  otpStore.delete(email.toLowerCase());
-  return { valid: true };
-}
-
-// ─── Email Templates ──────────────────────────────────────────────────────────
-function emailVerificationTemplate(username, otp) {
-  return `<!DOCTYPE html>
-<html dir="rtl" lang="ar">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>تأكيد البريد الإلكتروني - Taskora</title>
-</head>
-<body style="margin:0;padding:0;background:#f0f2f5;font-family:'Segoe UI',Arial,sans-serif;direction:rtl;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 16px;">
-    <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-
-        <!-- Header -->
-        <tr>
-          <td style="background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);padding:36px 40px;text-align:center;">
-            <h1 style="color:#e94560;font-size:28px;margin:0 0 4px;font-weight:700;letter-spacing:2px;">TASKORA</h1>
-            <p style="color:#8892b0;font-size:13px;margin:0;">منصة المهام والإنجاز</p>
-          </td>
-        </tr>
-
-        <!-- Body -->
-        <tr>
-          <td style="padding:40px 40px 32px;">
-            <h2 style="color:#1a1a2e;font-size:20px;margin:0 0 12px;font-weight:600;">مرحباً ${username} 👋</h2>
-            <p style="color:#4a5568;font-size:15px;line-height:1.8;margin:0 0 32px;">
-              شكراً لتسجيلك في Taskora! لتأكيد بريدك الإلكتروني وتفعيل حسابك، استخدم الكود أدناه.
-              الكود صالح لمدة <strong>10 دقائق</strong> فقط.
-            </p>
-
-            <!-- OTP Box -->
-            <div style="background:#f7f9fc;border:2px dashed #e94560;border-radius:12px;padding:28px;text-align:center;margin-bottom:32px;">
-              <p style="color:#8892b0;font-size:12px;margin:0 0 10px;letter-spacing:3px;text-transform:uppercase;">كود التحقق</p>
-              <p style="color:#1a1a2e;font-size:48px;font-weight:700;letter-spacing:14px;margin:0;font-family:'Courier New',monospace;">${otp}</p>
-              <p style="color:#a0aec0;font-size:12px;margin:12px 0 0;">ينتهي خلال 10 دقائق</p>
-            </div>
-
-            <div style="background:#fff8f0;border-right:4px solid #f6ad55;border-radius:6px;padding:14px 16px;margin-bottom:24px;">
-              <p style="color:#744210;font-size:13px;margin:0;line-height:1.7;">
-                ⚠️ إذا لم تقم بالتسجيل في Taskora، يمكنك تجاهل هذا الإيميل بأمان تام.
-              </p>
-            </div>
-
-            <p style="color:#718096;font-size:13px;margin:0;">لا تشارك هذا الكود مع أي شخص.</p>
-          </td>
-        </tr>
-
-        <!-- Footer -->
-        <tr>
-          <td style="background:#f7f9fc;padding:20px 40px;border-top:1px solid #e2e8f0;text-align:center;">
-            <p style="color:#a0aec0;font-size:12px;margin:0;">
-              أُرسل هذا الإيميل من <a href="mailto:noreply@taskora.live" style="color:#e94560;text-decoration:none;">noreply@taskora.live</a>
-              &nbsp;|&nbsp; Taskora © ${new Date().getFullYear()}
-            </p>
-          </td>
-        </tr>
-
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`;
-}
-
-function passwordResetTemplate(username, otp) {
-  return `<!DOCTYPE html>
-<html dir="rtl" lang="ar">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>استعادة كلمة المرور - Taskora</title>
-</head>
-<body style="margin:0;padding:0;background:#f0f2f5;font-family:'Segoe UI',Arial,sans-serif;direction:rtl;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 16px;">
-    <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
-
-        <!-- Header -->
-        <tr>
-          <td style="background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);padding:36px 40px;text-align:center;">
-            <h1 style="color:#e94560;font-size:28px;margin:0 0 4px;font-weight:700;letter-spacing:2px;">TASKORA</h1>
-            <p style="color:#8892b0;font-size:13px;margin:0;">استعادة كلمة المرور</p>
-          </td>
-        </tr>
-
-        <!-- Body -->
-        <tr>
-          <td style="padding:40px 40px 32px;">
-            <h2 style="color:#1a1a2e;font-size:20px;margin:0 0 12px;font-weight:600;">مرحباً ${username}،</h2>
-            <p style="color:#4a5568;font-size:15px;line-height:1.8;margin:0 0 8px;">
-              تلقينا طلباً لاستعادة كلمة مرور حسابك في Taskora.
-            </p>
-            <p style="color:#4a5568;font-size:15px;line-height:1.8;margin:0 0 32px;">
-              استخدم الكود أدناه لتعيين كلمة مرور جديدة. الكود صالح لمدة <strong>15 دقيقة</strong>.
-            </p>
-
-            <!-- OTP Box -->
-            <div style="background:#fff5f5;border:2px dashed #e94560;border-radius:12px;padding:28px;text-align:center;margin-bottom:32px;">
-              <p style="color:#8892b0;font-size:12px;margin:0 0 10px;letter-spacing:3px;text-transform:uppercase;">كود الاستعادة</p>
-              <p style="color:#1a1a2e;font-size:48px;font-weight:700;letter-spacing:14px;margin:0;font-family:'Courier New',monospace;">${otp}</p>
-              <p style="color:#a0aec0;font-size:12px;margin:12px 0 0;">ينتهي خلال 15 دقيقة</p>
-            </div>
-
-            <div style="background:#fff8f0;border-right:4px solid #f6ad55;border-radius:6px;padding:14px 16px;margin-bottom:24px;">
-              <p style="color:#744210;font-size:13px;margin:0;line-height:1.7;">
-                ⚠️ إذا لم تطلب استعادة كلمة المرور، <strong>تجاهل هذا الإيميل فوراً</strong> وتأكد من أمان حسابك.
-              </p>
-            </div>
-
-            <p style="color:#718096;font-size:13px;margin:0;">لا تشارك هذا الكود مع أي شخص.</p>
-          </td>
-        </tr>
-
-        <!-- Footer -->
-        <tr>
-          <td style="background:#f7f9fc;padding:20px 40px;border-top:1px solid #e2e8f0;text-align:center;">
-            <p style="color:#a0aec0;font-size:12px;margin:0;">
-              أُرسل هذا الإيميل من <a href="mailto:noreply@taskora.live" style="color:#e94560;text-decoration:none;">noreply@taskora.live</a>
-              &nbsp;|&nbsp; Taskora © ${new Date().getFullYear()}
-            </p>
-          </td>
-        </tr>
-
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`;
-}
-
-// ─── Send Mail via Resend ─────────────────────────────────────────────────────
 async function sendMail(to, subject, html) {
-  if (!process.env.RESEND_API_KEY) {
-    console.log(`MAIL DEV MODE -> ${to} | ${subject}`);
-    return { dev: true };
-  }
-
-  const from = process.env.MAIL_FROM || "Taskora <noreply@taskora.live>";
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ from, to, subject, html })
-  });
-
-  if (!response.ok) {
-    const text = await response.text().catch(() => "");
-    console.error("Email send failed:", text);
-    throw new Error("Email provider failed.");
-  }
-  return response.json().catch(() => ({}));
+  return emailService.sendEmail(to, subject, html);
 }
+
 
 
 
@@ -340,14 +198,22 @@ async function migrate() {
     );
   `);
 
+  await query(`
+    CREATE TABLE IF NOT EXISTS otps (
+      id BIGSERIAL PRIMARY KEY,
+      email VARCHAR(255) NOT NULL,
+      code VARCHAR(6) NOT NULL,
+      type VARCHAR(50) NOT NULL,
+      attempts INTEGER DEFAULT 0,
+      expires_at TIMESTAMPTZ NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `);
+
   await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT FALSE;`);
   await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verification_token VARCHAR(255);`);
   await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_token VARCHAR(255);`);
   await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_reset_expires TIMESTAMPTZ;`);
-  await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_otp VARCHAR(6);`);
-  await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email_otp_expires TIMESTAMPTZ;`);
-  await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_otp VARCHAR(6);`);
-  await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_otp_expires TIMESTAMPTZ;`);
   await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER NOT NULL DEFAULT 0;`);
   await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS locked_until TIMESTAMPTZ;`);
   await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ;`);
@@ -758,22 +624,27 @@ app.post("/api/auth/register", async (req, res) => {
       referralCode = makeReferral(username);
     }
 
+    const verificationToken = makeToken();
     const result = await query(`
-      INSERT INTO users (username, email, phone, password_hash, referral_code, referred_by)
-      VALUES ($1,$2,$3,$4,$5,$6)
+      INSERT INTO users (username, email, phone, password_hash, referral_code, referred_by, email_verification_token)
+      VALUES ($1,$2,$3,$4,$5,$6,$7)
       RETURNING *
-    `, [username, email, phone, passwordHash, referralCode, referredBy]);
+    `, [username, email, phone, passwordHash, referralCode, referredBy, verificationToken]);
 
     const user = result.rows[0];
-
-    // Generate and send OTP
-    const otp = generateOTP();
-    storeOTP(email, otp);
-    await query("UPDATE users SET email_otp=$1, email_otp_expires=NOW() + interval '10 minutes' WHERE id=$2", [otp, user.id]);
-
     await createNotification(pool, user.id, "مرحبًا بك في Taskora", "أكمل توثيق البريد والهوية لتفعيل كامل المزايا.", "welcome");
-    await sendMail(email, "كود تأكيد بريدك الإلكتروني - Taskora", emailVerificationTemplate(username, otp));
-    res.status(201).json({ token: signToken(user), user: publicUser(user), message: "تم إرسال كود التحقق إلى بريدك الإلكتروني." });
+
+    // Generate 6-digit OTP for email verification
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    await query(`
+      INSERT INTO otps (email, code, type, expires_at)
+      VALUES ($1, $2, 'email_verification', NOW() + interval '10 minutes')
+    `, [email, otpCode]);
+
+    // Send styled welcome and verification email using Resend
+    await emailService.sendOTPEmail(email, username, otpCode, "email_verification");
+
+    res.status(201).json({ token: signToken(user), user: publicUser(user), verification_url: `/api/auth/verify-email/${verificationToken}` });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Registration failed." });
@@ -798,50 +669,23 @@ app.post("/api/auth/login", async (req, res) => {
 });
 
 
-// POST /api/auth/verify-email — verify with 6-digit OTP
-app.post("/api/auth/verify-email", async (req, res) => {
-  try {
-    const email = lower(req.body.email);
-    const otp = normalize(req.body.otp);
-    if (!email || !otp) return res.status(422).json({ error: "البريد الإلكتروني والكود مطلوبان." });
-
-    const result = verifyStoredOTP(email, otp);
-    if (!result.valid) return res.status(400).json({ error: result.reason });
-
-    const updated = await query(
-      "UPDATE users SET email_verified=true, email_otp=NULL, email_otp_expires=NULL WHERE lower(email)=lower($1) RETURNING id",
-      [email]
-    );
-    if (updated.rowCount === 0) return res.status(404).json({ error: "البريد الإلكتروني غير موجود." });
-
-    await createNotification(pool, updated.rows[0].id, "تم تأكيد البريد", "تم تأكيد بريدك الإلكتروني بنجاح.", "success");
-    res.json({ success: true, message: "تم تأكيد بريدك الإلكتروني بنجاح!" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "فشل التحقق." });
-  }
+app.get("/api/auth/verify-email/:token", async (req, res) => {
+  const token = normalize(req.params.token);
+  if (!token) return res.status(422).send("Invalid token.");
+  const result = await query("UPDATE users SET email_verified=true, email_verification_token=NULL WHERE email_verification_token=$1 RETURNING id", [token]);
+  if (result.rowCount === 0) return res.status(404).send("Verification link is invalid or already used.");
+  await createNotification(pool, result.rows[0].id, "تم تأكيد البريد", "تم تأكيد بريدك الإلكتروني بنجاح.", "success");
+  res.send("تم تأكيد البريد الإلكتروني بنجاح. يمكنك العودة إلى Taskora.");
 });
 
-// POST /api/auth/resend-verification — resend OTP (requires auth)
 app.post("/api/auth/resend-verification", auth, async (req, res) => {
-  try {
-    if (req.user.email_verified) return res.json({ message: "البريد الإلكتروني مؤكد بالفعل." });
-
-    const existing = otpStore.get(req.user.email.toLowerCase());
-    if (existing && (Date.now() - existing.lastSent) < 60 * 1000) {
-      return res.status(429).json({ error: "انتظر دقيقة واحدة قبل إعادة الإرسال." });
-    }
-
-    const otp = generateOTP();
-    storeOTP(req.user.email, otp);
-    await query("UPDATE users SET email_otp=$1, email_otp_expires=NOW() + interval '10 minutes' WHERE id=$2", [otp, req.user.id]);
-    await sendMail(req.user.email, "كود تأكيد بريدك الإلكتروني - Taskora", emailVerificationTemplate(req.user.username, otp));
-    await createNotification(pool, req.user.id, "إعادة إرسال كود التحقق", "تم إرسال كود تحقق جديد إلى بريدك الإلكتروني.", "info");
-    res.json({ success: true, message: "تم إرسال كود التحقق إلى بريدك الإلكتروني." });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "فشل إرسال الكود." });
-  }
+  if (req.user.email_verified) return res.json({ message: "Email already verified." });
+  const token = makeToken();
+  await query("UPDATE users SET email_verification_token=$1 WHERE id=$2", [token, req.user.id]);
+  const url = `${APP_URL}/api/auth/verify-email/${token}`;
+  await sendMail(req.user.email, "رابط تأكيد بريد Taskora", `<p>اضغط الرابط لتأكيد بريدك:</p><p><a href="${url}">تأكيد البريد</a></p>`);
+  await createNotification(pool, req.user.id, "رابط تأكيد البريد", "تم إنشاء رابط تأكيد جديد. في النسخة التجريبية يظهر الرابط في الاستجابة وسجلات السيرفر.", "info");
+  res.json({ verification_url: `/api/auth/verify-email/${token}` });
 });
 
 app.post("/api/auth/change-password", auth, async (req, res) => {
@@ -860,113 +704,255 @@ app.post("/api/auth/change-password", auth, async (req, res) => {
 
 
 
-// POST /api/auth/request-password-reset — send OTP for password reset
 app.post("/api/auth/request-password-reset", async (req, res) => {
   try {
     const email = lower(req.body.email);
     if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
-      return res.status(422).json({ error: "يرجى إدخال بريد إلكتروني صحيح." });
+      return res.status(422).json({ error: "Valid email is required." });
     }
 
     const result = await query("SELECT id,email,username FROM users WHERE lower(email)=lower($1) LIMIT 1", [email]);
-    // Do not reveal whether the email exists for security
-    if (result.rowCount === 0) return res.json({ success: true, message: "إذا كان البريد مسجلاً، ستتلقى كود الاستعادة." });
+    // Do not reveal whether the email exists.
+    if (result.rowCount === 0) return res.json({ success: true });
 
     const user = result.rows[0];
 
-    // Rate limit: 1 minute cooldown
-    const existing = otpStore.get(("reset:" + email).toLowerCase());
-    if (existing && (Date.now() - existing.lastSent) < 60 * 1000) {
-      return res.status(429).json({ error: "انتظر دقيقة واحدة قبل إعادة الإرسال." });
+    // Anti-spam Cooldown check: 60 seconds
+    const lastOtp = await query(`
+      SELECT created_at FROM otps 
+      WHERE lower(email) = lower($1) AND type = 'password_reset'
+      ORDER BY id DESC LIMIT 1
+    `, [user.email]);
+
+    if (lastOtp.rowCount > 0) {
+      const diffMs = Date.now() - new Date(lastOtp.rows[0].created_at).getTime();
+      if (diffMs < 60000) {
+        const waitSec = Math.ceil((60000 - diffMs) / 1000);
+        return res.status(429).json({ error: `الرجاء الانتظار ${waitSec} ثانية قبل طلب كود جديد.` });
+      }
     }
 
-    const otp = generateOTP();
-    // Store reset OTP with "reset:" prefix to separate from email-verification OTPs
-    otpStore.set(("reset:" + email).toLowerCase(), {
-      otp,
-      expiresAt: Date.now() + 15 * 60 * 1000, // 15 minutes
-      attempts: 0,
-      lastSent: Date.now()
-    });
-    await query("UPDATE users SET reset_otp=$1, reset_otp_expires=NOW() + interval '15 minutes' WHERE id=$2", [otp, user.id]);
+    // Daily limit check: 5 codes per 24 hours
+    const dailyCount = await query(`
+      SELECT COUNT(*)::int AS count FROM otps 
+      WHERE lower(email) = lower($1) AND type = 'password_reset' AND created_at > NOW() - interval '24 hours'
+    `, [user.email]);
 
-    await sendMail(user.email, "كود استعادة كلمة المرور - Taskora", passwordResetTemplate(user.username, otp));
-    await createNotification(pool, user.id, "طلب استعادة كلمة المرور", "تم إرسال كود استعادة كلمة المرور إلى بريدك الإلكتروني.", "info");
-    res.json({ success: true, message: "إذا كان البريد مسجلاً، ستتلقى كود الاستعادة." });
+    if (dailyCount.rows[0].count >= 5) {
+      return res.status(429).json({ error: "لقد تجاوزت الحد الأقصى لإرسال الأكواد اليوم (5 أكواد). يرجى المحاولة غداً." });
+    }
+
+    // Generate 6-digit OTP code for password reset
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    await query(`
+      INSERT INTO otps (email, code, type, expires_at)
+      VALUES ($1, $2, 'password_reset', NOW() + interval '10 minutes')
+    `, [user.email, otpCode]);
+
+    // Send styled password reset email using Resend
+    await emailService.sendOTPEmail(user.email, user.username, otpCode, "password_reset");
+
+    const token = makeToken();
+    await query("UPDATE users SET password_reset_token=$1, password_reset_expires=NOW() + interval '30 minutes' WHERE id=$2", [token, user.id]);
+    const url = `${APP_URL}/reset-password?token=${token}`;
+    await createNotification(pool, user.id, "طلب استعادة كلمة المرور", "تم إنشاء رابط استعادة كلمة مرور لحسابك.", "info");
+
+    res.json({ success: true, reset_url: `/reset-password?token=${token}` });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "فشل إرسال كود الاستعادة." });
+    res.status(500).json({ error: "Failed to request password reset." });
   }
 });
 
-// POST /api/auth/verify-reset-otp — verify reset OTP (optional step to confirm before setting password)
-app.post("/api/auth/verify-reset-otp", async (req, res) => {
-  try {
-    const email = lower(req.body.email);
-    const otp = normalize(req.body.otp);
-    if (!email || !otp) return res.status(422).json({ error: "البريد الإلكتروني والكود مطلوبان." });
-
-    const key = ("reset:" + email).toLowerCase();
-    const record = otpStore.get(key);
-    if (!record) return res.status(400).json({ error: "لا يوجد كود لهذا البريد الإلكتروني." });
-    if (Date.now() > record.expiresAt) {
-      otpStore.delete(key);
-      return res.status(400).json({ error: "انتهت صلاحية الكود، يرجى طلب كود جديد." });
-    }
-    if (record.otp !== otp) return res.status(400).json({ error: "الكود غير صحيح." });
-
-    res.json({ success: true, message: "الكود صحيح، يمكنك الآن تعيين كلمة مرور جديدة." });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "فشل التحقق." });
-  }
-});
-
-// POST /api/auth/reset-password — set new password using OTP
 app.post("/api/auth/reset-password", async (req, res) => {
+  const token = normalize(req.body.token);
+  const newPassword = normalize(req.body.new_password);
+  if (!token) return res.status(422).json({ error: "Reset token is required." });
+  if (!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(newPassword)) {
+    return res.status(422).json({ error: "New password must be at least 8 characters and contain letters and numbers." });
+  }
+
+  const result = await query("SELECT id FROM users WHERE password_reset_token=$1 AND password_reset_expires > NOW() LIMIT 1", [token]);
+  if (result.rowCount === 0) return res.status(404).json({ error: "Reset link is invalid or expired." });
+
+  const passwordHash = await bcrypt.hash(newPassword, 12);
+  await query("UPDATE users SET password_hash=$1, password_reset_token=NULL, password_reset_expires=NULL, failed_login_attempts=0, locked_until=NULL WHERE id=$2", [passwordHash, result.rows[0].id]);
+  await createNotification(pool, result.rows[0].id, "تمت استعادة كلمة المرور", "تم تعيين كلمة مرور جديدة لحسابك.", "success");
+  res.json({ success: true });
+});
+
+
+// ==========================================
+// NEW OTP & EMAIL SERVICE SYSTEM ENDPOINTS
+// ==========================================
+
+// 1. Send OTP for Email Verification (Authenticated)
+app.post("/api/auth/send-otp", auth, async (req, res) => {
   try {
-    const email = lower(req.body.email);
-    const otp = normalize(req.body.otp);
-    const newPassword = normalize(req.body.new_password);
+    const email = req.user.email;
+    const username = req.user.username;
 
-    if (!email || !otp) return res.status(422).json({ error: "البريد الإلكتروني والكود مطلوبان." });
+    if (req.user.email_verified) {
+      return res.status(400).json({ error: "البريد الإلكتروني مؤكد بالفعل." });
+    }
+
+    // Cooldown check: 60 seconds
+    const lastOtp = await query(`
+      SELECT created_at FROM otps 
+      WHERE lower(email) = lower($1) AND type = 'email_verification'
+      ORDER BY id DESC LIMIT 1
+    `, [email]);
+
+    if (lastOtp.rowCount > 0) {
+      const diffMs = Date.now() - new Date(lastOtp.rows[0].created_at).getTime();
+      if (diffMs < 60000) {
+        const waitSec = Math.ceil((60000 - diffMs) / 1000);
+        return res.status(429).json({ error: `الرجاء الانتظار ${waitSec} ثانية قبل طلب كود جديد.` });
+      }
+    }
+
+    // Daily limit check: 5 codes per 24 hours
+    const dailyCount = await query(`
+      SELECT COUNT(*)::int AS count FROM otps 
+      WHERE lower(email) = lower($1) AND type = 'email_verification' AND created_at > NOW() - interval '24 hours'
+    `, [email]);
+
+    if (dailyCount.rows[0].count >= 5) {
+      return res.status(429).json({ error: "لقد تجاوزت الحد الأقصى لإرسال الأكواد اليوم (5 أكواد). يرجى المحاولة غداً." });
+    }
+
+    // Generate 6-digit OTP code
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    await query(`
+      INSERT INTO otps (email, code, type, expires_at)
+      VALUES ($1, $2, 'email_verification', NOW() + interval '10 minutes')
+    `, [email, code]);
+
+    // Send styled welcome and verification email using Resend
+    await emailService.sendOTPEmail(email, username, code, "email_verification");
+    await createNotification(pool, req.user.id, "إرسال كود التحقق", "تم إرسال كود تحقق جديد إلى بريدك الإلكتروني.", "info");
+
+    res.json({ success: true, message: "تم إرسال كود تحقق جديد بنجاح." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "فشل إرسال كود التحقق." });
+  }
+});
+
+// 2. Verify OTP for Email Verification (Authenticated)
+app.post("/api/auth/verify-otp", auth, async (req, res) => {
+  try {
+    const email = req.user.email.toLowerCase().trim();
+    const code = String(req.body.code || "").trim();
+
+    if (!/^\d{6}$/.test(code)) {
+      return res.status(422).json({ error: "كود التحقق يجب أن يتكون من 6 أرقام." });
+    }
+
+    // Check for matching active OTP
+    const otpRes = await query(`
+      SELECT * FROM otps 
+      WHERE lower(email) = lower($1) AND type = 'email_verification' AND expires_at > NOW()
+      ORDER BY id DESC LIMIT 1
+    `, [email]);
+
+    if (otpRes.rowCount === 0) {
+      return res.status(404).json({ error: "كود التحقق غير صالح أو منتهي الصلاحية. يرجى طلب كود جديد." });
+    }
+
+    const otp = otpRes.rows[0];
+
+    if (otp.attempts >= 3) {
+      await query("DELETE FROM otps WHERE id = $1", [otp.id]);
+      return res.status(422).json({ error: "لقد تجاوزت الحد الأقصى للمحاولات الخاطئة (3 محاولات). يرجى طلب كود جديد." });
+    }
+
+    if (otp.code !== code) {
+      await query("UPDATE otps SET attempts = attempts + 1 WHERE id = $1", [otp.id]);
+      const remaining = 3 - (otp.attempts + 1);
+      return res.status(400).json({ error: `كود التحقق غير صحيح. المحاولات المتبقية: ${remaining}.` });
+    }
+
+    // Valid code! Mark user as verified
+    await query("UPDATE users SET email_verified = true, email_verification_token = NULL WHERE id = $1", [req.user.id]);
+    await query("DELETE FROM otps WHERE email = $1 AND type = 'email_verification'", [email]);
+    await createNotification(pool, req.user.id, "تم تأكيد البريد الإلكتروني", "تم تأكيد بريدك الإلكتروني بنجاح باستخدام كود التحقق.", "success");
+
+    res.json({ success: true, message: "تم تأكيد البريد الإلكتروني بنجاح." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "فشل التحقق من الكود." });
+  }
+});
+
+// 3. Reset Password using OTP (Public)
+app.post("/api/auth/reset-password-otp", async (req, res) => {
+  try {
+    const email = String(req.body.email || "").toLowerCase().trim();
+    const code = String(req.body.code || "").trim();
+    const newPassword = String(req.body.new_password || "").trim();
+
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+      return res.status(422).json({ error: "يرجى إدخال بريد إلكتروني صالح." });
+    }
+    if (!/^\d{6}$/.test(code)) {
+      return res.status(422).json({ error: "كود التحقق يجب أن يتكون من 6 أرقام." });
+    }
     if (!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(newPassword)) {
-      return res.status(422).json({ error: "كلمة المرور يجب أن تكون 8 أحرف على الأقل وتحتوي على حروف وأرقام." });
+      return res.status(422).json({ error: "كلمة المرور يجب أن تكون من 8 خانات على الأقل وتحتوي على حروف وأرقام." });
     }
 
-    const key = ("reset:" + email).toLowerCase();
-    const record = otpStore.get(key);
-    if (!record) return res.status(400).json({ error: "لا يوجد كود لهذا البريد الإلكتروني." });
-    if (Date.now() > record.expiresAt) {
-      otpStore.delete(key);
-      return res.status(400).json({ error: "انتهت صلاحية الكود، يرجى طلب كود جديد." });
+    // Find matching user
+    const userRes = await query("SELECT id, username FROM users WHERE lower(email) = lower($1) LIMIT 1", [email]);
+    if (userRes.rowCount === 0) {
+      return res.status(404).json({ error: "كود التحقق غير صالح أو منتهي الصلاحية." });
     }
-    if (record.attempts >= 5) {
-      otpStore.delete(key);
-      return res.status(400).json({ error: "تجاوزت عدد المحاولات المسموحة." });
-    }
-    if (record.otp !== otp) {
-      otpStore.set(key, { ...record, attempts: record.attempts + 1 });
-      return res.status(400).json({ error: "الكود غير صحيح." });
+    const user = userRes.rows[0];
+
+    // Find matching active OTP
+    const otpRes = await query(`
+      SELECT * FROM otps 
+      WHERE lower(email) = lower($1) AND type = 'password_reset' AND expires_at > NOW()
+      ORDER BY id DESC LIMIT 1
+    `, [email]);
+
+    if (otpRes.rowCount === 0) {
+      return res.status(404).json({ error: "كود التحقق غير صالح أو منتهي الصلاحية. يرجى طلب كود جديد." });
     }
 
-    otpStore.delete(key);
+    const otp = otpRes.rows[0];
 
-    const userResult = await query("SELECT id FROM users WHERE lower(email)=lower($1) LIMIT 1", [email]);
-    if (userResult.rowCount === 0) return res.status(404).json({ error: "البريد الإلكتروني غير موجود." });
+    if (otp.attempts >= 3) {
+      await query("DELETE FROM otps WHERE id = $1", [otp.id]);
+      return res.status(422).json({ error: "لقد تجاوزت الحد الأقصى للمحاولات الخاطئة (3 محاولات). يرجى طلب كود جديد." });
+    }
 
+    if (otp.code !== code) {
+      await query("UPDATE otps SET attempts = attempts + 1 WHERE id = $1", [otp.id]);
+      const remaining = 3 - (otp.attempts + 1);
+      return res.status(400).json({ error: `كود التحقق غير صحيح. المحاولات المتبقية: ${remaining}.` });
+    }
+
+    // Valid reset! Update password
     const passwordHash = await bcrypt.hash(newPassword, 12);
-    await query(
-      "UPDATE users SET password_hash=$1, reset_otp=NULL, reset_otp_expires=NULL, failed_login_attempts=0, locked_until=NULL WHERE id=$2",
-      [passwordHash, userResult.rows[0].id]
-    );
-    await createNotification(pool, userResult.rows[0].id, "تمت استعادة كلمة المرور", "تم تعيين كلمة مرور جديدة لحسابك بنجاح.", "success");
-    res.json({ success: true, message: "تم تعيين كلمة المرور الجديدة بنجاح!" });
+    await query(`
+      UPDATE users 
+      SET password_hash = $1, password_reset_token = NULL, password_reset_expires = NULL, failed_login_attempts = 0, locked_until = NULL, withdrawal_locked_until = NOW() + interval '24 hours'
+      WHERE id = $2
+    `, [passwordHash, user.id]);
+
+    await query("DELETE FROM otps WHERE email = $1 AND type = 'password_reset'", [email]);
+    await createNotification(pool, user.id, "تمت استعادة كلمة المرور", "تم إعادة تعيين كلمة المرور بنجاح باستخدام كود التحقق.", "success");
+
+    res.json({ success: true, message: "تم إعادة تعيين كلمة المرور بنجاح." });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "فشل إعادة تعيين كلمة المرور." });
   }
 });
+
+
+
 
 
 app.get("/api/me", auth, async (req, res) => {
@@ -1089,6 +1075,7 @@ app.post("/api/packages/:id/buy", auth, async (req, res) => {
       VALUES ($1,'package_purchase',$2,$3,$4,$5)
     `, [req.user.id, -pkg.price, `شراء باقة ${pkg.name}`, balance, balance - pkg.price]);
     await client.query("COMMIT");
+
     res.json({ success: true });
   } catch (err) {
     await client.query("ROLLBACK");
@@ -1387,6 +1374,14 @@ app.post("/api/support/tickets", auth, async (req, res) => {
   `, [req.user.id, subject, category, message]);
 
   await createNotification(pool, req.user.id, "تم إنشاء تذكرة دعم", "تم إرسال تذكرتك إلى فريق الدعم.", "info");
+
+  // Send support email notification safely
+  try {
+    await emailService.sendSupportTicketNotificationEmail(req.user.username, req.user.email, subject, category, message);
+  } catch (emailErr) {
+    console.error("[Support Ticket Email Notification Error]:", emailErr);
+  }
+
   res.status(201).json({ ticket: result.rows[0] });
 });
 
@@ -1785,7 +1780,13 @@ app.post("/api/admin/kyc/:id/approve", auth, adminOnly, async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    const kycRes = await client.query("SELECT * FROM user_kyc WHERE id=$1 FOR UPDATE", [req.params.id]);
+    const kycRes = await client.query(`
+      SELECT k.*, u.username, u.email
+      FROM user_kyc k
+      JOIN users u ON u.id = k.user_id
+      WHERE k.id = $1 FOR UPDATE
+    `, [req.params.id]);
+
     if (kycRes.rowCount === 0) {
       await client.query("ROLLBACK");
       return res.status(404).json({ error: "KYC not found." });
@@ -1798,7 +1799,7 @@ app.post("/api/admin/kyc/:id/approve", auth, adminOnly, async (req, res) => {
     await client.query("UPDATE users SET kyc_status='verified' WHERE id=$1", [kyc.user_id]);
 
     const bonusExists = await client.query("SELECT id FROM welcome_bonuses WHERE document_hash=$1 LIMIT 1", [kyc.document_hash]);
-    const userRes = await client.query("SELECT bonus_claimed FROM users WHERE id=$1 FOR UPDATE", [kyc.user_id]);
+    const userRes = await client.query("SELECT username, email, bonus_claimed FROM users WHERE id=$1 FOR UPDATE", [kyc.user_id]);
     if (bonusExists.rowCount === 0 && !userRes.rows[0].bonus_claimed) {
       await client.query("INSERT INTO welcome_bonuses (user_id, document_hash, amount, status) VALUES ($1,$2,10,'active')", [kyc.user_id, kyc.document_hash]);
       await addTransaction(client, kyc.user_id, "welcome_bonus", 10, "بونص ترحيبي بعد قبول التوثيق");
@@ -1806,6 +1807,14 @@ app.post("/api/admin/kyc/:id/approve", auth, adminOnly, async (req, res) => {
     }
 
     await client.query("COMMIT");
+
+    // Send KYC Approved Email via Resend safely
+    try {
+      await emailService.sendKYCStatusEmail(kyc.email, kyc.username, true);
+    } catch (emailErr) {
+      console.error("[KYC Approval Email Error]:", emailErr);
+    }
+
     res.json({ success: true });
   } catch (err) {
     await client.query("ROLLBACK");
@@ -1817,12 +1826,30 @@ app.post("/api/admin/kyc/:id/approve", auth, adminOnly, async (req, res) => {
 });
 
 app.post("/api/admin/kyc/:id/reject", auth, adminOnly, async (req, res) => {
-  const kycRes = await query("SELECT user_id FROM user_kyc WHERE id=$1", [req.params.id]);
+  const kycRes = await query(`
+    SELECT k.*, u.username, u.email
+    FROM user_kyc k
+    JOIN users u ON u.id = k.user_id
+    WHERE k.id = $1
+  `, [req.params.id]);
+
   if (kycRes.rowCount === 0) return res.status(404).json({ error: "KYC not found." });
-  await createNotification(pool, kycRes.rows[0].user_id, "تم رفض التوثيق", normalize(req.body.note) || "تم رفض التوثيق. يمكنك إعادة المحاولة بملفات أوضح.", "error");
-  await logAdminAction(pool, req.user.id, "reject_kyc", "kyc", Number(req.params.id), { note: normalize(req.body.note) });
-  await query("UPDATE user_kyc SET status='rejected', reviewed_by=$1, reviewed_at=NOW(), admin_note=$2 WHERE id=$3", [req.user.id, normalize(req.body.note), req.params.id]);
-  await query("UPDATE users SET kyc_status='rejected' WHERE id=$1", [kycRes.rows[0].user_id]);
+  const kyc = kycRes.rows[0];
+
+  const note = normalize(req.body.note);
+
+  await createNotification(pool, kyc.user_id, "تم رفض التوثيق", note || "تم رفض التوثيق. يمكنك إعادة المحاولة بملفات أوضح.", "error");
+  await logAdminAction(pool, req.user.id, "reject_kyc", "kyc", Number(req.params.id), { note });
+  await query("UPDATE user_kyc SET status='rejected', reviewed_by=$1, reviewed_at=NOW(), admin_note=$2 WHERE id=$3", [req.user.id, note, req.params.id]);
+  await query("UPDATE users SET kyc_status='rejected' WHERE id=$1", [kyc.user_id]);
+
+  // Send KYC Rejected Email via Resend safely
+  try {
+    await emailService.sendKYCStatusEmail(kyc.email, kyc.username, false, note);
+  } catch (emailErr) {
+    console.error("[KYC Rejection Email Error]:", emailErr);
+  }
+
   res.json({ success: true });
 });
 
@@ -1882,10 +1909,30 @@ app.get("/api/admin/withdrawals", auth, adminOnly, async (_req, res) => {
 });
 
 app.post("/api/admin/withdrawals/:id/approve", auth, adminOnly, async (req, res) => {
-  const wdApprove = await query("SELECT user_id, amount, coin FROM withdrawals WHERE id=$1", [req.params.id]);
-  if (wdApprove.rowCount) await createNotification(pool, wdApprove.rows[0].user_id, "تم قبول السحب", `تم قبول طلب السحب بقيمة ${wdApprove.rows[0].amount} ${String(wdApprove.rows[0].coin).toUpperCase()}.`, "success");
-  await logAdminAction(pool, req.user.id, "approve_withdrawal", "withdrawal", Number(req.params.id), { txid: normalize(req.body.txid), note: normalize(req.body.note) });
-  await query("UPDATE withdrawals SET status='approved', txid=$1, reviewed_by=$2, reviewed_at=NOW(), admin_note=$3 WHERE id=$4 AND status='pending'", [normalize(req.body.txid), req.user.id, normalize(req.body.note), req.params.id]);
+  const wdApprove = await query(`
+    SELECT w.user_id, w.amount, w.coin, w.wallet_address, u.username, u.email
+    FROM withdrawals w
+    JOIN users u ON u.id = w.user_id
+    WHERE w.id = $1
+  `, [req.params.id]);
+
+  if (wdApprove.rowCount === 0) return res.status(404).json({ error: "Withdrawal not found." });
+  const w = wdApprove.rows[0];
+
+  const txid = normalize(req.body.txid);
+  const note = normalize(req.body.note);
+
+  await createNotification(pool, w.user_id, "تم قبول السحب", `تم قبول طلب السحب بقيمة ${w.amount} ${String(w.coin).toUpperCase()}.`, "success");
+  await logAdminAction(pool, req.user.id, "approve_withdrawal", "withdrawal", Number(req.params.id), { txid, note });
+  await query("UPDATE withdrawals SET status='approved', txid=$1, reviewed_by=$2, reviewed_at=NOW(), admin_note=$3 WHERE id=$4 AND status='pending'", [txid, req.user.id, note, req.params.id]);
+
+  // Send Withdrawal Approved Email via Resend safely
+  try {
+    await emailService.sendWithdrawalStatusEmail(w.email, w.username, true, w.amount, w.coin, w.wallet_address, { txid });
+  } catch (emailErr) {
+    console.error("[Withdrawal Approval Email Error]:", emailErr);
+  }
+
   res.json({ success: true });
 });
 
@@ -1893,17 +1940,33 @@ app.post("/api/admin/withdrawals/:id/reject", auth, adminOnly, async (req, res) 
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    const wRes = await client.query("SELECT * FROM withdrawals WHERE id=$1 AND status='pending' FOR UPDATE", [req.params.id]);
+    const wRes = await client.query(`
+      SELECT w.*, u.username, u.email
+      FROM withdrawals w
+      JOIN users u ON u.id = w.user_id
+      WHERE w.id = $1 AND w.status = 'pending' FOR UPDATE
+    `, [req.params.id]);
+
     if (wRes.rowCount === 0) {
       await client.query("ROLLBACK");
       return res.status(404).json({ error: "Pending withdrawal not found." });
     }
     const w = wRes.rows[0];
-    await createNotification(client, w.user_id, "تم رفض السحب", normalize(req.body.note) || "تم رفض طلب السحب وتم إرجاع المبلغ إلى رصيدك.", "error");
-    await logAdminAction(client, req.user.id, "reject_withdrawal", "withdrawal", w.id, { amount: w.amount, note: normalize(req.body.note) });
-    await client.query("UPDATE withdrawals SET status='rejected', reviewed_by=$1, reviewed_at=NOW(), admin_note=$2 WHERE id=$3", [req.user.id, normalize(req.body.note), w.id]);
+    const note = normalize(req.body.note);
+
+    await createNotification(client, w.user_id, "تم رفض السحب", note || "تم رفض طلب السحب وتم إرجاع المبلغ إلى رصيدك.", "error");
+    await logAdminAction(client, req.user.id, "reject_withdrawal", "withdrawal", w.id, { amount: w.amount, note });
+    await client.query("UPDATE withdrawals SET status='rejected', reviewed_by=$1, reviewed_at=NOW(), admin_note=$2 WHERE id=$3", [req.user.id, note, w.id]);
     await addTransaction(client, w.user_id, "withdrawal_refund", Number(w.amount), "إرجاع مبلغ سحب مرفوض");
     await client.query("COMMIT");
+
+    // Send Withdrawal Rejected Email via Resend safely
+    try {
+      await emailService.sendWithdrawalStatusEmail(w.email, w.username, false, w.amount, w.coin, w.wallet_address, { reason: note });
+    } catch (emailErr) {
+      console.error("[Withdrawal Rejection Email Error]:", emailErr);
+    }
+
     res.json({ success: true });
   } catch (err) {
     await client.query("ROLLBACK");
@@ -1967,6 +2030,29 @@ app.get("/__debug", (_req, res) => {
   });
 });
 
+
+// Hard API guard: API routes must never return index.html.
+app.use("/api", (req, res, next) => {
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  next();
+});
+
+
+// Do not let static frontend answer API requests.
+app.use((req, res, next) => {
+  if (req.path === "/api" || req.path.startsWith("/api/")) {
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+  }
+  next();
+});
+
+app.get("/sw.js", (_req, res) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  res.type("application/javascript").sendFile(path.join(publicDir, "sw.js"));
+});
+
 app.use(express.static(publicDir, {
   index: false,
   fallthrough: true,
@@ -1977,15 +2063,66 @@ function sendFrontend(req, res) {
   if (!fs.existsSync(indexFile)) {
     return res.status(500).send("Frontend file missing: public/index.html");
   }
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
   res.sendFile(indexFile);
 }
 
 app.get("/", sendFrontend);
 app.get("/index.html", sendFrontend);
 
+
+// API routes must never return frontend HTML.
+app.use((req, res, next) => {
+  if (req.path.startsWith("/api/")) {
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+  }
+  next();
+});
+
+
+// Final API JSON 404. Must appear before any frontend fallback.
+app.use("/api", (req, res) => {
+  res.status(404).json({
+    error: "API route not found",
+    path: req.originalUrl,
+    version: APP_VERSION
+  });
+});
+
+
+// Strong API JSON 404 before SPA fallback.
+app.use("/api", (req, res, next) => {
+  if (res.headersSent) return next();
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.status(404).json({
+    error: "API route not found",
+    path: req.originalUrl,
+    version: APP_VERSION
+  });
+});
+
+
+// ABSOLUTE_API_JSON_FINAL_404
+app.use("/api", (req, res) => {
+  res.type("application/json").status(404).json({
+    error: "API_ROUTE_NOT_FOUND",
+    path: req.originalUrl,
+    version: APP_VERSION
+  });
+});
+
 // SPA fallback: serve frontend for all non-API routes.
 app.get("*", (req, res, next) => {
-  if (req.path === "/health" || req.path === "/__debug" || req.path.startsWith("/api/")) {
+  if (req.path === "/api" || req.path.startsWith("/api/")) {
+    return res.type("application/json").status(404).json({
+      error: "API_ROUTE_NOT_FOUND",
+      path: req.originalUrl,
+      version: APP_VERSION
+    });
+  }
+  if (req.path === "/health" || req.path === "/__debug") {
     return next();
   }
   return sendFrontend(req, res);

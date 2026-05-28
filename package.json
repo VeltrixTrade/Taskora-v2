@@ -1,7 +1,7 @@
 {
   "name": "taskora-real-railway",
   "version": "2.0.3",
-  "description": "Taskora v12.3 packages and tasks display fix",
+  "description": "Taskora remove native res.json JSON parse error v7",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
@@ -22,6 +22,7 @@
     "multer": "^1.4.5-lts.1",
     "pg": "^8.13.1",
     "compression": "^1.7.4",
-    "qrcode": "^1.5.4"
+    "qrcode": "^1.5.4",
+    "resend": "^3.2.0"
   }
 }

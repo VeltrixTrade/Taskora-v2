@@ -451,3 +451,92 @@ service unavailable
 - إصلاح أزرار تفاصيل الباقات.
 - تحسين صفحة المهام حتى تعرض رسالة واضحة عند وجود خطأ.
 - إضافة fallback لقائمة المهام اليومية.
+
+
+## Google Rewarded Ads Task Buttons
+
+تم تعديل أزرار المهام فقط:
+- زر شاهد الإعلان.
+- زر إكمال المهمة يكون مقفلًا حتى انتهاء الإعلان.
+- Mock Mode للتجربة.
+- مكان جاهز لإضافة Google Ad Manager Rewarded Ad Unit Path.
+
+راجع:
+`GOOGLE_REWARDED_ADS_SETUP.txt`
+
+
+## Google Ads configured
+
+- Publisher ID: `ca-pub-3936169440487132`
+- Rewarded Ad Unit Path الحالي: `/3936169440487132/taskora_tasks_rewarded`
+- Mock Mode: `false`
+- يوجد fallback تجريبي إذا لم يتوفر إعلان Google.
+
+راجع:
+`GOOGLE_REWARDED_ADS_SETUP.txt`
+
+
+## google-rewarded-ads-json-parse-fix
+
+تم إصلاح خطأ:
+`Unexpected token '<', "<!DOCTYPE html>" is not valid JSON`
+
+الإصلاح:
+- إضافة قارئ JSON آمن في الواجهة.
+- منع قراءة HTML كـ JSON.
+- توضيح الخطأ إذا كان مسار API يرجع صفحة HTML.
+- ضمان أن مسارات `/api` لا ترجع HTML.
+
+
+## hard-json-html-api-fix-v2
+
+إصلاح قوي لخطأ:
+`Unexpected token '<', "<!DOCTYPE html>" is not valid JSON`
+
+مهم:
+هذا الخطأ ليس من رقم الناشر غالبًا. السبب أن API يرجع HTML بدل JSON.
+
+اختبر بعد الرفع:
+- `/api/health`
+- `/api/version`
+
+إذا لم يرجعا JSON، فالمشكلة في نشر السيرفر أو إعداد Railway.
+
+
+## final-json-html-guard-v3
+
+إصلاح نهائي لمحاولة قراءة HTML كـ JSON.
+أضفنا:
+- حارس قوي على fetch و Response.json.
+- `/api/health`
+- `/api/version`
+- railway.json لتشغيل `node server.js`
+- Procfile
+- nixpacks.toml
+
+بعد الرفع اختبر `/api/health`.
+
+
+## absolute-api-json-fix-v4
+
+إصلاح مطلق لمشكلة HTML بدل JSON.
+بعد الرفع يجب اختبار:
+`/api/health`
+
+إذا لم يرجع JSON فالمشكلة إعداد Railway وليس رقم الناشر.
+
+
+## api-diagnostic-exact-url-v5
+
+بما أن `/api/health` يعمل، هذه نسخة تشخيص تعرض المسار الحقيقي الذي يرجع HTML بدل JSON.
+عند ظهور المشكلة، سيظهر مربع أحمر فيه URL المطلوب إصلاحه.
+
+
+## no-native-json-token-error-v6
+
+منع خطأ Unexpected token '<' من الواجهة، مع إبقاء تشخيص URL.
+
+
+## remove-native-res-json-v7
+
+إزالة استخدام res.json() المباشر من الواجهة لمنع خطأ Unexpected token '<'.
