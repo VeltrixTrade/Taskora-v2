@@ -213,7 +213,7 @@ function emailVerificationTemplate(username, otp) {
         <tr>
           <td style="background:#f7f9fc;padding:20px 40px;border-top:1px solid #e2e8f0;text-align:center;">
             <p style="color:#a0aec0;font-size:12px;margin:0;">
-              أُرسل هذا الإيميل من <a href="mailto:Taskroa@proton.me" style="color:#e94560;text-decoration:none;">Taskroa@proton.me</a>
+              أُرسل هذا الإيميل من <a href="mailto:noreply@taskora.live" style="color:#e94560;text-decoration:none;">noreply@taskora.live</a>
               &nbsp;|&nbsp; Taskora © ${new Date().getFullYear()}
             </p>
           </td>
@@ -279,7 +279,7 @@ function passwordResetTemplate(username, otp) {
         <tr>
           <td style="background:#f7f9fc;padding:20px 40px;border-top:1px solid #e2e8f0;text-align:center;">
             <p style="color:#a0aec0;font-size:12px;margin:0;">
-              أُرسل هذا الإيميل من <a href="mailto:Taskroa@proton.me" style="color:#e94560;text-decoration:none;">Taskroa@proton.me</a>
+              أُرسل هذا الإيميل من <a href="mailto:noreply@taskora.live" style="color:#e94560;text-decoration:none;">noreply@taskora.live</a>
               &nbsp;|&nbsp; Taskora © ${new Date().getFullYear()}
             </p>
           </td>
@@ -299,7 +299,7 @@ async function sendMail(to, subject, html) {
     return { dev: true };
   }
 
-  const from = process.env.MAIL_FROM || "Taskora <Taskroa@proton.me>";
+  const from = process.env.MAIL_FROM || "Taskora <noreply@taskora.live>";
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
