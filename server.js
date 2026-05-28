@@ -335,8 +335,7 @@ async function migrate() {
   `);
 
   await query(`
-    UPDATE wallet_addresses 
-    SET is_active = false 
+    DELETE FROM wallet_addresses 
     WHERE coin NOT IN ('usdt_trc20', 'usdt_erc20', 'btc', 'sol');
   `);
 
@@ -1270,21 +1269,66 @@ app.post("/api/withdrawals", auth, async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    const userRes = await client.query("SELECT balance FROM users WHERE id=$1 FOR UPDATE", [req.user.id]);
+    const userRes = await client.query("SELECT balance, bonus_claimed FROM users WHERE id=$1 FOR UPDATE", [req.user.id]);
     const balance = Number(userRes.rows[0].balance);
+    const bonusClaimed = !!userRes.rows[0].bonus_claimed;
+
     if (balance < amount) {
       await client.query("ROLLBACK");
       return res.status(422).json({ error: "Insufficient balance." });
     }
-    await client.query("UPDATE users SET balance=balance-$1 WHERE id=$2", [amount, req.user.id]);
-    await client.query(`
-      INSERT INTO withdrawals (user_id, amount, coin, wallet_address)
-      VALUES ($1,$2,$3,$4)
-    `, [req.user.id, amount, coin, wallet]);
-    await client.query(`
-      INSERT INTO transactions (user_id, type, amount, description, balance_before, balance_after)
-      VALUES ($1,'withdrawal_hold',$2,'حجز مبلغ السحب بانتظار مراجعة الأدمن',$3,$4)
-    `, [req.user.id, -amount, balance, balance - amount]);
+
+    let withdrawableBalance = balance;
+    let isBonusWithdrawal = false;
+
+    if (bonusClaimed) {
+      isBonusWithdrawal = true;
+      // 50% of the welcome bonus ($5.00) is permanently locked/deleted.
+      // The withdrawable balance is their total balance minus $5.00.
+      withdrawableBalance = balance - 5.00;
+    }
+
+    if (amount > withdrawableBalance) {
+      await client.query("ROLLBACK");
+      return res.status(422).json({ error: "رصيدك غير متاح للسحب" });
+    }
+
+    if (isBonusWithdrawal) {
+      // 1. Create withdrawal request for the requested amount
+      await client.query(`
+        INSERT INTO withdrawals (user_id, amount, coin, wallet_address)
+        VALUES ($1,$2,$3,$4)
+      `, [req.user.id, amount, coin, wallet]);
+
+      // 2. Deduct both the withdrawal amount AND the $5 locked bonus portion, and clear the bonus_claimed flag (one-time only)
+      const newBalance = balance - 5.00 - amount;
+      await client.query("UPDATE users SET balance=$1, bonus_claimed=false WHERE id=$2", [newBalance, req.user.id]);
+
+      // 3. Record transaction for the withdrawal hold
+      await client.query(`
+        INSERT INTO transactions (user_id, type, amount, description, balance_before, balance_after)
+        VALUES ($1,'withdrawal_hold',$2,'حجز مبلغ السحب بانتظار مراجعة الأدمن',$3,$4)
+      `, [req.user.id, -amount, balance, balance - amount]);
+
+      // 4. Record transaction for the permanent deletion of the $5 locked bonus portion
+      await client.query(`
+        INSERT INTO transactions (user_id, type, amount, description, balance_before, balance_after)
+        VALUES ($1,'bonus_settlement',-5.00,'إلغاء 50% من البونص الترحيبي عند أول عملية سحب',$2,$3)
+      `, [req.user.id, balance - amount, newBalance]);
+
+    } else {
+      // Normal withdrawal flow
+      await client.query("UPDATE users SET balance=balance-$1 WHERE id=$2", [amount, req.user.id]);
+      await client.query(`
+        INSERT INTO withdrawals (user_id, amount, coin, wallet_address)
+        VALUES ($1,$2,$3,$4)
+      `, [req.user.id, amount, coin, wallet]);
+      await client.query(`
+        INSERT INTO transactions (user_id, type, amount, description, balance_before, balance_after)
+        VALUES ($1,'withdrawal_hold',$2,'حجز مبلغ السحب بانتظار مراجعة الأدمن',$3,$4)
+      `, [req.user.id, -amount, balance, balance - amount]);
+    }
+
     await client.query("COMMIT");
     res.status(201).json({ success: true });
   } catch (err) {
@@ -1496,6 +1540,66 @@ app.get("/api/wallets", async (_req, res) => {
 
 /* Admin */
 
+app.get("/api/admin/diagnose-files", auth, adminOnly, async (req, res) => {
+  try {
+    const kyc = await query("SELECT id, user_id, front_image, back_image, selfie_image FROM user_kyc");
+    const deposits = await query("SELECT id, user_id, proof_image FROM deposits");
+    const results = [];
+    
+    for (const row of kyc.rows) {
+      if (row.front_image) {
+        const frontName = path.basename(row.front_image);
+        const frontPath = path.join(uploadDir, frontName);
+        results.push({
+          type: 'kyc_front',
+          id: row.id,
+          user_id: row.user_id,
+          db_value: row.front_image,
+          resolved_path: frontPath,
+          exists: fs.existsSync(frontPath)
+        });
+      }
+      if (row.back_image) {
+        const backName = path.basename(row.back_image);
+        const backPath = path.join(uploadDir, backName);
+        results.push({
+          type: 'kyc_back',
+          id: row.id,
+          user_id: row.user_id,
+          db_value: row.back_image,
+          resolved_path: backPath,
+          exists: fs.existsSync(backPath)
+        });
+      }
+    }
+
+    for (const row of deposits.rows) {
+      if (row.proof_image) {
+        const proofName = path.basename(row.proof_image);
+        const proofPath = path.join(uploadDir, proofName);
+        results.push({
+          type: 'deposit_proof',
+          id: row.id,
+          user_id: row.user_id,
+          db_value: row.proof_image,
+          resolved_path: proofPath,
+          exists: fs.existsSync(proofPath)
+        });
+      }
+    }
+
+    res.json({
+      upload_dir: uploadDir,
+      upload_dir_exists: fs.existsSync(uploadDir),
+      total_checked: results.length,
+      files: results
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get("/api/admin/stats", auth, adminOnly, async (_req, res) => {
   const [users, pendingKyc, pendingDeposits, pendingWithdrawals, balances, deposits, withdrawals] = await Promise.all([
     query("SELECT COUNT(*)::int AS count FROM users WHERE role='user'"),
@@ -1536,6 +1640,17 @@ app.post("/api/admin/wallets", auth, adminOnly, async (req, res) => {
     RETURNING *
   `, [coin, address, network]);
   res.json({ wallet: result.rows[0] });
+});
+
+app.delete("/api/admin/wallets/:coin", auth, adminOnly, async (req, res) => {
+  try {
+    const coin = lower(req.params.coin);
+    await query("DELETE FROM wallet_addresses WHERE coin=$1", [coin]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to delete wallet." });
+  }
 });
 
 

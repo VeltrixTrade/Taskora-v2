@@ -4220,10 +4220,6 @@
                 <span>مبنى تاسكورا، الطابق الرابع، شارع الاستقلال 45، ليماسول، قبرص</span>
               </div>
               <div class="footer-contact-item" style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #94a3b8; direction: rtl; justify-content: flex-start;">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: rgba(255,255,255,0.6); flex-shrink: 0;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                <a href="tel:+35725896450" style="color: inherit; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#ffffff'" onmouseout="this.style.color='inherit'">+357 25 896 450</a>
-              </div>
-              <div class="footer-contact-item" style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #94a3b8; direction: rtl; justify-content: flex-start;">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: rgba(255,255,255,0.6); flex-shrink: 0;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                 <a href="mailto:support@taskora.live" style="color: inherit; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#ffffff'" onmouseout="this.style.color='inherit'">support@taskora.live</a>
               </div>
@@ -4339,7 +4335,12 @@ async function openSecureFile(filePath){
   try{
     setLoading(true);
     const res = await fetch(filePath, { headers: headers(false) });
-    if(!res.ok) throw new Error("لا يمكن فتح الملف أو لا تملك صلاحية الوصول.");
+    if(!res.ok) {
+      if (res.status === 404) {
+        throw new Error("عذراً، لم يتم العثور على الملف على الخادم (غالباً بسبب إعادة تشغيل خادم Railway ومسح الملفات المؤقتة).");
+      }
+      throw new Error(`تعذر فتح الملف: رمز الخطأ ${res.status} (${res.statusText || 'غير معروف'})`);
+    }
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     window.open(url, "_blank");
@@ -5137,7 +5138,7 @@ async function renderWallet(){
       <div class="card"><h3>طلب إيداع</h3>
         <label>العملة</label><select id="depCoin" onchange="showDepositWallet()">${options}</select>
         <div id="depositWalletBox"></div>
-        <label>المبلغ المطلوب تحويله بالعملة الرقمية (Binance Live)</label>
+        <label>المبلغ المطلوب تحويله بالعملة الرقمية</label>
         <div id="cryptoCalcBox" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(108, 77, 255, 0.2); border-radius: 12px; padding: 14px; margin-bottom: 12px; font-weight: 700; color: #fff; text-align: center; font-size: 14px; line-height: 1.6;">
           أدخل المبلغ بـ USD لحساب القيمة بالعملة الرقمية...
         </div>
@@ -5147,12 +5148,15 @@ async function renderWallet(){
         <button class="btn green full mt" onclick="deposit()">إرسال للمراجعة</button>
       </div>
       <div class="card"><h3>طلب سحب</h3>
-        <label>العملة</label><select id="wdCoin" onchange="updateCryptoWdCalculation()">${options}</select>
-        <label>المبلغ التقديري بالعملة الرقمية (Binance Live)</label>
-        <div id="cryptoWdCalcBox" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(108, 77, 255, 0.2); border-radius: 12px; padding: 14px; margin-bottom: 12px; font-weight: 700; color: #fff; text-align: center; font-size: 14px; line-height: 1.6;">
-          أدخل المبلغ بـ USD لحساب القيمة التقريبية بالعملة الرقمية...
+        <label>العملة</label><select id="wdCoin">${options}</select>
+        <label>المبلغ بـ (USD)</label><input id="wdAmount" type="number" min="1" placeholder="أدخل قيمة السحب بالدولار">
+        <div class="withdrawal-balance-label" style="font-size: 13px; color: #10b981; font-weight: 700; margin-top: 6px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; direction: rtl; justify-content: flex-start;">
+          <span style="display: flex; align-items: center; gap: 4px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #10b981;"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            الرصيد المتاح للسحب:
+          </span>
+          <span style="font-size: 14px; color: #ffffff; background: rgba(16, 185, 129, 0.15); padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.3); font-family: 'Rajdhani', sans-serif; text-shadow: 0 0 8px rgba(16, 185, 129, 0.4);">${money(me.balance)}</span>
         </div>
-        <label>المبلغ بـ (USD)</label><input id="wdAmount" type="number" min="1" oninput="updateCryptoWdCalculation()" placeholder="أدخل قيمة السحب بالدولار">
         <label>عنوان محفظتك للاستلام</label><input id="wdAddress" placeholder="أدخل عنوان المحفظة بدقة">
         <label>تأكيد عنوان المحفظة</label><input id="wdConfirmAddress" placeholder="أعد إدخال عنوان المحفظة للتأكيد">
         <button class="btn primary full mt" onclick="withdraw()">طلب السحب</button>
@@ -5206,7 +5210,28 @@ async function deposit(){
     toast(e.message, "error");
   }
 }
-async function withdraw(){ try{ await api("/api/withdrawals",{method:"POST",headers:headers(),body:JSON.stringify({coin:wdCoin.value,amount:wdAmount.value,wallet_address:wdAddress.value,confirm_wallet_address:wdConfirmAddress.value})}); toast("تم إرسال السحب للمراجعة", "success"); await loadMe(); }catch(e){ toast(e.message, "error"); } }
+async function withdraw(){
+  try{
+    await api("/api/withdrawals",{
+      method:"POST",
+      headers:headers(),
+      body:JSON.stringify({
+        coin:wdCoin.value,
+        amount:wdAmount.value,
+        wallet_address:wdAddress.value,
+        confirm_wallet_address:wdConfirmAddress.value
+      })
+    });
+    toast("تم إرسال السحب للمراجعة", "success");
+    await loadMe();
+    if(document.getElementById("wdAmount")) document.getElementById("wdAmount").value = "";
+    if(document.getElementById("wdAddress")) document.getElementById("wdAddress").value = "";
+    if(document.getElementById("wdConfirmAddress")) document.getElementById("wdConfirmAddress").value = "";
+    setDash("overview");
+  }catch(e){
+    toast(e.message, "error");
+  }
+}
 
 
 function simpleBarChart(rows, labelKey="day", valueKey="total"){
@@ -5328,7 +5353,7 @@ async function createTicket(){
 }
 async function adminSupportTickets(){
   const d = await api("/api/admin/support/tickets",{headers:headers()});
-  document.getElementById("adminMain").innerHTML = `
+  adminBox.innerHTML = `
     <div class="admin-panel">
       <h3>تذاكر الدعم الفني</h3>
       <div class="table-wrap">
@@ -5461,7 +5486,7 @@ async function renderReferrals(){
     d = { referral_code: me.referral_code || "TASKORA", invited: [], total_bonus: 0 };
     toast("تعذر تحميل بيانات الدعوات من السيرفر، تم عرض البيانات الأساسية.", "error");
   }
-  const link = `${location.origin}/?ref=${d.referral_code}`;
+  const link = `https://taskora.live/?ref=${d.referral_code}`;
   document.getElementById("dashContent").innerHTML = `
     <div class="referral-panel">
       <div class="card">
@@ -5836,12 +5861,36 @@ async function adminKycUnverified(){
 async function adminDeposits(){
   markAdminNav("deposits");
   const d=await api("/api/admin/deposits",{headers:headers()});
-  adminBox.innerHTML=`<h3>مراجعة الإيداعات</h3><div class="table-wrap"><table><thead><tr><th>المستخدم</th><th>المبلغ</th><th>العملة</th><th>TXID</th><th>الإثبات</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>${d.deposits.map(x=>`<tr><td>${x.username}<br>${x.email}</td><td class="money-cell">${money(x.amount)}</td><td>${x.coin}</td><td style="direction:ltr;text-align:left">${x.txid}</td><td>${x.proof_image?`<button class="file-btn" onclick="openSecureFile('${x.proof_image}')">فتح</button>`:"-"}</td><td>${x.status}</td><td><div class="admin-actions"><button class="mini-btn green" onclick="adminAction('/api/admin/deposits/${x.id}/approve')">قبول</button><button class="mini-btn red" onclick="adminAction('/api/admin/deposits/${x.id}/reject')">رفض</button></div></td></tr>`).join("")}</tbody></table></div>`;
+  const pending = d.deposits.filter(x => x.status === "pending");
+  const archived = d.deposits.filter(x => x.status !== "pending");
+  const getCoinLabel = (coin) => {
+    if (coin === "usdt_trc20") return "USDT (TRC20)";
+    if (coin === "usdt_erc20") return "USDT (ERC20)";
+    return coin.toUpperCase();
+  };
+  adminBox.innerHTML=`<h3>مراجعة الإيداعات</h3>
+    <div style="margin-bottom: 24px; font-weight: 700; color: #fff; font-size: 15px;">📥 طلبات الإيداع المعلقة (${pending.length})</div>
+    ${pending.length ? `<div class="table-wrap"><table><thead><tr><th>المستخدم</th><th>المبلغ</th><th>العملة</th><th>TXID</th><th>الإثبات</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>${pending.map(x=>`<tr><td><b>${x.username}</b><br><span class="muted">${x.email}</span></td><td class="money-cell" style="font-weight:700;">${money(x.amount)}</td><td><span style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; font-size:11px;">${getCoinLabel(x.coin)}</span></td><td style="direction:ltr;text-align:left; font-family:monospace; font-size:11px;">${x.txid}</td><td>${x.proof_image?`<button class="file-btn" onclick="openSecureFile('${x.proof_image}')">فتح</button>`:"-"}</td><td><span class="status pending">معلق</span></td><td><div class="admin-actions"><button class="mini-btn green" onclick="adminAction('/api/admin/deposits/${x.id}/approve')">قبول</button><button class="mini-btn red" onclick="adminAction('/api/admin/deposits/${x.id}/reject')">رفض</button></div></td></tr>`).join("")}</tbody></table></div>` : `<div class="admin-empty" style="margin-bottom:24px;">لا توجد طلبات إيداع معلقة حاليًا.</div>`}
+    
+    <div style="margin-top: 36px; margin-bottom: 24px; font-weight: 700; color: #a1a1aa; font-size: 15px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 24px;">📚 أرشيف الإيداعات السابقة (${archived.length})</div>
+    ${archived.length ? `<div class="table-wrap"><table style="opacity:0.9;"><thead><tr><th>المستخدم</th><th>المبلغ</th><th>العملة</th><th>TXID</th><th>الإثبات</th><th>الحالة</th><th>ملاحظة الأدمن</th></tr></thead><tbody>${archived.map(x=>`<tr><td><b>${x.username}</b><br><span class="muted">${x.email}</span></td><td class="money-cell" style="color:#ffffff;">${money(x.amount)}</td><td><span style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; font-size:11px;">${getCoinLabel(x.coin)}</span></td><td style="direction:ltr;text-align:left; font-family:monospace; font-size:11px; color:#8e8e93;">${x.txid}</td><td>${x.proof_image?`<button class="file-btn" onclick="openSecureFile('${x.proof_image}')">فتح</button>`:"-"}</td><td><span class="status ${x.status==='approved'?'verified':'rejected'}">${x.status==='approved'?'مقبول':'مرفوض'}</span></td><td style="font-size:12px; color:#8e8e93;">${x.admin_note||"-"}</td></tr>`).join("")}</tbody></table></div>` : `<div class="admin-empty">الأرشيف فارغ حالياً.</div>`}`;
 }
 async function adminWithdrawals(){
   markAdminNav("withdrawals");
   const d=await api("/api/admin/withdrawals",{headers:headers()});
-  adminBox.innerHTML=`<h3>مراجعة السحوبات</h3><div class="table-wrap"><table><thead><tr><th>المستخدم</th><th>المبلغ</th><th>العملة</th><th>المحفظة</th><th>KYC</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>${d.withdrawals.map(x=>`<tr><td>${x.username}<br>${x.email}</td><td class="money-cell">${money(x.amount)}</td><td>${x.coin}</td><td style="direction:ltr;text-align:left">${x.wallet_address}</td><td>${x.kyc_status}</td><td>${x.status}</td><td><div class="admin-actions"><button class="mini-btn green" onclick="approveWithdrawal(${x.id})">قبول</button><button class="mini-btn red" onclick="adminAction('/api/admin/withdrawals/${x.id}/reject')">رفض</button></div></td></tr>`).join("")}</tbody></table></div>`;
+  const pending = d.withdrawals.filter(x => x.status === "pending");
+  const archived = d.withdrawals.filter(x => x.status !== "pending");
+  const getCoinLabel = (coin) => {
+    if (coin === "usdt_trc20") return "USDT (TRC20)";
+    if (coin === "usdt_erc20") return "USDT (ERC20)";
+    return coin.toUpperCase();
+  };
+  adminBox.innerHTML=`<h3>مراجعة السحوبات</h3>
+    <div style="margin-bottom: 24px; font-weight: 700; color: #fff; font-size: 15px;">📤 طلبات السحب المعلقة (${pending.length})</div>
+    ${pending.length ? `<div class="table-wrap"><table><thead><tr><th>المستخدم</th><th>المبلغ</th><th>العملة</th><th>المحفظة</th><th>KYC</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>${pending.map(x=>`<tr><td><b>${x.username}</b><br><span class="muted">${x.email}</span></td><td class="money-cell" style="font-weight:700;">${money(x.amount)}</td><td><span style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; font-size:11px;">${getCoinLabel(x.coin)}</span></td><td style="direction:ltr;text-align:left; font-family:monospace; font-size:11px;">${x.wallet_address}</td><td><span class="status ${x.kyc_status==='verified'?'verified':'rejected'}">${x.kyc_status}</span></td><td><span class="status pending">معلق</span></td><td><div class="admin-actions"><button class="mini-btn green" onclick="approveWithdrawal(${x.id})">قبول</button><button class="mini-btn red" onclick="adminAction('/api/admin/withdrawals/${x.id}/reject')">رفض</button></div></td></tr>`).join("")}</tbody></table></div>` : `<div class="admin-empty" style="margin-bottom:24px;">لا توجد طلبات سحب معلقة حاليًا.</div>`}
+    
+    <div style="margin-top: 36px; margin-bottom: 24px; font-weight: 700; color: #a1a1aa; font-size: 15px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 24px;">📚 أرشيف السحوبات السابقة (${archived.length})</div>
+    ${archived.length ? `<div class="table-wrap"><table style="opacity:0.9;"><thead><tr><th>المستخدم</th><th>المبلغ</th><th>العملة</th><th>المحفظة</th><th>الحالة</th><th>TXID التحويل</th><th>ملاحظة الأدمن</th></tr></thead><tbody>${archived.map(x=>`<tr><td><b>${x.username}</b><br><span class="muted">${x.email}</span></td><td class="money-cell" style="color:#ffffff;">${money(x.amount)}</td><td><span style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; font-size:11px;">${getCoinLabel(x.coin)}</span></td><td style="direction:ltr;text-align:left; font-family:monospace; font-size:11px; color:#8e8e93;">${x.wallet_address}</td><td><span class="status ${x.status==='approved'?'verified':'rejected'}">${x.status==='approved'?'مقبول':'مرفوض'}</span></td><td style="direction:ltr;text-align:left; font-family:monospace; font-size:11px; color:#8e8e93;">${x.txid||"-"}</td><td style="font-size:12px; color:#8e8e93;">${x.admin_note||"-"}</td></tr>`).join("")}</tbody></table></div>` : `<div class="admin-empty">الأرشيف فارغ حالياً.</div>`}`;
 }
 function approveWithdrawal(id){
   document.getElementById("adminModal").innerHTML = `<div class="modal"><h3>قبول السحب</h3><label>TXID عملية التحويل</label><input id="withdrawTxid" class="admin-input" placeholder="اختياري لكن مهم للتوثيق"><label>ملاحظة</label><textarea id="withdrawNote" class="admin-input"></textarea><div class="admin-actions mt"><button class="btn green" onclick="saveApproveWithdrawal(${id})">قبول السحب</button><button class="btn" onclick="closeAdminModal()">إلغاء</button></div></div>`;
@@ -5857,9 +5906,24 @@ async function saveApproveWithdrawal(id){
 async function adminWallets(){
   markAdminNav("wallets");
   const d=await api("/api/admin/wallets",{headers:headers()});
-  adminBox.innerHTML = `<h3>محافظ الإيداع</h3><div class="card"><div class="form-grid"><div><label>العملة</label><select id="walletCoin"><option value="usdt">USDT</option><option value="bnb">BNB</option><option value="eth">ETH</option><option value="btc">BTC</option></select></div><div><label>الشبكة</label><input id="walletNetwork" class="admin-input" placeholder="TRC20 / BEP20 / ERC20"></div></div><label>عنوان المحفظة</label><input id="walletAddress" class="admin-input"><button class="btn green mt" onclick="saveWallet()">حفظ المحفظة</button></div><div class="table-wrap mt"><table><thead><tr><th>العملة</th><th>الشبكة</th><th>العنوان</th><th>آخر تعديل</th></tr></thead><tbody>${d.wallets.map(w=>`<tr><td>${w.coin.toUpperCase()}</td><td>${w.network||""}</td><td style="direction:ltr;text-align:left">${w.address}</td><td>${new Date(w.updated_at).toLocaleString("ar")}</td></tr>`).join("")}</tbody></table></div>`;
+  const getCoinLabel = (coin) => {
+    if (coin === "usdt_trc20") return "USDT (TRC20)";
+    if (coin === "usdt_erc20") return "USDT (ERC20)";
+    return coin.toUpperCase();
+  };
+  adminBox.innerHTML = `<h3>محافظ الإيداع</h3><div class="card"><div class="form-grid"><div><label>العملة</label><select id="walletCoin"><option value="usdt_trc20">USDT (TRC20)</option><option value="usdt_erc20">USDT (ERC20)</option><option value="btc">BTC</option><option value="sol">SOL</option></select></div><div><label>الشبكة</label><input id="walletNetwork" class="admin-input" placeholder="مثال: TRC20 / ERC20 / Solana"></div></div><label>عنوان المحفظة</label><input id="walletAddress" class="admin-input" placeholder="أدخل العنوان بدقة"><button class="btn green mt" onclick="saveWallet()">حفظ المحفظة</button></div><div class="table-wrap mt"><table><thead><tr><th>العملة</th><th>الشبكة</th><th>العنوان</th><th>آخر تعديل</th><th>الإجراء</th></tr></thead><tbody>${d.wallets.map(w=>`<tr><td><b>${getCoinLabel(w.coin)}</b></td><td>${w.network||""}</td><td style="direction:ltr;text-align:left">${w.address}</td><td>${new Date(w.updated_at).toLocaleString("ar")}</td><td><div class="admin-actions"><button class="mini-btn red" onclick="deleteWallet('${w.coin}')">حذف</button></div></td></tr>`).join("")}</tbody></table></div>`;
 }
 async function saveWallet(){ try{ await api("/api/admin/wallets",{method:"POST",headers:headers(),body:JSON.stringify({coin:walletCoin.value,network:walletNetwork.value,address:walletAddress.value})}); await renderAdmin(); }catch(e){ toast(e.message, "error"); } }
+async function deleteWallet(coin){
+  if(!confirm("هل أنت متأكد من حذف هذه المحفظة؟")) return;
+  try {
+    await api(`/api/admin/wallets/${coin}`, { method: "DELETE", headers: headers() });
+    toast("تم حذف المحفظة بنجاح", "success");
+    await renderAdmin();
+  } catch(e) {
+    toast(e.message, "error");
+  }
+}
 async function adminGolden(){
   markAdminNav("golden");
   const users=await api("/api/admin/users",{headers:headers()});
