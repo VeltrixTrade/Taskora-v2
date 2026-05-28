@@ -324,13 +324,20 @@ async function migrate() {
   `);
 
   await query(`
-    INSERT INTO wallet_addresses (coin, address, network)
+    INSERT INTO wallet_addresses (coin, address, network, is_active)
     VALUES
-      ('usdt', 'USDT_TRC20_WALLET_ADDRESS_HERE', 'TRC20'),
-      ('bnb', 'BNB_BEP20_WALLET_ADDRESS_HERE', 'BEP20'),
-      ('eth', 'ETH_ERC20_WALLET_ADDRESS_HERE', 'ERC20'),
-      ('btc', 'BTC_WALLET_ADDRESS_HERE', 'BTC')
-    ON CONFLICT (coin) DO NOTHING;
+      ('usdt_trc20', 'TRiN4r8FkteWnAKwdgQ6UJXh3VPSL1hbSQ', 'TRC20', true),
+      ('usdt_erc20', '0xab3f219c2132edee0203d2d1a365e281a3508021', 'ERC20', true),
+      ('btc', 'bc1q245hjxk4836qg0qg5r2w4k0szp66l3r2xp6end44gdh3d4nxft7swh7jwg', 'Bitcoin', true),
+      ('sol', 'HpJDweX8pfW2a25rbcExW7b3mhk9FLu4SsThJxzHMJYN', 'Solana', true)
+    ON CONFLICT (coin) 
+    DO UPDATE SET address = EXCLUDED.address, network = EXCLUDED.network, is_active = true;
+  `);
+
+  await query(`
+    UPDATE wallet_addresses 
+    SET is_active = false 
+    WHERE coin NOT IN ('usdt_trc20', 'usdt_erc20', 'btc', 'sol');
   `);
 
   await query(`
@@ -532,9 +539,9 @@ const PACKAGES = [
   { id: "gold", name: "الذهبية", price: 50, tasks: 12 },
   { id: "platinum", name: "البلاتينيوم", price: 100, tasks: 12 },
   { id: "vip", name: "VIP", price: 500, tasks: 12 },
-  { id: "diamond", name: "VIP النخبة", price: 1000, tasks: 12, monthly: true },
-  { id: "crown_vip", name: "VIP التاج", price: 2000, tasks: 12, monthly: true },
-  { id: "royal_vip", name: "VIP الملكية", price: 5000, tasks: 12, monthly: true }
+  { id: "diamond", name: "VIP النخبة", price: 1000, tasks: 12 },
+  { id: "crown_vip", name: "VIP التاج", price: 2000, tasks: 12 },
+  { id: "royal_vip", name: "VIP الملكية", price: 5000, tasks: 12 }
 ];
 
 const DAILY_TASKS = [
@@ -757,7 +764,7 @@ app.post("/api/auth/request-password-reset", async (req, res) => {
     const url = `${APP_URL}/reset-password?token=${token}`;
     await createNotification(pool, user.id, "طلب استعادة كلمة المرور", "تم إنشاء رابط استعادة كلمة مرور لحسابك.", "info");
 
-    res.json({ success: true, reset_url: `/reset-password?token=${token}` });
+    res.json({ success: true });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to request password reset." });
@@ -1131,7 +1138,7 @@ app.post("/api/tasks/daily/:number/complete", auth, async (req, res) => {
     const newCompleted = [...completed, taskNumber].sort((a,b) => a-b);
     const newCount = newCompleted.length;
 
-    const isMonthly = ["diamond", "crown_vip", "royal_vip"].includes(pkg.package_id);
+    const isMonthly = false;
     const originalStart = pkg.original_started_at ? new Date(pkg.original_started_at).getTime() : new Date(pkg.started_at).getTime();
     const thirtyDays = 30 * 24 * 60 * 60 * 1000;
     const monthlyExpired = isMonthly && (Date.now() - originalStart >= thirtyDays);
@@ -1216,7 +1223,7 @@ app.post("/api/deposits", auth, upload.single("proof_image"), async (req, res) =
     const txid = normalize(req.body.txid);
     if (!amount || amount <= 0) return res.status(422).json({ error: "Invalid amount." });
   if (amount < MIN_WITHDRAWAL_AMOUNT) return res.status(422).json({ error: `Minimum withdrawal amount is ${MIN_WITHDRAWAL_AMOUNT}.` });
-    if (!["usdt", "bnb", "eth", "btc"].includes(coin)) return res.status(422).json({ error: "Invalid coin." });
+    if (!["usdt_trc20", "usdt_erc20", "btc", "sol"].includes(coin)) return res.status(422).json({ error: "Invalid coin." });
     if (!txid || txid.length < 4) return res.status(422).json({ error: "TXID is required." });
 
     const duplicateTx = await query("SELECT id FROM deposits WHERE lower(txid)=lower($1) LIMIT 1", [txid]);
@@ -1224,7 +1231,10 @@ app.post("/api/deposits", auth, upload.single("proof_image"), async (req, res) =
       return res.status(409).json({ error: "This TXID has already been submitted." });
     }
 
-    const proof = req.file ? `/api/files/${req.file.filename}` : null;
+    if (!req.file) {
+      return res.status(422).json({ error: "إثبات الدفع (لقطة الشاشة) مطلوب وإجباري لإتمام الإيداع." });
+    }
+    const proof = `/api/files/${req.file.filename}`;
     const result = await query(`
       INSERT INTO deposits (user_id, amount, coin, txid, proof_image)
       VALUES ($1,$2,$3,$4,$5) RETURNING *
@@ -1244,7 +1254,7 @@ app.post("/api/withdrawals", auth, async (req, res) => {
 
   if (req.user.kyc_status !== "verified") return res.status(403).json({ error: "KYC verification is required before withdrawals." });
   if (!amount || amount <= 0) return res.status(422).json({ error: "Invalid amount." });
-  if (!["usdt", "bnb", "eth", "btc"].includes(coin)) return res.status(422).json({ error: "Invalid coin." });
+  if (!["usdt_trc20", "usdt_erc20", "btc", "sol"].includes(coin)) return res.status(422).json({ error: "Invalid coin." });
   if (!wallet || wallet.length < 10) return res.status(422).json({ error: "Wallet address is required." });
   if (wallet !== confirmWallet) return res.status(422).json({ error: "Wallet confirmation does not match." });
 
@@ -1516,7 +1526,7 @@ app.post("/api/admin/wallets", auth, adminOnly, async (req, res) => {
   const coin = lower(req.body.coin);
   const address = normalize(req.body.address);
   const network = normalize(req.body.network);
-  if (!["usdt","bnb","eth","btc"].includes(coin)) return res.status(422).json({ error: "Invalid coin." });
+  if (!["usdt_trc20","usdt_erc20","btc","sol"].includes(coin)) return res.status(422).json({ error: "Invalid coin." });
   if (!address || address.length < 6) return res.status(422).json({ error: "Wallet address is required." });
   const result = await query(`
     INSERT INTO wallet_addresses (coin, address, network, updated_at)

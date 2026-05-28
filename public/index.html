@@ -4639,9 +4639,20 @@ async function requestPasswordReset(){
   try{
     const email = authMode === "register" ? document.getElementById("regEmail").value : document.getElementById("authLogin").value;
     if(!email || !email.includes("@")) return toast("اكتب البريد الإلكتروني أولًا", "error");
-    const d = await api("/api/auth/request-password-reset",{method:"POST",headers:headers(),body:JSON.stringify({email})});
-    document.getElementById("passwordResetBox").innerHTML = d.reset_url ? `<div class="wallet-box">${location.origin}${d.reset_url}</div>` : `<div class="success mt">إذا كان البريد موجودًا، سيتم إرسال رابط الاستعادة.</div>`;
-    toast("تم إنشاء طلب استعادة كلمة المرور", "success");
+    await api("/api/auth/request-password-reset",{method:"POST",headers:headers(),body:JSON.stringify({email})});
+    
+    // Clear passwordResetBox
+    document.getElementById("passwordResetBox").innerHTML = "";
+    
+    // Pre-fill the email in the reset view
+    if (document.getElementById("resetEmail")) {
+      document.getElementById("resetEmail").value = email;
+    }
+    
+    // Show the reset password page where they can enter their OTP code
+    showView("reset");
+    
+    toast("تم إرسال رمز التحقق OTP إلى بريدك الإلكتروني بنجاح.", "success");
   }catch(e){ toast(e.message, "error"); }
 }
 async function submitPasswordReset(){
@@ -4862,9 +4873,9 @@ function getFallbackPackages(){
     {id:"gold",name:"الذهبية",price:50,profit:5,per_task:0.42},
     {id:"platinum",name:"البلاتينيوم",price:100,profit:10,per_task:0.83},
     {id:"vip",name:"VIP",price:500,profit:50,per_task:4.17},
-    {id:"diamond",name:"VIP النخبة",price:1000,profit:100,per_task:8.33,monthly:true},
-    {id:"crown_vip",name:"VIP التاج",price:2000,profit:200,per_task:16.67,monthly:true},
-    {id:"royal_vip",name:"VIP الملكية",price:5000,profit:500,per_task:41.67,monthly:true}
+    {id:"diamond",name:"VIP النخبة",price:1000,profit:100,per_task:8.33},
+    {id:"crown_vip",name:"VIP التاج",price:2000,profit:200,per_task:16.67},
+    {id:"royal_vip",name:"VIP الملكية",price:5000,profit:500,per_task:41.67}
   ];
 }
 
@@ -4895,19 +4906,18 @@ async function renderPackages(){
       <h2>اختر باقتك</h2>
       <p>اختر الباقة المناسبة لتفعيل المهام اليومية وجني الأرباح.</p>
     </div>
-    ${active ? `<div class="success">لديك باقة حالية: <b>${active.package_name}</b> — التقدم ${active.completed_count}/${["diamond", "crown_vip", "royal_vip"].includes(active.package_id) ? '12 لكل دورة' : '12'} — الحالة ${active.status}</div>` : ""}
+    ${active ? `<div class="success">لديك باقة حالية: <b>${active.package_name}</b> — التقدم ${active.completed_count}/12 — الحالة ${active.status}</div>` : ""}
     <div class="package-pro-grid mt">
       ${packages.map(p=>`
         <div class="card package-pro-card">
-          <span class="package-badge">${p.monthly || ["diamond", "crown_vip", "royal_vip"].includes(p.id) ? '12 مهمة كل 4 أيام • لمدة شهر' : '12 مهمة • 4 أيام'} • عائد 10%</span>
           <canvas class="pkg-icon3d" data-pkg-id="${p.id}" width="56" height="56" style="display:block;margin-bottom:12px;cursor:pointer;"></canvas>
           <h3>${p.name}</h3>
           <div class="package-pro-price">${money(p.price)}</div>
-          <p>${p.monthly || ["diamond", "crown_vip", "royal_vip"].includes(p.id) ? 'تظهر 3 مهام يوميًا. إجمالي 12 مهمة كل 4 أيام للحصول على 10% من قيمة الباقة.' : 'تظهر 3 مهام يوميًا. ربح المهام المستهدف ' + money(p.profit) + ' بعد 4 أيام.'}</p>
+          <p>تظهر 3 مهام يوميًا. ربح المهام المستهدف ${money(p.profit)} بعد 4 أيام.</p>
           <div class="package-feature-list">
-            <div><span>المهام</span><b>12${p.monthly || ["diamond", "crown_vip", "royal_vip"].includes(p.id) ? ' لكل دورة' : ''}</b></div>
-            <div><span>المدة</span><b>${p.monthly || ["diamond", "crown_vip", "royal_vip"].includes(p.id) ? 'شهر (30 يوم)' : '4 أيام'}</b></div>
-            <div><span>ربح مستهدف</span><b>${money(p.profit)}${p.monthly || ["diamond", "crown_vip", "royal_vip"].includes(p.id) ? ' / دورة' : ''}</b></div>
+            <div><span>المهام</span><b>12</b></div>
+            <div><span>المدة</span><b>4 أيام</b></div>
+            <div><span>ربح مستهدف</span><b>${money(p.profit)}</b></div>
             <div><span>ربح المهمة</span><b>${money(p.per_task || (p.profit/12))}</b></div>
           </div>
           <div class="admin-actions mt">
@@ -4962,7 +4972,7 @@ async function renderTasks(){
     "بيع تذكرة مباريات","إكمال طلب سحب","بيع تذكرة فيلم","بيع تذكرة حفلة","تأكيد طلب شراء","مراجعة طلب خدمة","بيع تذكرة سفر","إكمال طلب دفع","تنفيذ طلب متجر","تأكيد عملية محفظة","بيع قسيمة رقمية","إكمال طلب نهائي"
   ].map((title,index)=>({number:index+1,title}))).slice(0, 12);
 
-  const isMonthly = ["diamond", "crown_vip", "royal_vip"].includes(pkg.package_id);
+  const isMonthly = false;
 
   document.getElementById("dashContent").innerHTML = `
     <div class="card">
@@ -5009,37 +5019,193 @@ async function buyPackage(id){
   }
 }
 async function completeTask(n){ try{ await api("/api/tasks/daily/"+n+"/complete",{method:"POST",headers:headers(),body:"{}"}); toast("تم إكمال المهمة", "success"); await loadMe(); setDash("tasks"); }catch(e){ toast(e.message, "error"); } }
+let cryptoPrices = { btc: 0, sol: 0 };
+async function fetchCryptoPrices() {
+  try {
+    const [btcRes, solRes] = await Promise.all([
+      fetch("https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT").then(r => r.json()),
+      fetch("https://api.binance.com/api/v3/ticker/price?symbol=SOLUSDT").then(r => r.json())
+    ]);
+    if (btcRes && btcRes.price) cryptoPrices.btc = Number(btcRes.price);
+    if (solRes && solRes.price) cryptoPrices.sol = Number(solRes.price);
+    updateCryptoCalculation();
+    updateCryptoWdCalculation();
+  } catch (err) {
+    console.error("Error fetching Binance prices:", err);
+  }
+}
+function updateCryptoCalculation() {
+  const coin = document.getElementById("depCoin")?.value;
+  const amount = Number(document.getElementById("depAmount")?.value || 0);
+  const calcBox = document.getElementById("cryptoCalcBox");
+  if (!calcBox) return;
+
+  if (amount <= 0) {
+    calcBox.innerHTML = "أدخل المبلغ بـ USD لحساب القيمة بالعملة الرقمية...";
+    return;
+  }
+
+  const getCoinLabel = (coin) => {
+    if (coin === "usdt_trc20") return "USDT";
+    if (coin === "usdt_erc20") return "USDT";
+    return coin.toUpperCase();
+  };
+
+  let finalAmount = 0;
+  let symbol = "";
+
+  if (coin === "usdt_trc20" || coin === "usdt_erc20" || coin === "usdt") {
+    finalAmount = amount;
+    symbol = "USDT";
+    calcBox.innerHTML = `المبلغ المطلوب إرساله:<br><span style="color: #10b981; font-size: 20px; font-weight: 800;">${finalAmount.toFixed(2)} ${symbol}</span>`;
+  } else if (coin === "btc") {
+    const price = cryptoPrices.btc;
+    if (price > 0) {
+      finalAmount = amount / price;
+      symbol = "BTC";
+      calcBox.innerHTML = `سعر BTC المباشر: $${price.toLocaleString()}<br>المبلغ المطلوب إرساله:<br><span style="color: #10b981; font-size: 20px; font-weight: 800;">${finalAmount.toFixed(8)} ${symbol}</span>`;
+    } else {
+      calcBox.innerHTML = "جاري جلب سعر BTC من Binance...";
+    }
+  } else if (coin === "sol") {
+    const price = cryptoPrices.sol;
+    if (price > 0) {
+      finalAmount = amount / price;
+      symbol = "SOL";
+      calcBox.innerHTML = `سعر SOL المباشر: $${price.toLocaleString()}<br>المبلغ المطلوب إرساله:<br><span style="color: #10b981; font-size: 20px; font-weight: 800;">${finalAmount.toFixed(4)} ${symbol}</span>`;
+    } else {
+      calcBox.innerHTML = "جاري جلب سعر SOL من Binance...";
+    }
+  }
+}
+
+function updateCryptoWdCalculation() {
+  const coin = document.getElementById("wdCoin")?.value;
+  const amount = Number(document.getElementById("wdAmount")?.value || 0);
+  const calcBox = document.getElementById("cryptoWdCalcBox");
+  if (!calcBox) return;
+
+  if (amount <= 0) {
+    calcBox.innerHTML = "أدخل المبلغ بـ USD لحساب القيمة التقريبية بالعملة الرقمية...";
+    return;
+  }
+
+  const getCoinLabel = (coin) => {
+    if (coin === "usdt_trc20") return "USDT";
+    if (coin === "usdt_erc20") return "USDT";
+    return coin.toUpperCase();
+  };
+
+  let finalAmount = 0;
+  let symbol = "";
+
+  if (coin === "usdt_trc20" || coin === "usdt_erc20" || coin === "usdt") {
+    finalAmount = amount;
+    symbol = "USDT";
+    calcBox.innerHTML = `المبلغ التقديري الذي ستستلمه:<br><span style="color: #10b981; font-size: 20px; font-weight: 800;">${finalAmount.toFixed(2)} ${symbol}</span>`;
+  } else if (coin === "btc") {
+    const price = cryptoPrices.btc;
+    if (price > 0) {
+      finalAmount = amount / price;
+      symbol = "BTC";
+      calcBox.innerHTML = `سعر BTC المباشر: $${price.toLocaleString()}<br>المبلغ التقديري الذي ستستلمه:<br><span style="color: #10b981; font-size: 20px; font-weight: 800;">${finalAmount.toFixed(8)} ${symbol}</span>`;
+    } else {
+      calcBox.innerHTML = "جاري جلب سعر BTC من Binance...";
+    }
+  } else if (coin === "sol") {
+    const price = cryptoPrices.sol;
+    if (price > 0) {
+      finalAmount = amount / price;
+      symbol = "SOL";
+      calcBox.innerHTML = `سعر SOL المباشر: $${price.toLocaleString()}<br>المبلغ التقديري الذي ستستلمه:<br><span style="color: #10b981; font-size: 20px; font-weight: 800;">${finalAmount.toFixed(4)} ${symbol}</span>`;
+    } else {
+      calcBox.innerHTML = "جاري جلب سعر SOL من Binance...";
+    }
+  }
+}
+
 async function renderWallet(){
   const w = await api("/api/wallets");
-  const options = w.wallets.map(x => `<option value="${x.coin}">${x.coin.toUpperCase()} - ${x.network || ""}</option>`).join("") || `<option value="usdt">USDT</option>`;
+  const getCoinLabel = (coin) => {
+    if (coin === "usdt_trc20") return "USDT";
+    if (coin === "usdt_erc20") return "USDT";
+    return coin.toUpperCase();
+  };
+  const options = w.wallets.map(x => `<option value="${x.coin}">${getCoinLabel(x.coin)} - ${x.network || ""}</option>`).join("") || `<option value="usdt">USDT</option>`;
   document.getElementById("dashContent").innerHTML = `
     <div class="wallet-layout">
       <div class="card"><h3>طلب إيداع</h3>
         <label>العملة</label><select id="depCoin" onchange="showDepositWallet()">${options}</select>
         <div id="depositWalletBox"></div>
-        <label>المبلغ</label><input id="depAmount" type="number" min="1">
-        <label>TXID</label><input id="depTxid">
-        <label>إثبات - اختياري</label><input id="depProof" type="file" accept="image/*,.pdf">
+        <label>المبلغ المطلوب تحويله بالعملة الرقمية (Binance Live)</label>
+        <div id="cryptoCalcBox" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(108, 77, 255, 0.2); border-radius: 12px; padding: 14px; margin-bottom: 12px; font-weight: 700; color: #fff; text-align: center; font-size: 14px; line-height: 1.6;">
+          أدخل المبلغ بـ USD لحساب القيمة بالعملة الرقمية...
+        </div>
+        <label>المبلغ بـ (USD)</label><input id="depAmount" type="number" min="1" oninput="updateCryptoCalculation()" placeholder="أدخل القيمة بالدولار">
+        <label>رقم المعاملة (TXID)</label><input id="depTxid" placeholder="أدخل رقم الـ hash الخاص بالمعاملة">
+        <label>إثبات الدفع (لقطة شاشة) - إجباري</label><input id="depProof" type="file" accept="image/*,.pdf">
         <button class="btn green full mt" onclick="deposit()">إرسال للمراجعة</button>
       </div>
       <div class="card"><h3>طلب سحب</h3>
-        <label>العملة</label><select id="wdCoin">${options}</select>
-        <label>المبلغ</label><input id="wdAmount" type="number" min="1">
-        <label>عنوان محفظتك</label><input id="wdAddress"><label>تأكيد عنوان المحفظة</label><input id="wdConfirmAddress">
+        <label>العملة</label><select id="wdCoin" onchange="updateCryptoWdCalculation()">${options}</select>
+        <label>المبلغ التقديري بالعملة الرقمية (Binance Live)</label>
+        <div id="cryptoWdCalcBox" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(108, 77, 255, 0.2); border-radius: 12px; padding: 14px; margin-bottom: 12px; font-weight: 700; color: #fff; text-align: center; font-size: 14px; line-height: 1.6;">
+          أدخل المبلغ بـ USD لحساب القيمة التقريبية بالعملة الرقمية...
+        </div>
+        <label>المبلغ بـ (USD)</label><input id="wdAmount" type="number" min="1" oninput="updateCryptoWdCalculation()" placeholder="أدخل قيمة السحب بالدولار">
+        <label>عنوان محفظتك للاستلام</label><input id="wdAddress" placeholder="أدخل عنوان المحفظة بدقة">
+        <label>تأكيد عنوان المحفظة</label><input id="wdConfirmAddress" placeholder="أعد إدخال عنوان المحفظة للتأكيد">
         <button class="btn primary full mt" onclick="withdraw()">طلب السحب</button>
-        <div class="notice mt">لا يمكن السحب إلا بعد قبول التوثيق من الإدارة.</div>
+        <div class="notice mt">لا يمكن السحب إلا بعد قبول التوثيق (KYC) من الإدارة.</div>
       </div>
     </div>
     ${taskoraAdsenseUnit("walletBottom", taskoraLangText("صفحة المحفظة", "Wallet page"))}`;
   window.__wallets = w.wallets;
   showDepositWallet();
+  fetchCryptoPrices();
+  if (window.__cryptoInterval) clearInterval(window.__cryptoInterval);
+  window.__cryptoInterval = setInterval(fetchCryptoPrices, 60000);
 }
 function showDepositWallet(){
   const coin = document.getElementById("depCoin")?.value;
   const item = (window.__wallets || []).find(x => x.coin === coin);
-  document.getElementById("depositWalletBox").innerHTML = item ? `<div class="wallet-box">${item.coin.toUpperCase()} ${item.network || ""}<br>${item.address}<br><img class="qr-img" src="${item.qr}" alt="QR"></div>` : "";
+  const getCoinLabel = (coin) => {
+    if (coin === "usdt_trc20") return "USDT";
+    if (coin === "usdt_erc20") return "USDT";
+    return coin.toUpperCase();
+  };
+  document.getElementById("depositWalletBox").innerHTML = item ? `<div class="wallet-box" style="padding: 16px; background: rgba(0,0,0,0.15); border-radius:12px; margin-bottom:16px;">
+    <strong>${getCoinLabel(item.coin)} - شبكة (${item.network || ""})</strong><br>
+    <code style="display:block; margin: 10px 0; font-size:12px; color:#c7d2fe; word-break:break-all; background:rgba(0,0,0,0.3); padding:8px; border-radius:6px; user-select:all;">${item.address}</code>
+    <img class="qr-img" src="${item.qr}" alt="QR" style="display:block; margin: 10px auto; max-width:140px; border-radius:8px; background:#fff; padding:6px;">
+  </div>` : "";
+  updateCryptoCalculation();
 }
-async function deposit(){ try{ const fd=new FormData(); fd.append("coin",depCoin.value); fd.append("amount",depAmount.value); fd.append("txid",depTxid.value); if(depProof.files[0]) fd.append("proof_image",depProof.files[0]); await api("/api/deposits",{method:"POST",headers:headers(false),body:fd}); toast("تم إرسال الإيداع للمراجعة", "success"); }catch(e){ toast(e.message, "error"); } }
+async function deposit(){
+  try{
+    if(!depAmount.value || Number(depAmount.value) <= 0) return toast("يرجى إدخال مبلغ إيداع صحيح.", "error");
+    if(!depTxid.value || depTxid.value.trim().length < 4) return toast("يرجى إدخال رقم المعاملة (TXID) بدقة.", "error");
+    if(!depProof.files[0]) return toast("إثبات الدفع (لقطة الشاشة) مطلوب وإجباري لإكمال العملية.", "error");
+
+    const fd=new FormData();
+    fd.append("coin",depCoin.value);
+    fd.append("amount",depAmount.value);
+    fd.append("txid",depTxid.value);
+    fd.append("proof_image",depProof.files[0]);
+
+    await api("/api/deposits",{method:"POST",headers:headers(false),body:fd});
+    
+    // Clear inputs
+    depAmount.value = "";
+    depTxid.value = "";
+    depProof.value = "";
+    updateCryptoCalculation();
+
+    toast("تم إرسال طلب الإيداع بنجاح، وطلبك قيد المراجعة حالياً.", "success");
+  }catch(e){
+    toast(e.message, "error");
+  }
+}
 async function withdraw(){ try{ await api("/api/withdrawals",{method:"POST",headers:headers(),body:JSON.stringify({coin:wdCoin.value,amount:wdAmount.value,wallet_address:wdAddress.value,confirm_wallet_address:wdConfirmAddress.value})}); toast("تم إرسال السحب للمراجعة", "success"); await loadMe(); }catch(e){ toast(e.message, "error"); } }
 
 
@@ -5325,7 +5491,7 @@ function openPackageDetail(id){
   if(!p){ toast("لم يتم العثور على تفاصيل الباقة", "error"); return; }
   const active = window.__activePackage;
   
-  const isMonthly = p.monthly || ["diamond", "crown_vip", "royal_vip"].includes(p.id);
+  const isMonthly = false;
   
   document.getElementById("adminModal").innerHTML = `<div class="modal package-detail-modal">
     <h2>${p.name}</h2>
