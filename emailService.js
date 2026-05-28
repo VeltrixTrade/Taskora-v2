@@ -3,7 +3,10 @@ const { Resend } = require("resend");
 // Initialize Resend with the environment API Key
 const apiKey = process.env.RESEND_API_KEY || "re_J9FCQ94f_3JFsuzoRrMLHypf2YPqyF1Zr";
 const resend = apiKey ? new Resend(apiKey) : null;
-const MAIL_FROM = process.env.MAIL_FROM || "Taskora <onboarding@resend.dev>";
+let MAIL_FROM = process.env.MAIL_FROM || "Taskora <noreply@taskora.live>";
+if (!MAIL_FROM || MAIL_FROM.includes("onboarding@resend.dev") || MAIL_FROM.includes("resend.dev")) {
+  MAIL_FROM = "Taskora <noreply@taskora.live>";
+}
 
 /**
  * Base email sending utility using official Resend API client.
@@ -18,6 +21,13 @@ Content: ${html.replace(/<[^>]*>/g, " ").trim().slice(0, 300)}...`);
     return { dev: true };
   }
 
+  // Diagnostic print before sending
+  console.log("Sending email via Resend API:", {
+    from: MAIL_FROM,
+    to: to,
+    subject: subject
+  });
+
   try {
     const data = await resend.emails.send({
       from: MAIL_FROM,
@@ -25,7 +35,10 @@ Content: ${html.replace(/<[^>]*>/g, " ").trim().slice(0, 300)}...`);
       subject: subject,
       html: html,
     });
-    console.log(`[Resend Email Sent Success] Message ID: ${data.data?.id}`);
+    
+    // Diagnostic print after sending
+    console.log("Resend API Response:", data);
+    
     return data;
   } catch (error) {
     console.error("[Resend Email Send Error]:", error);
