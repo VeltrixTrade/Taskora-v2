@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta name="taskora-version" content="remove-native-res-json-v7">
+  <meta name="taskora-version" content="v11-premium-homepage">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Taskora منصة استثمار رقمية مع تسجيل، توثيق، محفظة، ولوحة أدمن." />
@@ -846,6 +846,16 @@
       box-shadow: 0 10px 24px rgba(255, 255, 255, 0.1) !important;
       color: #030304 !important;
     }
+    .user-menu button.logout-btn {
+      border-color: rgba(239, 68, 68, 0.2) !important;
+      background: rgba(239, 68, 68, 0.02) !important;
+      color: #fca5a5 !important;
+    }
+    .user-menu button.logout-btn:hover {
+      background: rgba(239, 68, 68, 0.08) !important;
+      border-color: rgba(239, 68, 68, 0.4) !important;
+      color: #ef4444 !important;
+    }
     .user-main{min-width:0}
     .dashboard-top{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;margin-bottom:16px}
     .dashboard-hero{
@@ -1266,6 +1276,16 @@
     body.light-mode .user-menu button.active {
       color: #ffffff !important;
       background: #0d0e12 !important;
+    }
+    body.light-mode .user-menu button.logout-btn {
+      color: #b91c1c !important;
+      border-color: rgba(239, 68, 68, 0.3) !important;
+      background: rgba(239, 68, 68, 0.03) !important;
+    }
+    body.light-mode .user-menu button.logout-btn:hover {
+      background: rgba(239, 68, 68, 0.1) !important;
+      border-color: #b91c1c !important;
+      color: #b91c1c !important;
     }
     body.light-mode .side-title {
       color: #64748b !important;
@@ -2707,228 +2727,8 @@
       color: #0d0e12 !important;
       filter: drop-shadow(0 0 3px rgba(13, 14, 18, 0.1));
     }
-
-    /* Google Rewarded Ads task buttons - isolated styles */
-    .task-ad-actions{display:grid;gap:10px;margin-top:14px}
-    .task-ad-status{min-height:38px;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:14px;border:1px solid rgba(108,77,255,.20);background:rgba(108,77,255,.08);font-weight:800;font-size:14px;padding:9px 12px;line-height:1.5;text-align:center}
-    .task-ad-status.ready{border-color:rgba(16,185,129,.28);background:rgba(16,185,129,.10)}
-    .task-ad-status.error{border-color:rgba(239,68,68,.28);background:rgba(239,68,68,.10)}
-    .task-ad-watch-btn,.task-ad-complete-btn{width:100%}
-    .task-ad-complete-btn:disabled{opacity:.55;cursor:not-allowed;filter:grayscale(.2)}
-    .taskora-adsense-unit{
-      margin:18px 0;
-      min-height:92px;
-      display:grid;
-      place-items:center;
-      border:1px dashed rgba(255,255,255,.14);
-      border-radius:22px;
-      background:linear-gradient(135deg,rgba(255,255,255,.035),rgba(255,255,255,.01));
-      color:var(--text);
-      overflow:hidden;
-      text-align:center;
-    }
-    .taskora-adsense-unit .adsbygoogle{width:100%;min-height:92px}
-    .taskora-adsense-pending{padding:16px}
-    .taskora-adsense-pending span{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      min-height:26px;
-      padding:4px 10px;
-      border-radius:999px;
-      background:rgba(255,255,255,.06);
-      color:#d4d4d8;
-      font-family:Inter,Tajawal,sans-serif;
-      font-size:12px;
-      font-weight:900;
-      direction:ltr;
-    }
-    .taskora-adsense-pending b{display:block;margin-top:8px;font-size:15px}
-    .taskora-adsense-pending small{display:block;margin-top:4px;color:var(--muted);line-height:1.6}
-    .dashboard-ad-anchor:empty{display:none}
-
   </style>
   <link rel="manifest" href="/manifest.json">
-  <script>
-    window.TASKORA_ADSENSE_PUBLISHER_ID = "pub-3936169440487132";
-    window.TASKORA_ADSENSE_CLIENT_ID = "ca-pub-3936169440487132";
-    window.TASKORA_GOOGLE_PUBLISHER_ID = window.TASKORA_ADSENSE_CLIENT_ID;
-    window.TASKORA_AD_MANAGER_NETWORK_CODE = "3936169440487132";
-    window.TASKORA_REWARDED_AD_UNIT_PATH = window.TASKORA_REWARDED_AD_UNIT_PATH || "/3936169440487132/taskora_tasks_rewarded";
-    window.TASKORA_ADSENSE_SLOTS = window.TASKORA_ADSENSE_SLOTS || {
-      home: "",
-      dashboardTop: "",
-      packagesBottom: "",
-      tasksBottom: "",
-      walletBottom: ""
-    };
-    window.googletag = window.googletag || { cmd: [] };
-  </script>
-  <script async src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"></script>
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3936169440487132"
-     crossorigin="anonymous"></script>
-  <meta name="google-adsense-account" content="ca-pub-3936169440487132">
-
-
-
-
-
-<script>
-/* remove-native-res-json-v7: safe API parser. */
-(function(){
-  if(window.__TASKORA_SAFE_API_V7__) return;
-  window.__TASKORA_SAFE_API_V7__ = true;
-  window.__TASKORA_API_ERRORS__ = [];
-
-  window.taskoraShowApiError = function(payload){
-    window.__TASKORA_API_ERRORS__.push(payload);
-    console.error("TASKORA API ERROR:", payload);
-
-    let box = document.getElementById("taskoraApiErrorBox");
-    if(!box){
-      box = document.createElement("div");
-      box.id = "taskoraApiErrorBox";
-      box.style.cssText = "position:fixed;z-index:999999;left:14px;right:14px;bottom:14px;max-width:780px;margin:auto;background:#160b0b;color:#fff;border:1px solid #ef4444;border-radius:18px;padding:14px 16px;font-family:Arial,sans-serif;direction:ltr;text-align:left;line-height:1.5;box-shadow:0 24px 80px rgba(0,0,0,.45)";
-      document.body.appendChild(box);
-    }
-    box.innerHTML = `
-      <b style="color:#fca5a5">API / JSON Error</b>
-      <div>URL: <code style="color:#fde68a">${taskoraEscapeHtml(payload.url || payload.path || "unknown")}</code></div>
-      <div>Status: <code>${taskoraEscapeHtml(payload.status || "unknown")}</code></div>
-      <pre style="white-space:pre-wrap;max-height:120px;overflow:auto;background:#0b1220;padding:8px;border-radius:10px;color:#e5e7eb">${taskoraEscapeHtml(payload.preview || payload.message_ar || payload.error || "")}</pre>
-      <button onclick="document.getElementById('taskoraApiErrorBox').remove()" style="border:0;border-radius:10px;padding:8px 12px;background:#ef4444;color:#fff;font-weight:700">Close</button>
-    `;
-  };
-
-  window.taskoraApiDiagnostics = function(){
-    console.table(window.__TASKORA_API_ERRORS__);
-    return window.__TASKORA_API_ERRORS__;
-  };
-
-  function taskoraEscapeHtml(value){
-    return String(value ?? "").replace(/[&<>"']/g, ch => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#039;"
-    })[ch]);
-  }
-
-  function taskoraIsApiUrl(url){
-    try{
-      const parsed = new URL(url || "", location.href);
-      return parsed.origin === location.origin && (parsed.pathname === "/api" || parsed.pathname.startsWith("/api/"));
-    }catch(_e){
-      return String(url || "").startsWith("/api");
-    }
-  }
-
-  function taskoraJsonPayload(error, res, path, text, parseError){
-    const contentType = (res.headers.get("content-type") || "").toLowerCase();
-    return {
-      error,
-      message_ar: error === "API_HTML_RESPONSE" ? "مسار API يرجع HTML بدل JSON." : "رد السيرفر ليس JSON صالح.",
-      url: res.url || path || "",
-      path: path || "",
-      status: res.status,
-      status_text: res.statusText || "",
-      content_type: contentType,
-      preview: String(text || "").slice(0, 300).replace(/\s+/g, " "),
-      parse_error: parseError ? (parseError.message || String(parseError)) : ""
-    };
-  }
-
-  if(window.Response && Response.prototype && Response.prototype.json && !Response.prototype.__TASKORA_SAFE_JSON_PATCHED__){
-    const nativeResponseJson = Response.prototype.json;
-    Object.defineProperty(Response.prototype, "__TASKORA_SAFE_JSON_PATCHED__", { value: true });
-    Response.prototype.json = async function(){
-      if(!taskoraIsApiUrl(this.url)){
-        return nativeResponseJson.apply(this, arguments);
-      }
-
-      const clone = this.clone();
-      const contentType = (clone.headers.get("content-type") || "").toLowerCase();
-      const text = await clone.text().catch(() => "");
-      const isHtml = /^\s*<!doctype\s+html/i.test(text) || /^\s*<html/i.test(text) || contentType.includes("text/html");
-
-      if(isHtml){
-        const payload = taskoraJsonPayload("API_HTML_RESPONSE", clone, this.url || "", text);
-        window.taskoraShowApiError(payload);
-        return payload;
-      }
-
-      if(!text) return {};
-
-      try{
-        return JSON.parse(text);
-      }catch(e){
-        const payload = taskoraJsonPayload("INVALID_JSON_RESPONSE", clone, this.url || "", text, e);
-        window.taskoraShowApiError(payload);
-        return payload;
-      }
-    };
-  }
-
-  window.taskoraSafeJson = async function(res, path){
-    const contentType = (res.headers.get("content-type") || "").toLowerCase();
-    const text = await res.text().catch(() => "");
-    const isHtml = /^\s*<!doctype\s+html/i.test(text) || /^\s*<html/i.test(text) || contentType.includes("text/html");
-    const url = res.url || path || "";
-
-    if(isHtml){
-      const payload = {
-        error: "API_HTML_RESPONSE",
-        message_ar: "مسار API يرجع HTML بدل JSON.",
-        url,
-        path: path || "",
-        status: res.status,
-        status_text: res.statusText || "",
-        content_type: contentType,
-        preview: text.slice(0, 300).replace(/\s+/g, " ")
-      };
-      window.taskoraShowApiError(payload);
-      return payload;
-    }
-
-    if(!text) return {};
-
-    try{
-      return JSON.parse(text);
-    }catch(e){
-      const payload = {
-        error: "INVALID_JSON_RESPONSE",
-        message_ar: "رد السيرفر ليس JSON صالح.",
-        url,
-        path: path || "",
-        status: res.status,
-        status_text: res.statusText || "",
-        content_type: contentType,
-        preview: text.slice(0, 300).replace(/\s+/g, " "),
-        parse_error: e.message || String(e)
-      };
-      window.taskoraShowApiError(payload);
-      return payload;
-    }
-  };
-
-  window.addEventListener("error", function(event){
-    if(String(event.message || "").includes("Unexpected token '<'")){
-      event.preventDefault();
-      console.warn("Ignored non-API JSON parse error:", event.message);
-    }
-  });
-
-  window.addEventListener("unhandledrejection", function(event){
-    const msg = String(event.reason && (event.reason.message || event.reason) || "");
-    if(msg.includes("Unexpected token '<'")){
-      event.preventDefault();
-      console.warn("Ignored non-API JSON parse rejection:", event.reason);
-    }
-  });
-})();
-</script>
-
 </head>
 <body>
   <!-- ====== INTRO SCREEN ====== -->
@@ -2959,7 +2759,7 @@
       </div>
       <!-- Trigger button for the left side drawer menu -->
       <div style="display: flex; align-items: center; gap: 8px;">
-        <button class="btn menu-trigger-btn" onclick="toggleSideMenu()" style="padding: 10px 14px; border-radius: 12px; clip-path: none; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); cursor: pointer;" title="Open Menu">
+        <button class="btn menu-trigger-btn" onclick="handleMenuTriggerClick()" style="padding: 10px 14px; border-radius: 12px; clip-path: none; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); cursor: pointer;" title="Open Menu">
           <span style="font-size: 18px; color: #ffffff;">☰</span>
         </button>
       </div>
@@ -3461,29 +3261,32 @@
           };
 
           window.toggleSideMenu = function() {
-            const isDashboard = document.getElementById("dashboardView").style.display === "block";
-            if (isDashboard) {
-              const isMobile = window.innerWidth <= 1100;
-              if (isMobile) {
-                toggleUserSide();
+            const backdrop = document.getElementById("sideMenuBackdrop");
+            if (!backdrop) return;
+            const isOpen = backdrop.classList.contains("open");
+            if (isOpen) {
+              backdrop.classList.remove("open");
+              setTimeout(() => {
+                backdrop.style.display = "none";
+              }, 300);
+            } else {
+              backdrop.style.display = "block";
+              setTimeout(() => {
+                backdrop.classList.add("open");
+              }, 10);
+            }
+          };
+
+          window.handleMenuTriggerClick = function() {
+            const isDash = document.getElementById("dashboardView") && document.getElementById("dashboardView").style.display === "block";
+            if (isDash) {
+              if (window.innerWidth <= 1100) {
+                if (typeof toggleUserSide === "function") toggleUserSide();
               } else {
-                toggleCollapseUserSide();
+                if (typeof toggleCollapseUserSide === "function") toggleCollapseUserSide();
               }
             } else {
-              const backdrop = document.getElementById("sideMenuBackdrop");
-              if (!backdrop) return;
-              const isOpen = backdrop.classList.contains("open");
-              if (isOpen) {
-                backdrop.classList.remove("open");
-                setTimeout(() => {
-                  backdrop.style.display = "none";
-                }, 300);
-              } else {
-                backdrop.style.display = "block";
-                setTimeout(() => {
-                  backdrop.classList.add("open");
-                }, 10);
-              }
+              if (typeof toggleSideMenu === "function") toggleSideMenu();
             }
           };
 
@@ -3870,25 +3673,15 @@
   
   <section id="resetView" class="auth-wrap">
     <div class="container">
-      <div class="card auth-box" style="backdrop-filter: blur(16px); background: rgba(21, 26, 38, 0.85); border: 1px solid rgba(108, 77, 255, 0.2);">
+      <div class="card auth-box">
         <h2>استعادة كلمة المرور</h2>
         <div id="resetMsg"></div>
-        
-        <label>البريد الإلكتروني</label>
-        <input id="resetEmail" type="email" placeholder="example@domain.com" style="margin-bottom: 12px;">
-
-        <label>كود الاستعادة (6 أرقام)</label>
-        <input id="resetOtpCode" type="text" maxlength="6" style="text-align: center; font-size: 22px; letter-spacing: 6px; font-weight: bold; margin-bottom: 12px; background: rgba(0,0,0,0.2); border: 1px solid rgba(108,77,255,0.25); color: #fff;" placeholder="000000">
-
         <label>كلمة المرور الجديدة</label>
-        <input id="resetNewPassword" type="password" placeholder="8 خانات، حروف وأرقام" style="margin-bottom: 16px;">
-        
+        <input id="resetNewPassword" type="password" placeholder="8 خانات، حروف وأرقام">
         <button class="btn primary full mt" onclick="submitPasswordReset()">تعيين كلمة المرور</button>
-        <button class="btn full mt" style="background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #e4e7eb;" onclick="showView('auth'); setAuthMode('login');">العودة لتسجيل الدخول</button>
       </div>
     </div>
   </section>
-
 
 <section id="authView" class="auth-wrap">
     <div class="container">
@@ -4040,8 +3833,11 @@
             <button class="user-nav" data-dash="help" onclick="setDash('help')">المساعدة <svg class="nav-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></button>
             <button class="user-nav" data-dash="support" onclick="setDash('support')">الدعم <svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
             <button class="user-nav adminOnly hidden" data-dash="admin" onclick="setDash('admin')">لوحة الإدارة <svg class="nav-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+            
+            <!-- Extra Navigation Actions -->
+            <div class="user-menu-divider" style="height: 1px; background: rgba(255,255,255,0.08); margin: 12px 0;"></div>
             <button class="user-nav" onclick="showView('home')">الرئيسية <svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></button>
-            <button class="user-nav logout-btn" onclick="logout()" style="color: #fca5a5; border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.02);">تسجيل الخروج <svg class="nav-svg-icon" viewBox="0 0 24 24" style="stroke: #ef4444;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
+            <button class="user-nav logout-btn" onclick="logout()">خروج <svg class="nav-svg-icon" viewBox="0 0 24 24" style="stroke: #fca5a5;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
           </div>
           <div class="side-title">معلومات واقعية</div>
           <div class="detail-chip"><b>السحب</b>متاح فقط للحسابات الموثقة.</div>
@@ -4054,11 +3850,14 @@
               <h2 id="dashTitle">لوحة المستخدم</h2>
               <p id="dashSubtitle">إدارة الرصيد، الباقات، المهام، التوثيق والسحب من مكان واحد.</p>
             </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap"></div>
+            <!-- Redundant toggles hidden to merge with top-left ☰ menu button -->
+            <div style="display:none !important;gap:8px;flex-wrap:wrap">
+              <button class="btn side-toggle" onclick="toggleUserSide()">☰ القائمة</button>
+              <button class="btn desktop-only-btn" onclick="toggleCollapseUserSide()">إخفاء/إظهار</button>
+            </div>
           </div>
 
           <div id="dashStats" class="user-stats-grid"></div>
-          <div id="dashTopAd" class="dashboard-ad-anchor"></div>
           <div id="dashMsg" class="mt"></div>
           <div id="dashContent" class="user-panel"></div>
         </main>
@@ -4315,9 +4114,7 @@ function runDashPage(name, fn){
   try{
     const result = fn();
     if(result && typeof result.catch === "function"){
-      result.then(() => taskoraAfterRenderAds()).catch(e => renderDashError(e, name));
-    }else{
-      taskoraAfterRenderAds();
+      result.catch(e => renderDashError(e, name));
     }
   }catch(e){
     renderDashError(e, name);
@@ -4325,12 +4122,6 @@ function runDashPage(name, fn){
 }
 window.addEventListener("unhandledrejection", (event) => {
   if(event && event.reason){
-    const message = event.reason.message || String(event.reason);
-    if(message.includes("Unexpected token '<'")){
-      event.preventDefault();
-      console.warn("Ignored non-API JSON parse rejection:", event.reason);
-      return;
-    }
     console.error(event.reason);
     toast(event.reason.message || "حدث خطأ غير متوقع", "error");
   }
@@ -4357,73 +4148,6 @@ function headers(json=true){
   if(latestToken){ h.Authorization = "Bearer " + latestToken; h["x-taskora-token"] = latestToken; }
   if(json) h["Content-Type"]="application/json";
   return h;
-}
-
-function taskoraLangText(ar, en){
-  return document.documentElement.lang === "en" ? en : ar;
-}
-
-function taskoraGetAdsenseSlot(key){
-  return (window.TASKORA_ADSENSE_SLOTS && window.TASKORA_ADSENSE_SLOTS[key]) || "";
-}
-
-function taskoraAdsenseUnit(key, label){
-  const slot = taskoraGetAdsenseSlot(key);
-  const safeKey = escapeHtml(key);
-  const safeLabel = escapeHtml(label || "AdSense");
-  if(!slot){
-    return `<div class="taskora-adsense-unit taskora-adsense-pending" id="taskora-ad-${safeKey}" data-ad-key="${safeKey}">
-      <div>
-        <span>AdSense</span>
-        <b>${taskoraLangText("الإعلانات قيد التجهيز", "Ads are being prepared")}</b>
-        <small>${safeLabel} - ${taskoraLangText("أضف data-ad-slot لاحقًا من حساب AdSense لتظهر الإعلانات هنا.", "Add the AdSense data-ad-slot later to show ads here.")}</small>
-      </div>
-    </div>`;
-  }
-  return `<div class="taskora-adsense-unit" id="taskora-ad-${safeKey}" data-ad-key="${safeKey}" aria-label="${safeLabel}">
-    <ins class="adsbygoogle"
-      data-taskora-ad="true"
-      style="display:block"
-      data-ad-client="${escapeHtml(window.TASKORA_ADSENSE_CLIENT_ID || "ca-pub-3936169440487132")}"
-      data-ad-slot="${escapeHtml(slot)}"
-      data-ad-format="auto"
-      data-full-width-responsive="true"></ins>
-  </div>`;
-}
-
-function taskoraMountStaticAds(){
-  const home = document.getElementById("homeView");
-  if(home && !document.getElementById("taskoraHomeAdWrap")){
-    const html = `<div class="container" id="taskoraHomeAdWrap">${taskoraAdsenseUnit("home", taskoraLangText("الصفحة الرئيسية", "Home page"))}</div>`;
-    const firstSection = home.querySelector("section");
-    if(firstSection) firstSection.insertAdjacentHTML("afterend", html);
-    else home.insertAdjacentHTML("beforeend", html);
-  }
-  const dashTopAd = document.getElementById("dashTopAd");
-  if(dashTopAd && !dashTopAd.dataset.taskoraReady){
-    dashTopAd.innerHTML = taskoraAdsenseUnit("dashboardTop", taskoraLangText("أعلى لوحة المستخدم", "User dashboard top"));
-    dashTopAd.dataset.taskoraReady = "1";
-  }
-}
-
-function taskoraInitAdsenseBlocks(){
-  document.querySelectorAll("ins.adsbygoogle[data-taskora-ad]:not([data-taskora-requested])").forEach(ad => {
-    if(!ad.getAttribute("data-ad-slot")) return;
-    ad.dataset.taskoraRequested = "1";
-    try{
-      window.adsbygoogle = window.adsbygoogle || [];
-      window.adsbygoogle.push({});
-    }catch(e){
-      console.warn("AdSense is not ready yet:", e);
-    }
-  });
-}
-
-function taskoraAfterRenderAds(){
-  setTimeout(() => {
-    taskoraMountStaticAds();
-    taskoraInitAdsenseBlocks();
-  }, 80);
 }
 function prettyKycStatus(status){ return ({verified:"موثق",pending:"قيد المراجعة",rejected:"مرفوض",not_verified:"غير موثق"})[status || "not_verified"] || status; }
 function setAvatarElements(avatarUrl, username){
@@ -4470,7 +4194,7 @@ async function uploadAvatar(input){
     const fd = new FormData();
     fd.append("avatar", file);
     const res = await fetch(API + "/api/profile/avatar", { method:"POST", headers: headers(false), body: fd });
-    const data = await taskoraReadJsonResponse(res, "/api/profile/avatar").catch(()=>({}));
+    const data = await res.json().catch(()=>({}));
     if(!res.ok) throw new Error(data.error || "فشل رفع الصورة");
     me.avatar_url = data.avatar_url;
     setAvatarElements(me.avatar_url, me.username);
@@ -4513,7 +4237,6 @@ function showView(v){
   // Tagline visibility helper
   updateBrandSubVisibility(v);
   renderNav();
-  taskoraAfterRenderAds();
 }
 function toggleUserSide(){ document.getElementById("userSide")?.classList.toggle("open"); document.getElementById("userOverlay")?.classList.toggle("open"); }
 function closeUserSide(){ document.getElementById("userSide")?.classList.remove("open"); document.getElementById("userOverlay")?.classList.remove("open"); }
@@ -4571,29 +4294,16 @@ function setAuthMode(m){
   document.getElementById("loginFields").classList.toggle("hidden",m!=="login");
   document.getElementById("authTitle").innerText = m==="login" ? "تسجيل الدخول" : "إنشاء حساب حقيقي";
 }
-
-async function taskoraReadJsonResponse(res, path=""){
-  return await taskoraSafeJson(res, path);
-}
-
 async function api(path, opts={}){
+
+
   setLoading(true);
   try{
     opts.headers = opts.headers || headers();
     const res = await fetch(API+path, opts);
-    const data = await taskoraSafeJson(res, path);
-
-    if(data && (data.error === "API_HTML_RESPONSE" || data.error === "INVALID_JSON_RESPONSE")){
-      const err = new Error(data.message_ar || data.error || "API returned invalid response");
-      err.status = data.status || res.status;
-      err.path = path;
-      err.preview = data.preview;
-      err.taskoraApiPayload = data;
-      throw err;
-    }
-
+    const data = await res.json().catch(()=>({}));
     if(!res.ok){
-      const err = new Error(data.message_ar || data.error || "حدث خطأ");
+      const err = new Error(data.error || "حدث خطأ");
       err.status = res.status;
       err.path = path;
       if(res.status === 401 || data.error === "Unauthorized" || data.error === "Invalid token."){
@@ -4646,23 +4356,9 @@ async function requestPasswordReset(){
 }
 async function submitPasswordReset(){
   try{
-    msg("resetMsg","","");
-    const email = document.getElementById("resetEmail")?.value.trim();
-    const code = document.getElementById("resetOtpCode")?.value.trim();
-    const new_password = resetNewPassword.value;
     const token = new URLSearchParams(location.search).get("token");
-
-    if (token) {
-      // Token fallback
-      await api("/api/auth/reset-password",{method:"POST",headers:headers(),body:JSON.stringify({token,new_password})});
-    } else {
-      // Premium OTP Reset
-      if (!email) return toast("يرجى إدخال البريد الإلكتروني.", "error");
-      if (!code || !/^\d{6}$/.test(code)) return toast("يرجى إدخال كود استعادة مكون من 6 أرقام.", "error");
-      await api("/api/auth/reset-password-otp",{method:"POST",headers:headers(),body:JSON.stringify({email,code,new_password})});
-    }
-
-    toast("تم تعيين كلمة المرور الجديدة بنجاح!", "success");
+    await api("/api/auth/reset-password",{method:"POST",headers:headers(),body:JSON.stringify({token,new_password:resetNewPassword.value})});
+    toast("تم تعيين كلمة المرور الجديدة", "success");
     history.replaceState(null,"","/");
     showView("auth");
     setAuthMode("login");
@@ -4916,7 +4612,6 @@ async function renderPackages(){
           </div>
         </div>`).join("")}
     </div>
-    ${taskoraAdsenseUnit("packagesBottom", taskoraLangText("أسفل صفحة الباقات", "Packages page bottom"))}
     <div class="realistic-details">
       <div class="detail-chip"><b>التفعيل</b>يتم خصم قيمة الباقة من الرصيد المتاح ونقلها إلى رصيد الباقة.</div>
       <div class="detail-chip"><b>التقدم</b>تظهر 3 مهام يوميًا حتى اكتمال 12 مهمة.</div>
@@ -4991,10 +4686,9 @@ async function renderTasks(){
             <h3>${t.title}</h3>
             <p>اضغط لإكمال المهمة عند توفرها حسب جدول الباقة اليومي.</p>
           </div>
-          ${taskoraRewardedTaskButtons(t.number)}
+          <button class="btn green full" onclick="completeTask(${t.number})">إكمال المهمة</button>
         </div>`).join("")}
-    </div>
-    ${taskoraAdsenseUnit("tasksBottom", taskoraLangText("أسفل صفحة المهام", "Tasks page bottom"))}`;
+    </div>`;
 }
 
 async function buyPackage(id){
@@ -5029,8 +4723,7 @@ async function renderWallet(){
         <button class="btn primary full mt" onclick="withdraw()">طلب السحب</button>
         <div class="notice mt">لا يمكن السحب إلا بعد قبول التوثيق من الإدارة.</div>
       </div>
-    </div>
-    ${taskoraAdsenseUnit("walletBottom", taskoraLangText("صفحة المحفظة", "Wallet page"))}`;
+    </div>`;
   window.__wallets = w.wallets;
   showDepositWallet();
 }
@@ -5236,14 +4929,7 @@ async function installPwa(){
   deferredInstallPrompt = null;
 }
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").then(reg => reg.update()).catch(()=>null);
-    if(window.caches){
-      caches.keys()
-        .then(keys => Promise.all(keys.filter(key => key.startsWith("taskora-") && key !== "taskora-v10-cache").map(key => caches.delete(key))))
-        .catch(()=>null);
-    }
-  });
+  window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(()=>null));
 }
 
 
@@ -5382,19 +5068,10 @@ async function markNotificationsRead(){
 function renderSettings(){
   document.getElementById("dashContent").innerHTML = `
     <div class="settings-grid">
-      <div class="card" style="backdrop-filter: blur(16px); background: rgba(21, 26, 38, 0.85); border: 1px solid rgba(108, 77, 255, 0.15);">
+      <div class="card">
         <h3>تأكيد البريد الإلكتروني</h3>
-        <p>الحالة: <b class="status ${me.email_verified ? 'verified' : 'pending'}" style="padding: 4px 8px; border-radius: 6px;">${me.email_verified ? "مؤكد" : "غير مؤكد"}</b></p>
-        ${me.email_verified ? `<div class="success mt">بريدك الإلكتروني مؤكد ونشط بالكامل.</div>` : `
-          <div class="notice mt">يرجى طلب كود تحقق (OTP) وإدخاله لتأكيد بريدك الإلكتروني وتفعيل حسابك.</div>
-          <button class="btn primary mt" style="width:100%" onclick="sendVerificationOtp()">إرسال كود التحقق (OTP)</button>
-          <div id="verifyLinkBox"></div>
-          <div class="mt" style="border-top: 1px solid rgba(255,255,255,0.06); padding-top: 20px; display: flex; flex-direction: column; gap: 10px;">
-            <label style="font-weight:600">أدخل كود التحقق (6 أرقام):</label>
-            <input id="otpCode" type="text" maxlength="6" style="text-align: center; font-size: 24px; letter-spacing: 6px; font-weight: bold; background: rgba(0,0,0,0.25); border: 1px solid rgba(108,77,255,0.3); border-radius:10px; height: 48px; outline:none; color:#fff;" placeholder="000000">
-            <button class="btn green full mt" onclick="verifyOtpCode()">تأكيد الكود</button>
-          </div>
-        `}
+        <p>الحالة: <b>${me.email_verified ? "مؤكد" : "غير مؤكد"}</b></p>
+        ${me.email_verified ? `<div class="success">بريدك الإلكتروني مؤكد.</div>` : `<div class="notice">يمكنك إنشاء رابط تأكيد البريد لحماية الحساب.</div><button class="btn primary mt" onclick="resendVerification()">إنشاء رابط تأكيد</button><div id="verifyLinkBox"></div>`}
       </div>
       <div class="card">
         <h3>تغيير كلمة المرور</h3>
@@ -5404,25 +5081,12 @@ function renderSettings(){
       </div>
     </div>`;
 }
-async function sendVerificationOtp(){
-  try{
-    await api("/api/auth/send-otp",{method:"POST",headers:headers(),body:"{}"});
-    document.getElementById("verifyLinkBox").innerHTML = `<div class="success mt">تم إرسال كود التحقق بنجاح إلى بريدك. الكود صالح لمدة 10 دقائق.</div>`;
-    toast("تم إرسال كود التحقق بنجاح","success");
-  }catch(e){ toast(e.message,"error"); }
-}
-async function verifyOtpCode(){
-  try{
-    const code = document.getElementById("otpCode").value.trim();
-    if(!/^\d{6}$/.test(code)) return toast("يرجى إدخال كود التحقق المكون من 6 أرقام.", "error");
-    await api("/api/auth/verify-otp",{method:"POST",headers:headers(),body:JSON.stringify({code})});
-    toast("تم تأكيد البريد الإلكتروني بنجاح!","success");
-    await loadMe();
-    setDash("settings");
-  }catch(e){ toast(e.message,"error"); }
-}
 async function resendVerification(){
-  return sendVerificationOtp();
+  try{
+    const d = await api("/api/auth/resend-verification",{method:"POST",headers:headers(),body:"{}"});
+    document.getElementById("verifyLinkBox").innerHTML = d.verification_url ? `<div class="wallet-box">${location.origin}${d.verification_url}</div>` : `<div class="success">تم إرسال رابط التأكيد بنجاح.</div>`;
+    toast("تم إنشاء رابط تأكيد البريد","success");
+  }catch(e){ toast(e.message,"error"); }
 }
 async function changePassword(){
   try{
@@ -6081,274 +5745,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }, 100);
 });
-</script>
-
-<script>
-/*
-Taskora Google ads configured:
-Publisher ID: ca-pub-3936169440487132
-Rewarded Ad Unit Path currently used: /3936169440487132/taskora_tasks_rewarded
-
-If Google Ad Manager gives a different rewarded ad unit path, replace TASKORA_REWARDED_AD_UNIT_PATH only.
-*/
- /* Google Rewarded Ads integration for task buttons only.
-   Replace this with your real Google Ad Manager rewarded ad unit path.
-   Example: "/123456789/taskora_tasks_rewarded"
-*/
-window.TASKORA_ADSENSE_PUBLISHER_ID = window.TASKORA_ADSENSE_PUBLISHER_ID || "pub-3936169440487132";
-window.TASKORA_ADSENSE_CLIENT_ID = window.TASKORA_ADSENSE_CLIENT_ID || "ca-pub-3936169440487132";
-window.TASKORA_GOOGLE_PUBLISHER_ID = window.TASKORA_GOOGLE_PUBLISHER_ID || window.TASKORA_ADSENSE_CLIENT_ID;
-window.TASKORA_AD_MANAGER_NETWORK_CODE = window.TASKORA_AD_MANAGER_NETWORK_CODE || "3936169440487132";
-window.TASKORA_ADSENSE_SLOTS = window.TASKORA_ADSENSE_SLOTS || {
-  home: "",
-  dashboardTop: "",
-  packagesBottom: "",
-  tasksBottom: "",
-  walletBottom: ""
-};
-window.TASKORA_REWARDED_AD_UNIT_PATH = window.TASKORA_REWARDED_AD_UNIT_PATH || "/3936169440487132/taskora_tasks_rewarded";
-window.TASKORA_REWARDED_AD_MOCK_MODE = window.TASKORA_REWARDED_AD_MOCK_MODE ?? false;
-window.googletag = window.googletag || { cmd: [] };
-
-const taskoraAdWatchedTasks = new Set();
-let taskoraRewardedSlot = null;
-let taskoraRewardedTaskNumber = null;
-let taskoraRewardGranted = false;
-let taskoraRewardedAdTimeout = null;
-const taskoraRewardedAdTimeoutMs = 12000;
-let taskoraRewardedAttemptId = 0;
-
-function taskoraSetAdStatus(taskNumber, message, state=""){
-  const box = document.querySelector(`[data-ad-status="${taskNumber}"]`);
-  if(!box) return;
-  box.classList.remove("ready","error");
-  if(state) box.classList.add(state);
-  box.textContent = message;
-}
-
-function taskoraUnlockTaskAfterAd(taskNumber, options={}){
-  const adUnavailable = !!options.adUnavailable;
-  taskoraAdWatchedTasks.add(String(taskNumber));
-  const completeBtn = document.querySelector(`[data-complete-task="${taskNumber}"]`);
-  const watchBtn = document.querySelector(`[data-watch-task="${taskNumber}"]`);
-  if(completeBtn){
-    completeBtn.disabled = false;
-    completeBtn.textContent = taskoraLangText("إكمال المهمة", "Complete task");
-  }
-  if(watchBtn){
-    watchBtn.disabled = true;
-    watchBtn.textContent = adUnavailable ? taskoraLangText("الإعلانات قيد التجهيز", "Ads pending") : taskoraLangText("تمت مشاهدة الإعلان", "Ad watched");
-  }
-  taskoraSetAdStatus(taskNumber, adUnavailable
-    ? taskoraLangText("الإعلانات قيد التجهيز. يمكنك إكمال المهمة الآن.", "Ads are being prepared. You can complete the task now.")
-    : taskoraLangText("تمت مشاهدة الإعلان. يمكنك الآن إكمال المهمة.", "Ad completed. You can now complete the task."),
-    "ready"
-  );
-}
-
-function taskoraShowMockRewardedAd(taskNumber){
-  const watchBtn = document.querySelector(`[data-watch-task="${taskNumber}"]`);
-  if(watchBtn) watchBtn.disabled = true;
-  taskoraSetAdStatus(taskNumber, document.documentElement.lang === "en" ? "Loading rewarded ad..." : "جاري تحميل إعلان المكافأة...");
-  setTimeout(()=>taskoraSetAdStatus(taskNumber, document.documentElement.lang === "en" ? "Watching ad..." : "جاري مشاهدة الإعلان..."), 500);
-  setTimeout(()=>taskoraUnlockTaskAfterAd(taskNumber), 1800);
-}
-
-function taskoraClearRewardedTimeout(){
-  if(taskoraRewardedAdTimeout){
-    clearTimeout(taskoraRewardedAdTimeout);
-    taskoraRewardedAdTimeout = null;
-  }
-}
-
-function taskoraDestroyRewardedSlot(){
-  if(taskoraRewardedSlot && window.googletag && googletag.destroySlots){
-    try{ googletag.destroySlots([taskoraRewardedSlot]); }catch(e){ console.warn("Rewarded slot cleanup failed:", e); }
-  }
-  taskoraRewardedSlot = null;
-}
-
-function taskoraRewardedAdUnavailable(taskNumber, reason){
-  console.warn("Rewarded ad unavailable:", reason || "unknown");
-  taskoraRewardedAttemptId += 1;
-  taskoraClearRewardedTimeout();
-  taskoraDestroyRewardedSlot();
-  taskoraUnlockTaskAfterAd(taskNumber, { adUnavailable: true });
-}
-
-function taskoraFallbackToMockAd(taskNumber, reason){
-  console.warn("Rewarded ad fallback:", reason || "unknown");
-  if(window.TASKORA_REWARDED_AD_MOCK_MODE){
-    taskoraSetAdStatus(taskNumber, taskoraLangText("إعلان Google غير متاح الآن. تشغيل الوضع التجريبي...", "Google ad is not available. Running test mode..."));
-    setTimeout(()=>taskoraShowMockRewardedAd(taskNumber), 700);
-    return;
-  }
-  taskoraRewardedAdUnavailable(taskNumber, reason);
-}
-
-function taskoraWatchRewardedAd(taskNumber){
-  taskoraRewardedTaskNumber = taskNumber;
-  taskoraRewardGranted = false;
-  const rewardedAttemptId = ++taskoraRewardedAttemptId;
-  const rewardedPath = window.TASKORA_REWARDED_AD_UNIT_PATH || "";
-
-  if(window.TASKORA_REWARDED_AD_MOCK_MODE){
-    taskoraShowMockRewardedAd(taskNumber);
-    return;
-  }
-
-  if(!rewardedPath || rewardedPath.includes("YOUR_NETWORK_CODE")){
-    taskoraFallbackToMockAd(taskNumber, "rewarded ad unit path is not configured");
-    return;
-  }
-
-  if(!window.googletag || !googletag.cmd){
-    taskoraFallbackToMockAd(taskNumber, "google script not ready");
-    return;
-  }
-
-  const watchBtn = document.querySelector(`[data-watch-task="${taskNumber}"]`);
-  if(watchBtn) watchBtn.disabled = true;
-  taskoraSetAdStatus(taskNumber, document.documentElement.lang === "en" ? "Loading Google rewarded ad..." : "جاري تحميل إعلان Google...");
-  taskoraClearRewardedTimeout();
-  taskoraDestroyRewardedSlot();
-  taskoraRewardedAdTimeout = setTimeout(() => {
-    if(rewardedAttemptId === taskoraRewardedAttemptId && !taskoraRewardGranted){
-      taskoraRewardedAdUnavailable(taskNumber, "rewarded ad load timeout");
-    }
-  }, taskoraRewardedAdTimeoutMs);
-
-  googletag.cmd.push(function(){
-    try{
-      if(rewardedAttemptId !== taskoraRewardedAttemptId) return;
-      taskoraRewardedSlot = googletag.defineOutOfPageSlot(
-        rewardedPath,
-        googletag.enums.OutOfPageFormat.REWARDED
-      );
-      if(!taskoraRewardedSlot){
-        taskoraFallbackToMockAd(taskNumber, "rewarded slot unsupported");
-        return;
-      }
-
-      taskoraRewardedSlot.addService(googletag.pubads());
-
-      googletag.pubads().addEventListener("rewardedSlotReady", function(event){
-        if(rewardedAttemptId !== taskoraRewardedAttemptId) return;
-        taskoraClearRewardedTimeout();
-        taskoraSetAdStatus(taskNumber, document.documentElement.lang === "en" ? "Ad is ready..." : "الإعلان جاهز...");
-        event.makeRewardedVisible();
-      });
-
-      googletag.pubads().addEventListener("rewardedSlotGranted", function(){
-        if(rewardedAttemptId !== taskoraRewardedAttemptId) return;
-        taskoraClearRewardedTimeout();
-        taskoraRewardGranted = true;
-        taskoraUnlockTaskAfterAd(taskoraRewardedTaskNumber);
-      });
-
-      googletag.pubads().addEventListener("rewardedSlotClosed", function(){
-        if(rewardedAttemptId !== taskoraRewardedAttemptId) return;
-        taskoraClearRewardedTimeout();
-        if(!taskoraRewardGranted){
-          taskoraRewardedAdUnavailable(taskNumber, "rewarded ad closed before reward");
-          return;
-        }
-        taskoraDestroyRewardedSlot();
-      });
-
-      googletag.pubads().addEventListener("slotRenderEnded", function(event){
-        if(rewardedAttemptId !== taskoraRewardedAttemptId) return;
-        if(event && event.slot === taskoraRewardedSlot && event.isEmpty && !taskoraRewardGranted){
-          taskoraRewardedAdUnavailable(taskNumber, "rewarded ad slot returned empty");
-        }
-      });
-
-      googletag.enableServices();
-      googletag.display(taskoraRewardedSlot);
-    }catch(e){
-      console.error(e);
-      taskoraFallbackToMockAd(taskNumber, e.message || "display error");
-    }
-  });
-}
-
-function taskoraCompleteTaskAfterAd(taskNumber){
-  if(!taskoraAdWatchedTasks.has(String(taskNumber))){
-    taskoraSetAdStatus(taskNumber, document.documentElement.lang === "en" ? "Please watch the ad first." : "يرجى مشاهدة الإعلان أولًا.", "error");
-    return;
-  }
-  if(typeof completeTaskWithRobot === "function") return completeTaskWithRobot(taskNumber);
-  if(typeof completeTask === "function") return completeTask(taskNumber);
-  console.warn("No task completion function found.");
-}
-
-function taskoraRewardedTaskButtons(taskNumber){
-  const isEn = document.documentElement.lang === "en";
-  return `
-    <div class="task-ad-actions">
-      <div class="task-ad-status" data-ad-status="${taskNumber}">
-        ${isEn ? "Watch the rewarded ad to unlock this task." : "شاهد إعلان المكافأة لفتح إكمال المهمة."}
-      </div>
-      <button class="btn primary task-ad-watch-btn" data-watch-task="${taskNumber}" onclick="taskoraWatchRewardedAd(${taskNumber})">
-        ${isEn ? "Watch ad" : "شاهد الإعلان"}
-      </button>
-      <button class="btn green task-ad-complete-btn" data-complete-task="${taskNumber}" onclick="taskoraCompleteTaskAfterAd(${taskNumber})" disabled>
-        ${isEn ? "Complete after ad" : "أكمل بعد مشاهدة الإعلان"}
-      </button>
-    </div>`;
-}
-
-function taskoraConvertExistingTaskButtons(){
-  document.querySelectorAll("button").forEach(btn=>{
-    const onclick = btn.getAttribute("onclick") || "";
-    const m = onclick.match(/completeTask(?:WithRobot)?\((\d+)\)/);
-    if(!m || btn.closest(".task-ad-actions")) return;
-    const taskNumber = m[1];
-    const wrapper = document.createElement("div");
-    wrapper.innerHTML = taskoraRewardedTaskButtons(taskNumber);
-    btn.replaceWith(wrapper.firstElementChild);
-  });
-}
-
-const taskoraOriginalSetDash = window.setDash;
-if(typeof taskoraOriginalSetDash === "function"){
-  window.setDash = function(){
-    const result = taskoraOriginalSetDash.apply(this, arguments);
-    setTimeout(taskoraConvertExistingTaskButtons, 100);
-    return result;
-  }
-}
-window.addEventListener("load", () => setTimeout(taskoraConvertExistingTaskButtons, 250));
-</script>
-
-
-
-
-<script>
-window.taskoraApiSelfTest = async function(){
-  const url = "/api/health?check=absolute-api-json-fix-v4";
-  try{
-    const res = await fetch(url, { cache:"no-store" });
-    const data = await taskoraSafeJson(res, url || "");
-    console.log("Taskora API self-test:", data);
-    return data;
-  }catch(e){
-    console.error("Taskora API self-test failed:", e);
-    return { error:String(e) };
-  }
-};
-window.addEventListener("load", () => setTimeout(window.taskoraApiSelfTest, 500));
-</script>
-
-
-<script>
-window.taskoraApiHealthV7 = async function(){
-  const res = await fetch("/api/health?v=remove-native-res-json-v7", {cache:"no-store"});
-  const data = await taskoraSafeJson(res, "/api/health");
-  console.log("Taskora API health:", data);
-  return data;
-};
-window.addEventListener("load", () => setTimeout(window.taskoraApiHealthV7, 700));
 </script>
 </body>
 </html>
