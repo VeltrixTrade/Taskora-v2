@@ -3870,15 +3870,25 @@
   
   <section id="resetView" class="auth-wrap">
     <div class="container">
-      <div class="card auth-box">
+      <div class="card auth-box" style="backdrop-filter: blur(16px); background: rgba(21, 26, 38, 0.85); border: 1px solid rgba(108, 77, 255, 0.2);">
         <h2>استعادة كلمة المرور</h2>
         <div id="resetMsg"></div>
+        
+        <label>البريد الإلكتروني</label>
+        <input id="resetEmail" type="email" placeholder="example@domain.com" style="margin-bottom: 12px;">
+
+        <label>كود الاستعادة (6 أرقام)</label>
+        <input id="resetOtpCode" type="text" maxlength="6" style="text-align: center; font-size: 22px; letter-spacing: 6px; font-weight: bold; margin-bottom: 12px; background: rgba(0,0,0,0.2); border: 1px solid rgba(108,77,255,0.25); color: #fff;" placeholder="000000">
+
         <label>كلمة المرور الجديدة</label>
-        <input id="resetNewPassword" type="password" placeholder="8 خانات، حروف وأرقام">
+        <input id="resetNewPassword" type="password" placeholder="8 خانات، حروف وأرقام" style="margin-bottom: 16px;">
+        
         <button class="btn primary full mt" onclick="submitPasswordReset()">تعيين كلمة المرور</button>
+        <button class="btn full mt" style="background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #e4e7eb;" onclick="showView('auth'); setAuthMode('login');">العودة لتسجيل الدخول</button>
       </div>
     </div>
   </section>
+
 
 <section id="authView" class="auth-wrap">
     <div class="container">
@@ -4636,9 +4646,23 @@ async function requestPasswordReset(){
 }
 async function submitPasswordReset(){
   try{
+    msg("resetMsg","","");
+    const email = document.getElementById("resetEmail")?.value.trim();
+    const code = document.getElementById("resetOtpCode")?.value.trim();
+    const new_password = resetNewPassword.value;
     const token = new URLSearchParams(location.search).get("token");
-    await api("/api/auth/reset-password",{method:"POST",headers:headers(),body:JSON.stringify({token,new_password:resetNewPassword.value})});
-    toast("تم تعيين كلمة المرور الجديدة", "success");
+
+    if (token) {
+      // Token fallback
+      await api("/api/auth/reset-password",{method:"POST",headers:headers(),body:JSON.stringify({token,new_password})});
+    } else {
+      // Premium OTP Reset
+      if (!email) return toast("يرجى إدخال البريد الإلكتروني.", "error");
+      if (!code || !/^\d{6}$/.test(code)) return toast("يرجى إدخال كود استعادة مكون من 6 أرقام.", "error");
+      await api("/api/auth/reset-password-otp",{method:"POST",headers:headers(),body:JSON.stringify({email,code,new_password})});
+    }
+
+    toast("تم تعيين كلمة المرور الجديدة بنجاح!", "success");
     history.replaceState(null,"","/");
     showView("auth");
     setAuthMode("login");
@@ -5358,10 +5382,19 @@ async function markNotificationsRead(){
 function renderSettings(){
   document.getElementById("dashContent").innerHTML = `
     <div class="settings-grid">
-      <div class="card">
+      <div class="card" style="backdrop-filter: blur(16px); background: rgba(21, 26, 38, 0.85); border: 1px solid rgba(108, 77, 255, 0.15);">
         <h3>تأكيد البريد الإلكتروني</h3>
-        <p>الحالة: <b>${me.email_verified ? "مؤكد" : "غير مؤكد"}</b></p>
-        ${me.email_verified ? `<div class="success">بريدك الإلكتروني مؤكد.</div>` : `<div class="notice">يمكنك إنشاء رابط تأكيد البريد لحماية الحساب.</div><button class="btn primary mt" onclick="resendVerification()">إنشاء رابط تأكيد</button><div id="verifyLinkBox"></div>`}
+        <p>الحالة: <b class="status ${me.email_verified ? 'verified' : 'pending'}" style="padding: 4px 8px; border-radius: 6px;">${me.email_verified ? "مؤكد" : "غير مؤكد"}</b></p>
+        ${me.email_verified ? `<div class="success mt">بريدك الإلكتروني مؤكد ونشط بالكامل.</div>` : `
+          <div class="notice mt">يرجى طلب كود تحقق (OTP) وإدخاله لتأكيد بريدك الإلكتروني وتفعيل حسابك.</div>
+          <button class="btn primary mt" style="width:100%" onclick="sendVerificationOtp()">إرسال كود التحقق (OTP)</button>
+          <div id="verifyLinkBox"></div>
+          <div class="mt" style="border-top: 1px solid rgba(255,255,255,0.06); padding-top: 20px; display: flex; flex-direction: column; gap: 10px;">
+            <label style="font-weight:600">أدخل كود التحقق (6 أرقام):</label>
+            <input id="otpCode" type="text" maxlength="6" style="text-align: center; font-size: 24px; letter-spacing: 6px; font-weight: bold; background: rgba(0,0,0,0.25); border: 1px solid rgba(108,77,255,0.3); border-radius:10px; height: 48px; outline:none; color:#fff;" placeholder="000000">
+            <button class="btn green full mt" onclick="verifyOtpCode()">تأكيد الكود</button>
+          </div>
+        `}
       </div>
       <div class="card">
         <h3>تغيير كلمة المرور</h3>
@@ -5371,12 +5404,25 @@ function renderSettings(){
       </div>
     </div>`;
 }
-async function resendVerification(){
+async function sendVerificationOtp(){
   try{
-    const d = await api("/api/auth/resend-verification",{method:"POST",headers:headers(),body:"{}"});
-    document.getElementById("verifyLinkBox").innerHTML = d.verification_url ? `<div class="wallet-box">${location.origin}${d.verification_url}</div>` : `<div class="success">تم إرسال رابط التأكيد بنجاح.</div>`;
-    toast("تم إنشاء رابط تأكيد البريد","success");
+    await api("/api/auth/send-otp",{method:"POST",headers:headers(),body:"{}"});
+    document.getElementById("verifyLinkBox").innerHTML = `<div class="success mt">تم إرسال كود التحقق بنجاح إلى بريدك. الكود صالح لمدة 10 دقائق.</div>`;
+    toast("تم إرسال كود التحقق بنجاح","success");
   }catch(e){ toast(e.message,"error"); }
+}
+async function verifyOtpCode(){
+  try{
+    const code = document.getElementById("otpCode").value.trim();
+    if(!/^\d{6}$/.test(code)) return toast("يرجى إدخال كود التحقق المكون من 6 أرقام.", "error");
+    await api("/api/auth/verify-otp",{method:"POST",headers:headers(),body:JSON.stringify({code})});
+    toast("تم تأكيد البريد الإلكتروني بنجاح!","success");
+    await loadMe();
+    setDash("settings");
+  }catch(e){ toast(e.message,"error"); }
+}
+async function resendVerification(){
+  return sendVerificationOtp();
 }
 async function changePassword(){
   try{

@@ -13,9 +13,11 @@ const rateLimit = require("express-rate-limit");
 const compression = require("compression");
 const { Pool } = require("pg");
 const QRCode = require("qrcode");
+const emailService = require("./emailService");
 
 const app = express();
 const APP_VERSION = "remove-native-res-json-v7";
+
 
 // ABSOLUTE_API_JSON_FIX_ROUTES
 
@@ -169,28 +171,9 @@ function makeToken() {
 }
 
 async function sendMail(to, subject, html) {
-  if (!process.env.RESEND_API_KEY) {
-    console.log(`MAIL DEV MODE -> ${to} | ${subject} | ${html}`);
-    return { dev: true };
-  }
-
-  const from = process.env.MAIL_FROM || "Taskora <noreply@taskora.app>";
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ from, to, subject, html })
-  });
-
-  if (!response.ok) {
-    const text = await response.text().catch(() => "");
-    console.error("Email send failed:", text);
-    throw new Error("Email provider failed.");
-  }
-  return response.json().catch(() => ({}));
+  return emailService.sendEmail(to, subject, html);
 }
+
 
 
 
@@ -212,6 +195,18 @@ async function migrate() {
       bonus_claimed BOOLEAN NOT NULL DEFAULT FALSE,
       status VARCHAR(30) NOT NULL DEFAULT 'active',
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS otps (
+      id BIGSERIAL PRIMARY KEY,
+      email VARCHAR(255) NOT NULL,
+      code VARCHAR(6) NOT NULL,
+      type VARCHAR(50) NOT NULL,
+      attempts INTEGER DEFAULT 0,
+      expires_at TIMESTAMPTZ NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW()
     );
   `);
 
@@ -638,7 +633,17 @@ app.post("/api/auth/register", async (req, res) => {
 
     const user = result.rows[0];
     await createNotification(pool, user.id, "مرحبًا بك في Taskora", "أكمل توثيق البريد والهوية لتفعيل كامل المزايا.", "welcome");
-    await sendMail(email, "تأكيد بريد Taskora", `<p>مرحبًا ${username}</p><p>اضغط الرابط لتأكيد بريدك:</p><p><a href="${APP_URL}/api/auth/verify-email/${verificationToken}">تأكيد البريد</a></p>`);
+
+    // Generate 6-digit OTP for email verification
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    await query(`
+      INSERT INTO otps (email, code, type, expires_at)
+      VALUES ($1, $2, 'email_verification', NOW() + interval '10 minutes')
+    `, [email, otpCode]);
+
+    // Send styled welcome and verification email using Resend
+    await emailService.sendOTPEmail(email, username, otpCode, "email_verification");
+
     res.status(201).json({ token: signToken(user), user: publicUser(user), verification_url: `/api/auth/verify-email/${verificationToken}` });
   } catch (err) {
     console.error(err);
@@ -700,22 +705,63 @@ app.post("/api/auth/change-password", auth, async (req, res) => {
 
 
 app.post("/api/auth/request-password-reset", async (req, res) => {
-  const email = lower(req.body.email);
-  if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
-    return res.status(422).json({ error: "Valid email is required." });
+  try {
+    const email = lower(req.body.email);
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+      return res.status(422).json({ error: "Valid email is required." });
+    }
+
+    const result = await query("SELECT id,email,username FROM users WHERE lower(email)=lower($1) LIMIT 1", [email]);
+    // Do not reveal whether the email exists.
+    if (result.rowCount === 0) return res.json({ success: true });
+
+    const user = result.rows[0];
+
+    // Anti-spam Cooldown check: 60 seconds
+    const lastOtp = await query(`
+      SELECT created_at FROM otps 
+      WHERE lower(email) = lower($1) AND type = 'password_reset'
+      ORDER BY id DESC LIMIT 1
+    `, [user.email]);
+
+    if (lastOtp.rowCount > 0) {
+      const diffMs = Date.now() - new Date(lastOtp.rows[0].created_at).getTime();
+      if (diffMs < 60000) {
+        const waitSec = Math.ceil((60000 - diffMs) / 1000);
+        return res.status(429).json({ error: `الرجاء الانتظار ${waitSec} ثانية قبل طلب كود جديد.` });
+      }
+    }
+
+    // Daily limit check: 5 codes per 24 hours
+    const dailyCount = await query(`
+      SELECT COUNT(*)::int AS count FROM otps 
+      WHERE lower(email) = lower($1) AND type = 'password_reset' AND created_at > NOW() - interval '24 hours'
+    `, [user.email]);
+
+    if (dailyCount.rows[0].count >= 5) {
+      return res.status(429).json({ error: "لقد تجاوزت الحد الأقصى لإرسال الأكواد اليوم (5 أكواد). يرجى المحاولة غداً." });
+    }
+
+    // Generate 6-digit OTP code for password reset
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    await query(`
+      INSERT INTO otps (email, code, type, expires_at)
+      VALUES ($1, $2, 'password_reset', NOW() + interval '10 minutes')
+    `, [user.email, otpCode]);
+
+    // Send styled password reset email using Resend
+    await emailService.sendOTPEmail(user.email, user.username, otpCode, "password_reset");
+
+    const token = makeToken();
+    await query("UPDATE users SET password_reset_token=$1, password_reset_expires=NOW() + interval '30 minutes' WHERE id=$2", [token, user.id]);
+    const url = `${APP_URL}/reset-password?token=${token}`;
+    await createNotification(pool, user.id, "طلب استعادة كلمة المرور", "تم إنشاء رابط استعادة كلمة مرور لحسابك.", "info");
+
+    res.json({ success: true, reset_url: `/reset-password?token=${token}` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to request password reset." });
   }
-
-  const result = await query("SELECT id,email,username FROM users WHERE lower(email)=lower($1) LIMIT 1", [email]);
-  // Do not reveal whether the email exists.
-  if (result.rowCount === 0) return res.json({ success: true });
-
-  const user = result.rows[0];
-  const token = makeToken();
-  await query("UPDATE users SET password_reset_token=$1, password_reset_expires=NOW() + interval '30 minutes' WHERE id=$2", [token, user.id]);
-  const url = `${APP_URL}/reset-password?token=${token}`;
-  await sendMail(user.email, "استعادة كلمة مرور Taskora", `<p>مرحبًا ${user.username}</p><p>اضغط الرابط لتعيين كلمة مرور جديدة. الرابط صالح لمدة 30 دقيقة:</p><p><a href="${url}">استعادة كلمة المرور</a></p>`);
-  await createNotification(pool, user.id, "طلب استعادة كلمة المرور", "تم إنشاء رابط استعادة كلمة مرور لحسابك.", "info");
-  res.json({ success: true, reset_url: `/reset-password?token=${token}` });
 });
 
 app.post("/api/auth/reset-password", async (req, res) => {
@@ -734,6 +780,179 @@ app.post("/api/auth/reset-password", async (req, res) => {
   await createNotification(pool, result.rows[0].id, "تمت استعادة كلمة المرور", "تم تعيين كلمة مرور جديدة لحسابك.", "success");
   res.json({ success: true });
 });
+
+
+// ==========================================
+// NEW OTP & EMAIL SERVICE SYSTEM ENDPOINTS
+// ==========================================
+
+// 1. Send OTP for Email Verification (Authenticated)
+app.post("/api/auth/send-otp", auth, async (req, res) => {
+  try {
+    const email = req.user.email;
+    const username = req.user.username;
+
+    if (req.user.email_verified) {
+      return res.status(400).json({ error: "البريد الإلكتروني مؤكد بالفعل." });
+    }
+
+    // Cooldown check: 60 seconds
+    const lastOtp = await query(`
+      SELECT created_at FROM otps 
+      WHERE lower(email) = lower($1) AND type = 'email_verification'
+      ORDER BY id DESC LIMIT 1
+    `, [email]);
+
+    if (lastOtp.rowCount > 0) {
+      const diffMs = Date.now() - new Date(lastOtp.rows[0].created_at).getTime();
+      if (diffMs < 60000) {
+        const waitSec = Math.ceil((60000 - diffMs) / 1000);
+        return res.status(429).json({ error: `الرجاء الانتظار ${waitSec} ثانية قبل طلب كود جديد.` });
+      }
+    }
+
+    // Daily limit check: 5 codes per 24 hours
+    const dailyCount = await query(`
+      SELECT COUNT(*)::int AS count FROM otps 
+      WHERE lower(email) = lower($1) AND type = 'email_verification' AND created_at > NOW() - interval '24 hours'
+    `, [email]);
+
+    if (dailyCount.rows[0].count >= 5) {
+      return res.status(429).json({ error: "لقد تجاوزت الحد الأقصى لإرسال الأكواد اليوم (5 أكواد). يرجى المحاولة غداً." });
+    }
+
+    // Generate 6-digit OTP code
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    await query(`
+      INSERT INTO otps (email, code, type, expires_at)
+      VALUES ($1, $2, 'email_verification', NOW() + interval '10 minutes')
+    `, [email, code]);
+
+    // Send styled welcome and verification email using Resend
+    await emailService.sendOTPEmail(email, username, code, "email_verification");
+    await createNotification(pool, req.user.id, "إرسال كود التحقق", "تم إرسال كود تحقق جديد إلى بريدك الإلكتروني.", "info");
+
+    res.json({ success: true, message: "تم إرسال كود تحقق جديد بنجاح." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "فشل إرسال كود التحقق." });
+  }
+});
+
+// 2. Verify OTP for Email Verification (Authenticated)
+app.post("/api/auth/verify-otp", auth, async (req, res) => {
+  try {
+    const email = req.user.email.toLowerCase().trim();
+    const code = String(req.body.code || "").trim();
+
+    if (!/^\d{6}$/.test(code)) {
+      return res.status(422).json({ error: "كود التحقق يجب أن يتكون من 6 أرقام." });
+    }
+
+    // Check for matching active OTP
+    const otpRes = await query(`
+      SELECT * FROM otps 
+      WHERE lower(email) = lower($1) AND type = 'email_verification' AND expires_at > NOW()
+      ORDER BY id DESC LIMIT 1
+    `, [email]);
+
+    if (otpRes.rowCount === 0) {
+      return res.status(404).json({ error: "كود التحقق غير صالح أو منتهي الصلاحية. يرجى طلب كود جديد." });
+    }
+
+    const otp = otpRes.rows[0];
+
+    if (otp.attempts >= 3) {
+      await query("DELETE FROM otps WHERE id = $1", [otp.id]);
+      return res.status(422).json({ error: "لقد تجاوزت الحد الأقصى للمحاولات الخاطئة (3 محاولات). يرجى طلب كود جديد." });
+    }
+
+    if (otp.code !== code) {
+      await query("UPDATE otps SET attempts = attempts + 1 WHERE id = $1", [otp.id]);
+      const remaining = 3 - (otp.attempts + 1);
+      return res.status(400).json({ error: `كود التحقق غير صحيح. المحاولات المتبقية: ${remaining}.` });
+    }
+
+    // Valid code! Mark user as verified
+    await query("UPDATE users SET email_verified = true, email_verification_token = NULL WHERE id = $1", [req.user.id]);
+    await query("DELETE FROM otps WHERE email = $1 AND type = 'email_verification'", [email]);
+    await createNotification(pool, req.user.id, "تم تأكيد البريد الإلكتروني", "تم تأكيد بريدك الإلكتروني بنجاح باستخدام كود التحقق.", "success");
+
+    res.json({ success: true, message: "تم تأكيد البريد الإلكتروني بنجاح." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "فشل التحقق من الكود." });
+  }
+});
+
+// 3. Reset Password using OTP (Public)
+app.post("/api/auth/reset-password-otp", async (req, res) => {
+  try {
+    const email = String(req.body.email || "").toLowerCase().trim();
+    const code = String(req.body.code || "").trim();
+    const newPassword = String(req.body.new_password || "").trim();
+
+    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+      return res.status(422).json({ error: "يرجى إدخال بريد إلكتروني صالح." });
+    }
+    if (!/^\d{6}$/.test(code)) {
+      return res.status(422).json({ error: "كود التحقق يجب أن يتكون من 6 أرقام." });
+    }
+    if (!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(newPassword)) {
+      return res.status(422).json({ error: "كلمة المرور يجب أن تكون من 8 خانات على الأقل وتحتوي على حروف وأرقام." });
+    }
+
+    // Find matching user
+    const userRes = await query("SELECT id, username FROM users WHERE lower(email) = lower($1) LIMIT 1", [email]);
+    if (userRes.rowCount === 0) {
+      return res.status(404).json({ error: "كود التحقق غير صالح أو منتهي الصلاحية." });
+    }
+    const user = userRes.rows[0];
+
+    // Find matching active OTP
+    const otpRes = await query(`
+      SELECT * FROM otps 
+      WHERE lower(email) = lower($1) AND type = 'password_reset' AND expires_at > NOW()
+      ORDER BY id DESC LIMIT 1
+    `, [email]);
+
+    if (otpRes.rowCount === 0) {
+      return res.status(404).json({ error: "كود التحقق غير صالح أو منتهي الصلاحية. يرجى طلب كود جديد." });
+    }
+
+    const otp = otpRes.rows[0];
+
+    if (otp.attempts >= 3) {
+      await query("DELETE FROM otps WHERE id = $1", [otp.id]);
+      return res.status(422).json({ error: "لقد تجاوزت الحد الأقصى للمحاولات الخاطئة (3 محاولات). يرجى طلب كود جديد." });
+    }
+
+    if (otp.code !== code) {
+      await query("UPDATE otps SET attempts = attempts + 1 WHERE id = $1", [otp.id]);
+      const remaining = 3 - (otp.attempts + 1);
+      return res.status(400).json({ error: `كود التحقق غير صحيح. المحاولات المتبقية: ${remaining}.` });
+    }
+
+    // Valid reset! Update password
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    await query(`
+      UPDATE users 
+      SET password_hash = $1, password_reset_token = NULL, password_reset_expires = NULL, failed_login_attempts = 0, locked_until = NULL, withdrawal_locked_until = NOW() + interval '24 hours'
+      WHERE id = $2
+    `, [passwordHash, user.id]);
+
+    await query("DELETE FROM otps WHERE email = $1 AND type = 'password_reset'", [email]);
+    await createNotification(pool, user.id, "تمت استعادة كلمة المرور", "تم إعادة تعيين كلمة المرور بنجاح باستخدام كود التحقق.", "success");
+
+    res.json({ success: true, message: "تم إعادة تعيين كلمة المرور بنجاح." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "فشل إعادة تعيين كلمة المرور." });
+  }
+});
+
+
+
 
 
 app.get("/api/me", auth, async (req, res) => {
@@ -856,6 +1075,10 @@ app.post("/api/packages/:id/buy", auth, async (req, res) => {
       VALUES ($1,'package_purchase',$2,$3,$4,$5)
     `, [req.user.id, -pkg.price, `شراء باقة ${pkg.name}`, balance, balance - pkg.price]);
     await client.query("COMMIT");
+
+    // Send Package Purchase Email via Resend
+    await emailService.sendPackagePurchaseEmail(req.user.email, req.user.username, pkg.name, pkg.price);
+
     res.json({ success: true });
   } catch (err) {
     await client.query("ROLLBACK");
@@ -1552,7 +1775,13 @@ app.post("/api/admin/kyc/:id/approve", auth, adminOnly, async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    const kycRes = await client.query("SELECT * FROM user_kyc WHERE id=$1 FOR UPDATE", [req.params.id]);
+    const kycRes = await client.query(`
+      SELECT k.*, u.username, u.email
+      FROM user_kyc k
+      JOIN users u ON u.id = k.user_id
+      WHERE k.id = $1 FOR UPDATE
+    `, [req.params.id]);
+
     if (kycRes.rowCount === 0) {
       await client.query("ROLLBACK");
       return res.status(404).json({ error: "KYC not found." });
@@ -1565,7 +1794,7 @@ app.post("/api/admin/kyc/:id/approve", auth, adminOnly, async (req, res) => {
     await client.query("UPDATE users SET kyc_status='verified' WHERE id=$1", [kyc.user_id]);
 
     const bonusExists = await client.query("SELECT id FROM welcome_bonuses WHERE document_hash=$1 LIMIT 1", [kyc.document_hash]);
-    const userRes = await client.query("SELECT bonus_claimed FROM users WHERE id=$1 FOR UPDATE", [kyc.user_id]);
+    const userRes = await client.query("SELECT username, email, bonus_claimed FROM users WHERE id=$1 FOR UPDATE", [kyc.user_id]);
     if (bonusExists.rowCount === 0 && !userRes.rows[0].bonus_claimed) {
       await client.query("INSERT INTO welcome_bonuses (user_id, document_hash, amount, status) VALUES ($1,$2,10,'active')", [kyc.user_id, kyc.document_hash]);
       await addTransaction(client, kyc.user_id, "welcome_bonus", 10, "بونص ترحيبي بعد قبول التوثيق");
@@ -1573,6 +1802,10 @@ app.post("/api/admin/kyc/:id/approve", auth, adminOnly, async (req, res) => {
     }
 
     await client.query("COMMIT");
+
+    // Send KYC Approved Email via Resend
+    await emailService.sendKYCStatusEmail(kyc.email, kyc.username, true);
+
     res.json({ success: true });
   } catch (err) {
     await client.query("ROLLBACK");
@@ -1584,12 +1817,26 @@ app.post("/api/admin/kyc/:id/approve", auth, adminOnly, async (req, res) => {
 });
 
 app.post("/api/admin/kyc/:id/reject", auth, adminOnly, async (req, res) => {
-  const kycRes = await query("SELECT user_id FROM user_kyc WHERE id=$1", [req.params.id]);
+  const kycRes = await query(`
+    SELECT k.*, u.username, u.email
+    FROM user_kyc k
+    JOIN users u ON u.id = k.user_id
+    WHERE k.id = $1
+  `, [req.params.id]);
+
   if (kycRes.rowCount === 0) return res.status(404).json({ error: "KYC not found." });
-  await createNotification(pool, kycRes.rows[0].user_id, "تم رفض التوثيق", normalize(req.body.note) || "تم رفض التوثيق. يمكنك إعادة المحاولة بملفات أوضح.", "error");
-  await logAdminAction(pool, req.user.id, "reject_kyc", "kyc", Number(req.params.id), { note: normalize(req.body.note) });
-  await query("UPDATE user_kyc SET status='rejected', reviewed_by=$1, reviewed_at=NOW(), admin_note=$2 WHERE id=$3", [req.user.id, normalize(req.body.note), req.params.id]);
-  await query("UPDATE users SET kyc_status='rejected' WHERE id=$1", [kycRes.rows[0].user_id]);
+  const kyc = kycRes.rows[0];
+
+  const note = normalize(req.body.note);
+
+  await createNotification(pool, kyc.user_id, "تم رفض التوثيق", note || "تم رفض التوثيق. يمكنك إعادة المحاولة بملفات أوضح.", "error");
+  await logAdminAction(pool, req.user.id, "reject_kyc", "kyc", Number(req.params.id), { note });
+  await query("UPDATE user_kyc SET status='rejected', reviewed_by=$1, reviewed_at=NOW(), admin_note=$2 WHERE id=$3", [req.user.id, note, req.params.id]);
+  await query("UPDATE users SET kyc_status='rejected' WHERE id=$1", [kyc.user_id]);
+
+  // Send KYC Rejected Email via Resend
+  await emailService.sendKYCStatusEmail(kyc.email, kyc.username, false, note);
+
   res.json({ success: true });
 });
 
@@ -1649,10 +1896,26 @@ app.get("/api/admin/withdrawals", auth, adminOnly, async (_req, res) => {
 });
 
 app.post("/api/admin/withdrawals/:id/approve", auth, adminOnly, async (req, res) => {
-  const wdApprove = await query("SELECT user_id, amount, coin FROM withdrawals WHERE id=$1", [req.params.id]);
-  if (wdApprove.rowCount) await createNotification(pool, wdApprove.rows[0].user_id, "تم قبول السحب", `تم قبول طلب السحب بقيمة ${wdApprove.rows[0].amount} ${String(wdApprove.rows[0].coin).toUpperCase()}.`, "success");
-  await logAdminAction(pool, req.user.id, "approve_withdrawal", "withdrawal", Number(req.params.id), { txid: normalize(req.body.txid), note: normalize(req.body.note) });
-  await query("UPDATE withdrawals SET status='approved', txid=$1, reviewed_by=$2, reviewed_at=NOW(), admin_note=$3 WHERE id=$4 AND status='pending'", [normalize(req.body.txid), req.user.id, normalize(req.body.note), req.params.id]);
+  const wdApprove = await query(`
+    SELECT w.user_id, w.amount, w.coin, w.wallet_address, u.username, u.email
+    FROM withdrawals w
+    JOIN users u ON u.id = w.user_id
+    WHERE w.id = $1
+  `, [req.params.id]);
+
+  if (wdApprove.rowCount === 0) return res.status(404).json({ error: "Withdrawal not found." });
+  const w = wdApprove.rows[0];
+
+  const txid = normalize(req.body.txid);
+  const note = normalize(req.body.note);
+
+  await createNotification(pool, w.user_id, "تم قبول السحب", `تم قبول طلب السحب بقيمة ${w.amount} ${String(w.coin).toUpperCase()}.`, "success");
+  await logAdminAction(pool, req.user.id, "approve_withdrawal", "withdrawal", Number(req.params.id), { txid, note });
+  await query("UPDATE withdrawals SET status='approved', txid=$1, reviewed_by=$2, reviewed_at=NOW(), admin_note=$3 WHERE id=$4 AND status='pending'", [txid, req.user.id, note, req.params.id]);
+
+  // Send Withdrawal Approved Email via Resend
+  await emailService.sendWithdrawalStatusEmail(w.email, w.username, true, w.amount, w.coin, w.wallet_address, { txid });
+
   res.json({ success: true });
 });
 
@@ -1660,17 +1923,29 @@ app.post("/api/admin/withdrawals/:id/reject", auth, adminOnly, async (req, res) 
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    const wRes = await client.query("SELECT * FROM withdrawals WHERE id=$1 AND status='pending' FOR UPDATE", [req.params.id]);
+    const wRes = await client.query(`
+      SELECT w.*, u.username, u.email
+      FROM withdrawals w
+      JOIN users u ON u.id = w.user_id
+      WHERE w.id = $1 AND w.status = 'pending' FOR UPDATE
+    `, [req.params.id]);
+
     if (wRes.rowCount === 0) {
       await client.query("ROLLBACK");
       return res.status(404).json({ error: "Pending withdrawal not found." });
     }
     const w = wRes.rows[0];
-    await createNotification(client, w.user_id, "تم رفض السحب", normalize(req.body.note) || "تم رفض طلب السحب وتم إرجاع المبلغ إلى رصيدك.", "error");
-    await logAdminAction(client, req.user.id, "reject_withdrawal", "withdrawal", w.id, { amount: w.amount, note: normalize(req.body.note) });
-    await client.query("UPDATE withdrawals SET status='rejected', reviewed_by=$1, reviewed_at=NOW(), admin_note=$2 WHERE id=$3", [req.user.id, normalize(req.body.note), w.id]);
+    const note = normalize(req.body.note);
+
+    await createNotification(client, w.user_id, "تم رفض السحب", note || "تم رفض طلب السحب وتم إرجاع المبلغ إلى رصيدك.", "error");
+    await logAdminAction(client, req.user.id, "reject_withdrawal", "withdrawal", w.id, { amount: w.amount, note });
+    await client.query("UPDATE withdrawals SET status='rejected', reviewed_by=$1, reviewed_at=NOW(), admin_note=$2 WHERE id=$3", [req.user.id, note, w.id]);
     await addTransaction(client, w.user_id, "withdrawal_refund", Number(w.amount), "إرجاع مبلغ سحب مرفوض");
     await client.query("COMMIT");
+
+    // Send Withdrawal Rejected Email via Resend
+    await emailService.sendWithdrawalStatusEmail(w.email, w.username, false, w.amount, w.coin, w.wallet_address, { reason: note });
+
     res.json({ success: true });
   } catch (err) {
     await client.query("ROLLBACK");
