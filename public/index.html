@@ -4208,7 +4208,7 @@
               </div>
               <div class="footer-contact-item" style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #94a3b8; direction: rtl; justify-content: flex-start;">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: rgba(255,255,255,0.6); flex-shrink: 0;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                <a href="mailto:support@taskora.live" style="color: inherit; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#ffffff'" onmouseout="this.style.color='inherit'">support@taskora.live</a>
+                <a href="javascript:void(0)" onclick="openContactSupportModal()" style="color: inherit; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#ffffff'" onmouseout="this.style.color='inherit'">support@taskora.live</a>
               </div>
               <div class="footer-contact-item" style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #94a3b8; direction: rtl; justify-content: flex-start;">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: rgba(255,255,255,0.6); flex-shrink: 0;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -5353,6 +5353,66 @@ async function saveTicketReply(id){
     adminSupportTickets();
   }catch(e){ toast(e.message,"error"); }
 }
+async function adminSupportEmails(){
+  markAdminNav("support_emails");
+  try {
+    const d = await api("/api/admin/support-emails", {headers:headers()});
+    adminBox.innerHTML = `
+      <div class="admin-panel" style="backdrop-filter: blur(16px); background: rgba(18, 20, 29, 0.65); border: 1px solid rgba(108, 77, 255, 0.1);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
+          <h3 style="margin:0; color:#fff; display:flex; align-items:center; gap:8px;">📬 صندوق الرسائل الواردة لـ support@taskora.live</h3>
+          <button class="btn primary" onclick="adminSupportEmails()" style="height:34px; padding:0 12px; font-size:12px;">تحديث البريد 🔄</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="text-align:right;">المرسل</th>
+                <th style="text-align:right;">الموضوع</th>
+                <th style="text-align:right;">نص الرسالة</th>
+                <th style="text-align:right;">التاريخ</th>
+                <th style="text-align:center;">الإجراء</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${d.emails.length ? d.emails.map(e=>`
+                <tr id="email-row-${e.id}">
+                  <td style="direction:rtl;">
+                    <b>${escapeHtml(e.sender_name || "زائر")}</b><br>
+                    <span class="muted" style="font-size:12px; font-family:monospace;">${escapeHtml(e.sender_email)}</span>
+                  </td>
+                  <td style="font-weight:bold; color:var(--primary); direction:rtl;">${escapeHtml(e.subject)}</td>
+                  <td style="max-width:300px; white-space:normal; font-size:13px; line-height:1.5; color:#cbd5e1; direction:rtl; text-align:right;">
+                    ${escapeHtml(e.message).replace(/\n/g, '<br>')}
+                  </td>
+                  <td>${new Date(e.created_at).toLocaleString("ar")}</td>
+                  <td style="text-align:center;">
+                    <button class="mini-btn red" onclick="deleteSupportEmail(${e.id})">حذف 🗑️</button>
+                  </td>
+                </tr>`).join("") : `<tr><td colspan="5" class="admin-empty" style="text-align:center; padding:40px; color:#94a3b8;">صندوق البريد فارغ حالياً. لا توجد رسائل مستلمة.</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+  } catch(e) {
+    toast(e.message, "error");
+  }
+}
+async function deleteSupportEmail(id){
+  if(!confirm("هل أنت متأكد من رغبتك في حذف هذه الرسالة نهائياً؟")) return;
+  try {
+    const res = await api(`/api/admin/support-emails/${id}`, {
+      method: "DELETE",
+      headers: headers()
+    });
+    toast(res.message || "تم حذف الرسالة بنجاح.", "success");
+    const row = document.getElementById(`email-row-${id}`);
+    if(row) row.remove();
+    else adminSupportEmails();
+  } catch(e) {
+    toast(e.message, "error");
+  }
+}
 
 function renderHelp(){
   document.getElementById("dashContent").innerHTML = `
@@ -5442,24 +5502,89 @@ async function renderReferrals(){
   }
   const link = `https://taskora.live/?ref=${d.referral_code}`;
   document.getElementById("dashContent").innerHTML = `
-    <div class="referral-panel">
-      <div class="card">
-        <h3>رابط دعوتك</h3>
-        <div class="referral-link-box" id="referralLink">${link}</div>
-        <div class="admin-actions">
-          <button class="btn primary" onclick="navigator.clipboard.writeText('${link}'); toast('تم نسخ رابط الدعوة','success')">نسخ الرابط</button>
-          <button class="btn" onclick="setDash('profile')">عرض كود الدعوة</button>
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+      <div class="card" style="padding: 24px; background: rgba(21, 26, 38, 0.85); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 24px; backdrop-filter: blur(16px); box-shadow: 0 10px 30px rgba(0,0,0,0.25);">
+        <h3 style="margin-bottom: 12px; color: #fff; display: flex; align-items: center; gap: 8px;">🔗 برنامج الإحالة ورابط دعوتك</h3>
+        <p style="color: #94a3b8; font-size: 14px; margin-bottom: 20px; line-height: 1.5; text-align: right;">قم بدعوة أصدقائك للتسجيل في منصة تاسكورا واحصل على مكافآت وعمولات فورية عند تنشيط حساباتهم وباقاتهم.</p>
+        
+        <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; margin-bottom: 24px; direction: rtl; text-align: right;">
+          <div style="flex: 1; min-width: 280px;">
+            <label style="display: block; margin-bottom: 8px; color: #cbd5e1; font-weight: bold; font-size: 13px;">رابط الدعوة الخاص بك</label>
+            <div style="background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(108, 77, 255, 0.2); border-radius: 12px; padding: 12px 16px; font-family: monospace; font-size: 14px; color: #60a5fa; word-break: break-all; direction: ltr; text-align: left;">
+              ${link}
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button class="btn primary" onclick="navigator.clipboard.writeText('${link}'); toast('تم نسخ رابط الدعوة','success')" style="height: 46px; font-weight: bold; border-radius: 12px; padding: 0 24px; display: inline-flex; align-items: center; gap: 6px;">نسخ الرابط 📋</button>
+            <button class="btn" onclick="setDash('profile')" style="height: 46px; border-radius: 12px; padding: 0 20px; background: rgba(255, 255, 255, 0.05); color: #fff; border: 1px solid rgba(255, 255, 255, 0.08); font-weight: bold;">كود الدعوة 🔑</button>
+          </div>
         </div>
-        <div class="detail-metric-grid mt">
-          <div class="detail-metric">عدد المدعوين<b>${d.invited.length}</b></div>
-          <div class="detail-metric">بونص الدعوات<b>${money(d.total_bonus)}</b></div>
-          <div class="detail-metric">إيداعات المدعوين<b>${money(d.invited.reduce((a,b)=>a+Number(b.approved_deposits||0),0))}</b></div>
-          <div class="detail-metric">الكود<b>${d.referral_code}</b></div>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+          <div style="border: 1px solid rgba(255, 255, 255, 0.05); background: rgba(255, 255, 255, 0.02); border-radius: 18px; padding: 16px; text-align: center; backdrop-filter: blur(8px);">
+            <span style="color: #94a3b8; font-size: 13px; display: block; margin-bottom: 6px;">عدد المدعوين</span>
+            <b style="color: #fff; font-size: 26px; font-family: Inter, sans-serif; display: block; margin-top: 4px;">${d.invited.length}</b>
+          </div>
+          <div style="border: 1px solid rgba(255, 255, 255, 0.05); background: rgba(255, 255, 255, 0.02); border-radius: 18px; padding: 16px; text-align: center; backdrop-filter: blur(8px);">
+            <span style="color: #94a3b8; font-size: 13px; display: block; margin-bottom: 6px;">بونص الدعوات</span>
+            <b style="color: #10b981; font-size: 26px; font-family: Inter, sans-serif; display: block; margin-top: 4px; direction: ltr;">${money(d.total_bonus)}</b>
+          </div>
+          <div style="border: 1px solid rgba(255, 255, 255, 0.05); background: rgba(255, 255, 255, 0.02); border-radius: 18px; padding: 16px; text-align: center; backdrop-filter: blur(8px);">
+            <span style="color: #94a3b8; font-size: 13px; display: block; margin-bottom: 6px;">إيداعات المدعوين</span>
+            <b style="color: #3b82f6; font-size: 26px; font-family: Inter, sans-serif; display: block; margin-top: 4px; direction: ltr;">${money(d.invited.reduce((a,b)=>a+Number(b.approved_deposits||0),0))}</b>
+          </div>
+          <div style="border: 1px solid rgba(255, 255, 255, 0.05); background: rgba(255, 255, 255, 0.02); border-radius: 18px; padding: 16px; text-align: center; backdrop-filter: blur(8px);">
+            <span style="color: #94a3b8; font-size: 13px; display: block; margin-bottom: 6px;">كود الدعوة</span>
+            <b style="color: #f59e0b; font-size: 26px; font-family: Inter, sans-serif; display: block; margin-top: 4px; letter-spacing: 1px;">${d.referral_code}</b>
+          </div>
         </div>
       </div>
-      <div class="card">
-        <h3>المدعوون</h3>
-        ${d.invited.length ? `<div class="table-wrap"><table><thead><tr><th>المستخدم</th><th>البريد</th><th>إيداعات مقبولة</th></tr></thead><tbody>${d.invited.map(u=>`<tr><td>${u.username}</td><td>${u.email}</td><td>${money(u.approved_deposits)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty-state">لا توجد دعوات بعد.</div>`}
+      
+      <div class="card" style="padding: 24px; background: rgba(21, 26, 38, 0.85); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 24px; backdrop-filter: blur(16px); box-shadow: 0 10px 30px rgba(0,0,0,0.25);">
+        <h3 style="margin-bottom: 16px; color: #fff; display: flex; align-items: center; gap: 8px;">👥 قائمة الأصدقاء المدعوين</h3>
+        ${d.invited.length ? `
+          <div class="table-wrap">
+            <table style="width: 100%; border-collapse: collapse; text-align: right;">
+              <thead>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.08);">
+                  <th style="padding: 12px; color: #94a3b8; font-weight: 600; text-align: right;">المستخدم</th>
+                  <th style="padding: 12px; color: #94a3b8; font-weight: 600; text-align: center;">البريد الإلكتروني</th>
+                  <th style="padding: 12px; color: #94a3b8; font-weight: 600; text-align: left;">إيداعات مقبولة</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${d.invited.map(u => {
+                  const email = u.email || "";
+                  let maskedEmail = "";
+                  const parts = email.split("@");
+                  if (parts.length === 2) {
+                    const local = parts[0];
+                    const domain = parts[1];
+                    if (local.length <= 4) {
+                      maskedEmail = local.slice(0, 1) + "***@" + domain;
+                    } else {
+                      maskedEmail = local.slice(0, 3) + "***@" + domain;
+                    }
+                  } else {
+                    maskedEmail = email.slice(0, 3) + "***";
+                  }
+                  
+                  return `
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.2s;">
+                      <td style="padding: 14px 12px; font-weight: bold; color: #fff; text-align: right;">${u.username}</td>
+                      <td style="padding: 14px 12px; color: #cbd5e1; text-align: center; font-family: monospace; font-size: 13px;">${maskedEmail}</td>
+                      <td style="padding: 14px 12px; color: #10b981; font-weight: bold; text-align: left; direction: ltr;">${money(u.approved_deposits)}</td>
+                    </tr>
+                  `;
+                }).join("")}
+              </tbody>
+            </table>
+          </div>
+        ` : `
+          <div class="empty-state" style="padding: 40px; text-align: center; color: #64748b;">
+            لا توجد دعوات مسجلة بعد. شارك رابط دعوتك للبدء في تحقيق الأرباح!
+          </div>
+        `}
       </div>
     </div>`;
 }
@@ -5604,7 +5729,7 @@ async function renderAdmin(){
           <button data-admin-nav="wallets" onclick="adminWallets()">المحافظ <span>🔐</span></button>
           <button data-admin-nav="golden" onclick="adminGolden()">المهام الذهبية <span>⭐</span></button>
           <button data-admin-nav="adjustments" onclick="adminAdjustments()">تعديلات الرصيد <span>🧾</span></button>
-          <button data-admin-nav="transactions" onclick="adminTransactions()">كل المعاملات <span>📚</span></button><button data-admin-nav="audit" onclick="adminAuditLogs()">سجل التدقيق <span>🕵️</span></button><button data-admin-nav="reports" onclick="adminReports()">التقارير <span>📈</span></button><button data-admin-nav="support" onclick="adminSupportTickets()">الدعم <span>💬</span></button>
+          <button data-admin-nav="transactions" onclick="adminTransactions()">كل المعاملات <span>📚</span></button><button data-admin-nav="audit" onclick="adminAuditLogs()">سجل التدقيق <span>🕵️</span></button><button data-admin-nav="reports" onclick="adminReports()">التقارير <span>📈</span></button><button data-admin-nav="support" onclick="adminSupportTickets()">الدعم <span>💬</span></button><button data-admin-nav="support_emails" onclick="adminSupportEmails()">بريد support@ <span>📬</span></button>
         </div>
       </aside>
       <section class="admin-main">
@@ -5641,6 +5766,7 @@ async function renderAdmin(){
   else if(currentAdminScreen==="audit") adminAuditLogs();
   else if(currentAdminScreen==="reports") adminReports();
   else if(currentAdminScreen==="support") adminSupportTickets();
+  else if(currentAdminScreen==="support_emails") adminSupportEmails();
   else adminOverview();
 }
 function markAdminNav(key){
@@ -5744,6 +5870,80 @@ async function executeDeleteAllUsers(){
     toast(e.message || "حدث خطأ أثناء محاولة حذف المستخدمين.", "error");
   }
 }
+function openContactSupportModal(){
+  document.getElementById("adminModal").innerHTML = `<div class="modal" style="border: 1px solid rgba(108, 77, 255, 0.2); background: rgba(18, 20, 29, 0.95); backdrop-filter: blur(20px); max-width: 500px; width: 100%; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
+    <h3 style="color: var(--primary); display: flex; align-items: center; gap: 8px; font-weight: bold; margin-bottom: 12px; justify-content: center; direction: rtl;">📬 مراسلة الدعم الفني</h3>
+    <p style="margin: 10px 0 20px 0; line-height: 1.5; color: #94a3b8; text-align: center; font-size: 13px;">أرسل رسالة مباشرة إلى بريد الدعم الخاص بنا: <b>support@taskora.live</b> وسنقوم بالرد عليك في أقرب وقت.</p>
+    
+    <div style="display: flex; flex-direction: column; gap: 14px; text-align: right; direction: rtl;">
+      <div>
+        <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #d1d5db; font-size: 13px;">البريد الإلكتروني للمرسل</label>
+        <input id="contactEmail" type="email" class="admin-input" placeholder="example@domain.com" style="direction: ltr; text-align: left; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: #fff; width: 100%; height: 38px; padding: 0 12px;">
+      </div>
+      <div>
+        <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #d1d5db; font-size: 13px;">اسم المرسل (كاملًا)</label>
+        <input id="contactName" type="text" class="admin-input" placeholder="الاسم الأول والأخير" style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: #fff; width: 100%; height: 38px; padding: 0 12px;">
+      </div>
+      <div>
+        <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #d1d5db; font-size: 13px;">موضوع الرسالة</label>
+        <input id="contactSubject" type="text" class="admin-input" placeholder="ما هو استفسارك؟" style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: #fff; width: 100%; height: 38px; padding: 0 12px;">
+      </div>
+      <div>
+        <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #d1d5db; font-size: 13px;">نص الرسالة</label>
+        <textarea id="contactMessage" class="admin-input" placeholder="اكتب تفاصيل استفسارك أو مشكلتك هنا..." style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: #fff; width: 100%; min-height: 120px; padding: 10px 12px; resize: vertical; line-height: 1.5;"></textarea>
+      </div>
+    </div>
+    
+    <div style="margin-top: 24px; display: flex; gap: 10px; justify-content: flex-end; direction: rtl;">
+      <button class="btn primary" id="btnSendContactMessage" onclick="executeSendContactMessage()" style="font-weight: bold; background: var(--primary); border: none; padding: 0 20px; height: 38px; border-radius: 8px;">إرسال الرسالة 🚀</button>
+      <button class="btn" onclick="closeAdminModal()" style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.08); padding: 0 16px; height: 38px; border-radius: 8px;">إلغاء وإغلاق</button>
+    </div>
+  </div>`;
+  document.getElementById("adminModal").classList.add("open");
+}
+
+async function executeSendContactMessage(){
+  const email = document.getElementById("contactEmail").value.trim();
+  const name = document.getElementById("contactName").value.trim();
+  const subject = document.getElementById("contactSubject").value.trim();
+  const message = document.getElementById("contactMessage").value.trim();
+  
+  if(!email || !/^\S+@\S+\.\S+$/.test(email)){
+    toast("يرجى إدخال بريد إلكتروني صحيح.", "error");
+    return;
+  }
+  if(!subject){
+    toast("يرجى تحديد موضوع الرسالة.", "error");
+    return;
+  }
+  if(!message){
+    toast("يرجى كتابة نص الرسالة.", "error");
+    return;
+  }
+  
+  const btn = document.getElementById("btnSendContactMessage");
+  btn.disabled = true;
+  btn.innerText = "جاري الإرسال...";
+  
+  try {
+    const res = await fetch("/api/support/incoming-email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ sender_email: email, sender_name: name, subject, message })
+    });
+    const data = await res.json();
+    if(!res.ok) throw new Error(data.error || "فشل إرسال الرسالة.");
+    
+    closeAdminModal();
+    toast("تم إرسال رسالتك بنجاح إلى support@taskora.live وسجلت باللوحة!", "success");
+  } catch(e) {
+    btn.disabled = false;
+    btn.innerText = "إرسال الرسالة 🚀";
+    toast(e.message || "حدث خطأ أثناء محاولة إرسال الرسالة.", "error");
+  }
+}
 function filterAdminUsers(){
   const q = (document.getElementById("adminUserSearch")?.value || "").toLowerCase();
   const k = document.getElementById("adminKycFilter")?.value || "";
@@ -5764,6 +5964,7 @@ function filterAdminUsers(){
       <td><div class="admin-actions">
         <button class="mini-btn" onclick="openUserDetail(${u.id})">تفاصيل</button><button class="mini-btn green" onclick="openBalanceModal(${u.id},'${u.username}')">تعديل الرصيد</button>
         <button class="mini-btn amber" onclick="setUserStatus(${u.id},'${u.status==='active'?'blocked':'active'}')">${u.status==='active'?'حظر':'تفعيل'}</button>
+        <button class="mini-btn red" onclick="deleteIndividualUser(${u.id},'${u.username}')">حذف 🗑️</button>
       </div></td>
     </tr>`).join("")}</tbody></table></div>`;
 }
@@ -5798,6 +5999,19 @@ async function setUserStatus(userId,status){
     await api(`/api/admin/users/${userId}/status`,{method:"POST",headers:headers(),body:JSON.stringify({status})});
     await renderAdmin();
   }catch(e){ toast(e.message, "error"); }
+}
+async function deleteIndividualUser(userId, username){
+  if(!confirm(`هل أنت متأكد من رغبتك في حذف حساب المستخدم "${username}" نهائياً من قاعدة البيانات مع كافة بياناته التابعة؟`)) return;
+  try {
+    const res = await api(`/api/admin/users/${userId}`, {
+      method: "DELETE",
+      headers: headers()
+    });
+    toast(res.message || "تم حذف حساب المستخدم بنجاح.", "success");
+    await renderAdmin();
+  } catch(e) {
+    toast(e.message, "error");
+  }
 }
 async function adminKyc(){ return adminKycPending(); }
 

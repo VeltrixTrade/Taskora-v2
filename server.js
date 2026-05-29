@@ -426,6 +426,18 @@ async function migrate() {
   await query(`CREATE INDEX IF NOT EXISTS support_tickets_user_idx ON support_tickets (user_id, created_at DESC);`);
   await query(`CREATE INDEX IF NOT EXISTS support_tickets_status_idx ON support_tickets (status);`);
 
+  await query(`
+    CREATE TABLE IF NOT EXISTS support_emails (
+      id BIGSERIAL PRIMARY KEY,
+      sender_email VARCHAR(255) NOT NULL,
+      sender_name VARCHAR(255),
+      subject VARCHAR(255) NOT NULL,
+      message TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+  await query(`CREATE INDEX IF NOT EXISTS support_emails_created_idx ON support_emails (created_at DESC);`);
+
 
 
   await query(`
@@ -1919,6 +1931,92 @@ app.delete("/api/admin/users/all", auth, adminOnly, async (req, res) => {
   } catch (err) {
     console.error("Error deleting all users:", err);
     res.status(500).json({ error: "فشل حذف المستخدمين من قاعدة البيانات." });
+  }
+});
+
+app.delete("/api/admin/users/:id", auth, adminOnly, async (req, res) => {
+  try {
+    const userId = req.params.id;
+    
+    // Check if the user is an admin to prevent deleting administrators
+    const checkRes = await query("SELECT role, username FROM users WHERE id=$1", [userId]);
+    if (checkRes.rowCount === 0) {
+      return res.status(404).json({ error: "المستخدم غير موجود." });
+    }
+    if (checkRes.rows[0].role === "admin") {
+      return res.status(403).json({ error: "لا يمكن حذف حسابات المسؤولين (الأدمن)." });
+    }
+
+    // 1. Clear referral references where this user is the referrer to prevent FK issues
+    await query("UPDATE users SET referred_by = NULL WHERE referred_by = $1", [userId]);
+
+    // 2. Perform cascading deletion of the user
+    await query("DELETE FROM users WHERE id=$1", [userId]);
+
+    // 3. Log the administrative action
+    await logAdminAction(pool, req.user.id, "delete_user", "users", userId, {
+      deleted_username: checkRes.rows[0].username,
+      deleted_by_username: req.user.username
+    });
+
+    res.json({ success: true, message: `تم حذف حساب المستخدم ${checkRes.rows[0].username} بنجاح.` });
+  } catch (err) {
+    console.error("Error deleting individual user:", err);
+    res.status(500).json({ error: "فشل حذف حساب المستخدم من قاعدة البيانات." });
+  }
+});
+
+app.get("/api/admin/support-emails", auth, adminOnly, async (_req, res) => {
+  try {
+    const result = await query("SELECT * FROM support_emails ORDER BY id DESC LIMIT 500");
+    res.json({ emails: result.rows });
+  } catch (err) {
+    console.error("Error fetching support emails:", err);
+    res.status(500).json({ error: "فشل تحميل الرسائل الواردة." });
+  }
+});
+
+app.delete("/api/admin/support-emails/:id", auth, adminOnly, async (req, res) => {
+  try {
+    await query("DELETE FROM support_emails WHERE id=$1", [req.params.id]);
+    res.json({ success: true, message: "تم حذف الرسالة بنجاح." });
+  } catch (err) {
+    console.error("Error deleting support email:", err);
+    res.status(500).json({ error: "فشل حذف الرسالة." });
+  }
+});
+
+app.post("/api/support/incoming-email", async (req, res) => {
+  try {
+    const fromVal = req.body.from || req.body.sender_email || req.body.sender || "";
+    const nameVal = req.body.name || req.body.sender_name || "";
+    const subjectVal = req.body.subject || "بدون عنوان";
+    const messageVal = req.body.message || req.body.text || req.body.html || "";
+
+    let email = String(fromVal).trim();
+    let name = String(nameVal).trim();
+    const emailMatch = email.match(/([^<]+)<([^>]+)>/);
+    if (emailMatch) {
+      name = name || emailMatch[1].trim();
+      email = emailMatch[2].trim();
+    }
+
+    if (!email) {
+      return res.status(422).json({ error: "البريد الإلكتروني للمرسل مطلوب." });
+    }
+    if (!messageVal) {
+      return res.status(422).json({ error: "نص الرسالة مطلوب." });
+    }
+
+    await query(`
+      INSERT INTO support_emails (sender_email, sender_name, subject, message)
+      VALUES ($1, $2, $3, $4)
+    `, [email, name || null, subjectVal, messageVal]);
+
+    res.json({ success: true, message: "تم استقبال الرسالة وحفظها بنجاح." });
+  } catch (err) {
+    console.error("Error receiving incoming email:", err);
+    res.status(500).json({ error: "فشل حفظ الرسالة الواردة." });
   }
 });
 
