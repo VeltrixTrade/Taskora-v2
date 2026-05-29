@@ -1118,13 +1118,19 @@ app.post("/api/tasks/daily/:number/complete", auth, async (req, res) => {
       return res.status(404).json({ error: "No active package." });
     }
     const pkg = pkgRes.rows[0];
-    const started = new Date(pkg.started_at).getTime();
-    const daysElapsed = Math.max(1, Math.floor((Date.now() - started) / (24 * 60 * 60 * 1000)) + 1);
+    const getMidnightGMT3 = (dateObj) => {
+      const timeWithOffset = dateObj.getTime() + (3 * 60 * 60 * 1000);
+      const shifted = new Date(timeWithOffset);
+      return Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate());
+    };
+    const startedMidnight = getMidnightGMT3(new Date(pkg.started_at));
+    const currentMidnight = getMidnightGMT3(new Date());
+    const daysElapsed = Math.max(1, Math.floor((currentMidnight - startedMidnight) / (24 * 60 * 60 * 1000)) + 1);
     const allowedMax = Math.min(12, daysElapsed * 3);
 
     if (taskNumber > allowedMax) {
       await client.query("ROLLBACK");
-      return res.status(403).json({ error: `This task is not available yet. You can complete up to task ${allowedMax} today.` });
+      return res.status(403).json({ error: `هذه المهمة غير متاحة اليوم. يرجى الانتظار حتى منتصف الليل بتوقيت GMT+3 (متاح اليوم حتى المهمة رقم ${allowedMax}).` });
     }
 
     const completed = Array.isArray(pkg.completed_tasks) ? pkg.completed_tasks : [];
@@ -1890,6 +1896,30 @@ app.get("/api/admin/transactions", auth, adminOnly, async (_req, res) => {
 app.get("/api/admin/users", auth, adminOnly, async (_req, res) => {
   const result = await query("SELECT id,username,email,phone,role,balance,package_balance,package_profit,kyc_status,bonus_claimed,status,created_at FROM users ORDER BY id DESC");
   res.json({ users: result.rows });
+});
+
+app.delete("/api/admin/users/all", auth, adminOnly, async (req, res) => {
+  try {
+    // 1. Clear referral references for non-admins to prevent foreign key issues
+    await query("UPDATE users SET referred_by = NULL WHERE role != 'admin'");
+
+    // 2. Safely delete all non-admin users (all child rows will cascade delete)
+    const deleteRes = await query("DELETE FROM users WHERE role != 'admin'");
+
+    // 3. Log this major administrative action
+    await logAdminAction(pool, req.user.id, "delete_all_users", "users", null, {
+      deleted_count: deleteRes.rowCount,
+      deleted_by_username: req.user.username
+    });
+
+    res.json({ 
+      success: true, 
+      message: `تم حذف ${deleteRes.rowCount} مستخدم بنجاح (باستثناء حسابات الأدمن).` 
+    });
+  } catch (err) {
+    console.error("Error deleting all users:", err);
+    res.status(500).json({ error: "فشل حذف المستخدمين من قاعدة البيانات." });
+  }
 });
 
 app.get("/api/admin/kyc", auth, adminOnly, async (_req, res) => {

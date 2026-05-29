@@ -1,12 +1,9 @@
 const { Resend } = require("resend");
 
 // Initialize Resend with the environment API Key
-const apiKey = process.env.RESEND_API_KEY || "re_J9FCQ94f_3JFsuzoRrMLHypf2YPqyF1Zr";
+const apiKey = process.env.RESEND_API_KEY || "re_g5992ZKQ_P2mSa72diVDaUfqCNQ3jmBwL";
 const resend = apiKey ? new Resend(apiKey) : null;
-let MAIL_FROM = process.env.MAIL_FROM || "Taskora <noreply@taskora.live>";
-if (!MAIL_FROM || MAIL_FROM.includes("onboarding@resend.dev") || MAIL_FROM.includes("resend.dev")) {
-  MAIL_FROM = "Taskora <noreply@taskora.live>";
-}
+const MAIL_FROM = process.env.MAIL_FROM || "onboarding@resend.dev";
 
 /**
  * Base email sending utility using official Resend API client.

@@ -2716,16 +2716,7 @@
     .task-ad-watch-btn,.task-ad-complete-btn{width:100%}
     .task-ad-complete-btn:disabled{opacity:.55;cursor:not-allowed;filter:grayscale(.2)}
     .taskora-adsense-unit{
-      margin:18px 0;
-      min-height:92px;
-      display:grid;
-      place-items:center;
-      border:1px dashed rgba(255,255,255,.14);
-      border-radius:22px;
-      background:linear-gradient(135deg,rgba(255,255,255,.035),rgba(255,255,255,.01));
-      color:var(--text);
-      overflow:hidden;
-      text-align:center;
+      display: none !important;
     }
     .taskora-adsense-unit .adsbygoogle{width:100%;min-height:92px}
     .taskora-adsense-pending{padding:16px}
@@ -2764,10 +2755,6 @@
     };
     window.googletag = window.googletag || { cmd: [] };
   </script>
-  <script async src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"></script>
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3936169440487132"
-     crossorigin="anonymous"></script>
-  <meta name="google-adsense-account" content="ca-pub-3936169440487132">
 
 
 
@@ -3743,7 +3730,7 @@
               </div>
               <div class="package-card-feature">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                مدة الباقة: 30 يوم (دورات 4 أيام)
+                مدة الباقة: 4 أيام
               </div>
             </div>
             <button class="package-card-action" onclick="showView('auth');">تفعيل الباقة</button>
@@ -3775,7 +3762,7 @@
               </div>
               <div class="package-card-feature">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                مدة الباقة: 30 يوم (دورات 4 أيام)
+                مدة الباقة: 4 أيام
               </div>
             </div>
             <button class="package-card-action" onclick="showView('auth');">تفعيل الباقة</button>
@@ -3807,7 +3794,7 @@
               </div>
               <div class="package-card-feature">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                مدة الباقة: 30 يوم (دورات 4 أيام)
+                مدة الباقة: 4 أيام
               </div>
             </div>
             <button class="package-card-action" onclick="showView('auth');">تفعيل الباقة</button>
@@ -4225,7 +4212,7 @@
               </div>
               <div class="footer-contact-item" style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #94a3b8; direction: rtl; justify-content: flex-start;">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: rgba(255,255,255,0.6); flex-shrink: 0;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                <span>ساعات العمل: الاثنين - الجمعة (9:00 ص - 6:00 م)</span>
+                <span>ساعات العمل: طوال أيام الأسبوع (10:00 ص - 8:00 م)</span>
               </div>
             </div>
           </div>
@@ -4369,62 +4356,16 @@ function taskoraGetAdsenseSlot(key){
 }
 
 function taskoraAdsenseUnit(key, label){
-  const slot = taskoraGetAdsenseSlot(key);
-  const safeKey = escapeHtml(key);
-  const safeLabel = escapeHtml(label || "AdSense");
-  if(!slot){
-    return `<div class="taskora-adsense-unit taskora-adsense-pending" id="taskora-ad-${safeKey}" data-ad-key="${safeKey}">
-      <div>
-        <span>AdSense</span>
-        <b>${taskoraLangText("الإعلانات قيد التجهيز", "Ads are being prepared")}</b>
-        <small>${safeLabel} - ${taskoraLangText("أضف data-ad-slot لاحقًا من حساب AdSense لتظهر الإعلانات هنا.", "Add the AdSense data-ad-slot later to show ads here.")}</small>
-      </div>
-    </div>`;
-  }
-  return `<div class="taskora-adsense-unit" id="taskora-ad-${safeKey}" data-ad-key="${safeKey}" aria-label="${safeLabel}">
-    <ins class="adsbygoogle"
-      data-taskora-ad="true"
-      style="display:block"
-      data-ad-client="${escapeHtml(window.TASKORA_ADSENSE_CLIENT_ID || "ca-pub-3936169440487132")}"
-      data-ad-slot="${escapeHtml(slot)}"
-      data-ad-format="auto"
-      data-full-width-responsive="true"></ins>
-  </div>`;
+  return "";
 }
 
 function taskoraMountStaticAds(){
-  const home = document.getElementById("homeView");
-  if(home && !document.getElementById("taskoraHomeAdWrap")){
-    const html = `<div class="container" id="taskoraHomeAdWrap">${taskoraAdsenseUnit("home", taskoraLangText("الصفحة الرئيسية", "Home page"))}</div>`;
-    const firstSection = home.querySelector("section");
-    if(firstSection) firstSection.insertAdjacentHTML("afterend", html);
-    else home.insertAdjacentHTML("beforeend", html);
-  }
-  const dashTopAd = document.getElementById("dashTopAd");
-  if(dashTopAd && !dashTopAd.dataset.taskoraReady){
-    dashTopAd.innerHTML = taskoraAdsenseUnit("dashboardTop", taskoraLangText("أعلى لوحة المستخدم", "User dashboard top"));
-    dashTopAd.dataset.taskoraReady = "1";
-  }
 }
 
 function taskoraInitAdsenseBlocks(){
-  document.querySelectorAll("ins.adsbygoogle[data-taskora-ad]:not([data-taskora-requested])").forEach(ad => {
-    if(!ad.getAttribute("data-ad-slot")) return;
-    ad.dataset.taskoraRequested = "1";
-    try{
-      window.adsbygoogle = window.adsbygoogle || [];
-      window.adsbygoogle.push({});
-    }catch(e){
-      console.warn("AdSense is not ready yet:", e);
-    }
-  });
 }
 
 function taskoraAfterRenderAds(){
-  setTimeout(() => {
-    taskoraMountStaticAds();
-    taskoraInitAdsenseBlocks();
-  }, 80);
 }
 function prettyKycStatus(status){ return ({verified:"موثق",pending:"قيد المراجعة",rejected:"مرفوض",not_verified:"غير موثق"})[status || "not_verified"] || status; }
 function setAvatarElements(avatarUrl, username){
@@ -4973,6 +4914,18 @@ async function renderTasks(){
     "بيع تذكرة مباريات","إكمال طلب سحب","بيع تذكرة فيلم","بيع تذكرة حفلة","تأكيد طلب شراء","مراجعة طلب خدمة","بيع تذكرة سفر","إكمال طلب دفع","تنفيذ طلب متجر","تأكيد عملية محفظة","بيع قسيمة رقمية","إكمال طلب نهائي"
   ].map((title,index)=>({number:index+1,title}))).slice(0, 12);
 
+  const getMidnightGMT3 = (dateObj) => {
+    const timeWithOffset = dateObj.getTime() + (3 * 60 * 60 * 1000);
+    const shifted = new Date(timeWithOffset);
+    return Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate());
+  };
+
+  const startedMidnight = getMidnightGMT3(new Date(pkg.started_at));
+  const currentMidnight = getMidnightGMT3(new Date());
+  const daysElapsed = Math.max(1, Math.floor((currentMidnight - startedMidnight) / (24 * 60 * 60 * 1000)) + 1);
+  const maxAllowedTask = Math.min(12, daysElapsed * 3);
+  const unlockedDay = daysElapsed;
+
   const isMonthly = false;
 
   document.getElementById("dashContent").innerHTML = `
@@ -4982,9 +4935,10 @@ async function renderTasks(){
       <div class="timeline">
         ${[1,2,3,4].map(day=>{
           const base=(day-1)*3;
-          return `<div class="timeline-day">
-            <div class="day-num">اليوم ${day}</div>
-            <div><b>3 مهام</b><p>تقدم اليوم داخل الباقة.</p><div class="mini-task-dots">${[1,2,3].map(n=>{
+          const isDayUnlocked = day <= unlockedDay;
+          return `<div class="timeline-day" style="${!isDayUnlocked ? 'opacity: 0.55; filter: grayscale(0.8);' : ''}">
+            <div class="day-num">اليوم ${day} ${!isDayUnlocked ? '🔒' : ''}</div>
+            <div><b>3 مهام</b><p>${isDayUnlocked ? 'تقدم اليوم داخل الباقة.' : 'مغلق حتى يحين اليوم المخصص لها.'}</p><div class="mini-task-dots">${[1,2,3].map(n=>{
               const taskNo = base+n;
               const done = completedTasks.includes(taskNo) || completedCount >= taskNo;
               return `<span class="${done ? "done" : ""}">${taskNo}</span>`;
@@ -4995,7 +4949,7 @@ async function renderTasks(){
       </div>
     </div>
     <div class="task-board mt">
-      ${tasks.map(t=>`
+      ${tasks.filter(t => t.number <= maxAllowedTask).map(t=>`
         <div class="card task-card-pro">
           <div>
             <div class="task-number">${t.number}</div>
@@ -5740,9 +5694,55 @@ async function adminUsers(){
     <div class="admin-toolbar">
       <div><label>بحث</label><input id="adminUserSearch" class="admin-input" placeholder="username / email / phone" oninput="filterAdminUsers()"></div>
       <div><label>الحالة</label><select id="adminKycFilter" class="admin-input" onchange="filterAdminUsers()"><option value="">الكل</option><option value="verified">verified</option><option value="pending">pending</option><option value="not_verified">not_verified</option><option value="rejected">rejected</option></select></div>
+      <div style="flex: 0 1 auto; min-width: auto; display: flex; align-items: flex-end;"><button class="btn red" onclick="confirmDeleteAllUsers()" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border: none; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); height: 38px; padding: 0 16px; font-weight: bold; border-radius: 8px;">حذف جميع الحسابات 🗑️</button></div>
     </div>
     <div id="adminUsersTable"></div>`;
   filterAdminUsers();
+}
+function confirmDeleteAllUsers(){
+  document.getElementById("adminModal").innerHTML = `<div class="modal" style="border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(18, 11, 15, 0.95); backdrop-filter: blur(20px);">
+    <h3 style="color: #ef4444; display: flex; align-items: center; gap: 8px; font-weight: bold; margin-bottom: 12px;">⚠️ تحذير أمني خطير!</h3>
+    <p style="margin: 14px 0; line-height: 1.6; color: #f3f4f6; text-align: right;">أنت على وشك <b>حذف جميع حسابات المستخدمين نهائيًا</b> من النظام، بما في ذلك بياناتهم الشخصية، سجلات التوثيق (KYC)، الإيداعات، السحوبات، الباقات، والمعاملات المالية.</p>
+    <p style="color: #e5e7eb; font-weight: 600; text-align: right;">سيتم استثناء حسابات الإدارة (الآدمن) فقط.</p>
+    
+    <div style="margin: 16px 0; padding: 12px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border-right: 4px solid #ef4444; font-size: 13px; color: #fca5a5; text-align: right;">
+      * هذه العملية غير قابلة للتراجع على الإطلاق وسوف يتم مسح كافة البيانات بشكل كامل من قاعدة البيانات.
+    </div>
+
+    <label style="display: block; margin-bottom: 6px; font-weight: bold; color: #d1d5db; text-align: right;">لتأكيد الحذف النهائي، اكتب الكلمة <span style="color: #fca5a5; font-family: monospace; font-size: 15px; background: rgba(239, 68, 68, 0.2); padding: 2px 6px; border-radius: 4px;">حذف</span> في المربع أدناه:</label>
+    <input id="deleteConfirmationWord" type="text" class="admin-input" placeholder="اكتب حذف هنا" style="border-color: rgba(239, 68, 68, 0.4); text-align: center; font-size: 16px; font-weight: bold; letter-spacing: 1px;">
+    
+    <div class="admin-actions mt" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+      <button class="btn red" id="btnConfirmDeleteAll" onclick="executeDeleteAllUsers()" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); font-weight: bold;">تأكيد الحذف النهائي 🗑️</button>
+      <button class="btn" onclick="closeAdminModal()">إلغاء وإغلاق</button>
+    </div>
+  </div>`;
+  document.getElementById("adminModal").classList.add("open");
+}
+async function executeDeleteAllUsers(){
+  const word = document.getElementById("deleteConfirmationWord").value.trim();
+  if (word !== "حذف") {
+    toast("الكلمة المدخلة غير صحيحة، يرجى كتابة 'حذف' للتأكيد.", "error");
+    return;
+  }
+  
+  const btn = document.getElementById("btnConfirmDeleteAll");
+  btn.disabled = true;
+  btn.innerText = "جاري الحذف النهائي...";
+  
+  try {
+    const res = await api("/api/admin/users/all", {
+      method: "DELETE",
+      headers: headers()
+    });
+    closeAdminModal();
+    toast(res.message || "تم حذف جميع المستخدمين بنجاح عدا الأدمن.", "success");
+    await renderAdmin();
+  } catch(e) {
+    btn.disabled = false;
+    btn.innerText = "تأكيد الحذف النهائي 🗑️";
+    toast(e.message || "حدث خطأ أثناء محاولة حذف المستخدمين.", "error");
+  }
 }
 function filterAdminUsers(){
   const q = (document.getElementById("adminUserSearch")?.value || "").toLowerCase();
@@ -6529,15 +6529,7 @@ function taskoraRewardedTaskButtons(taskNumber){
 }
 
 function taskoraConvertExistingTaskButtons(){
-  document.querySelectorAll("button").forEach(btn=>{
-    const onclick = btn.getAttribute("onclick") || "";
-    const m = onclick.match(/completeTask(?:WithRobot)?\((\d+)\)/);
-    if(!m || btn.closest(".task-ad-actions")) return;
-    const taskNumber = m[1];
-    const wrapper = document.createElement("div");
-    wrapper.innerHTML = taskoraRewardedTaskButtons(taskNumber);
-    btn.replaceWith(wrapper.firstElementChild);
-  });
+  // Bypassed: task buttons do not require ads to complete
 }
 
 const taskoraOriginalSetDash = window.setDash;
