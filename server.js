@@ -630,7 +630,7 @@ app.post("/api/auth/register", async (req, res) => {
 
     let referredBy = null;
     if (referral) {
-      const refRes = await query("SELECT id FROM users WHERE referral_code=$1", [referral]);
+      const refRes = await query("SELECT id FROM users WHERE UPPER(TRIM(referral_code)) = UPPER(TRIM($1))", [referral]);
       if (refRes.rowCount > 0) referredBy = refRes.rows[0].id;
     }
 
@@ -2133,6 +2133,21 @@ app.post("/api/admin/deposits/:id/approve", auth, adminOnly, async (req, res) =>
     await logAdminAction(client, req.user.id, "approve_deposit", "deposit", dep.id, { amount: dep.amount, coin: dep.coin });
     await client.query("UPDATE deposits SET status='approved', reviewed_by=$1, reviewed_at=NOW(), admin_note=$2 WHERE id=$3", [req.user.id, normalize(req.body.note), dep.id]);
     await addTransaction(client, dep.user_id, "deposit", Number(dep.amount), `إيداع مقبول ${String(dep.coin).toUpperCase()}`);
+
+    // Referral 5% Commission logic
+    const userRes = await client.query("SELECT username, referred_by FROM users WHERE id=$1", [dep.user_id]);
+    if (userRes.rowCount > 0 && userRes.rows[0].referred_by) {
+      const referrerId = userRes.rows[0].referred_by;
+      const commission = Number((Number(dep.amount) * 0.05).toFixed(2));
+      if (commission > 0) {
+        // Credit the referrer with 5% commission of this deposit
+        await addTransaction(client, referrerId, "referral_bonus", commission, `عمولة إحالة 5% من إيداع ${userRes.rows[0].username} بقيمة ${dep.amount}`);
+        
+        // Notify the referrer
+        await createNotification(client, referrerId, "عمولة إحالة جديدة 🎁", `لقد حصلت على عمولة إحالة بقيمة $${commission.toFixed(2)} (5%) من إيداع صديقك ${userRes.rows[0].username}.`, "success");
+      }
+    }
+
     await client.query("COMMIT");
     res.json({ success: true });
   } catch (err) {
