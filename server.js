@@ -82,7 +82,7 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false
 });
 
-const uploadDir = process.env.UPLOAD_DIR || path.join(__dirname, "uploads");
+const uploadDir = path.resolve(process.env.UPLOAD_DIR || path.join(__dirname, "uploads"));
 fs.mkdirSync(uploadDir, { recursive: true });
 
 const storage = multer.diskStorage({

@@ -5961,6 +5961,73 @@ async function adminUsers(){
     <div id="adminUsersTable"></div>`;
   filterAdminUsers();
 }
+
+function filterAdminUsers(){
+  const q = (document.getElementById("adminUserSearch")?.value || "").toLowerCase();
+  const k = document.getElementById("adminKycFilter")?.value || "";
+  const rows = cachedAdminUsers.filter(u=>{
+    const okQ = !q || `${u.username} ${u.email} ${u.phone}`.toLowerCase().includes(q);
+    const okK = !k || u.kyc_status === k;
+    return okQ && okK;
+  });
+  document.getElementById("adminUsersTable").innerHTML = `<div class="table-wrap"><table><thead><tr><th>المستخدم</th><th>البريد/الهاتف</th><th>الرصيد</th><th>رصيد الباقة</th><th>ربح الباقة</th><th>KYC</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody>${rows.map(u=>`
+    <tr>
+      <td><b>${escapeHtml(u.username)}</b><br><span class="muted">ID: ${u.id}</span></td>
+      <td>${escapeHtml(u.email)}<br>${escapeHtml(u.phone)}</td>
+      <td class="money-cell">${money(u.balance)}</td>
+      <td class="money-cell">${money(u.package_balance)}</td>
+      <td class="money-cell">${money(u.package_profit)}</td>
+      <td><span class="status ${u.kyc_status || 'not_verified'}">${prettyKycStatus(u.kyc_status)}</span></td>
+      <td><span class="status ${u.status || 'active'}">${u.status || 'active'}</span></td>
+      <td>
+        <div class="admin-actions">
+          <button class="mini-btn" onclick="openUserDetail(${u.id})">تفاصيل</button>
+          <button class="mini-btn red" onclick="deleteIndividualUser(${u.id}, '${escapeHtml(u.username)}')">حذف</button>
+        </div>
+      </td>
+    </tr>
+  `).join("")}</tbody></table></div>`;
+}
+
+async function deleteIndividualUser(userId, username){
+  if(!confirm(`هل أنت متأكد من رغبتك في حذف حساب المستخدم "${username}" نهائياً من قاعدة البيانات مع كافة بياناته التابعة؟`)) return;
+  try {
+    const res = await api(`/api/admin/users/${userId}`, {
+      method: "DELETE",
+      headers: headers()
+    });
+    toast(res.message || "تم حذف حساب المستخدم بنجاح.", "success");
+    await renderAdmin();
+  } catch(e) {
+    toast(e.message, "error");
+  }
+}
+
+async function setUserStatus(userId, status){
+  try {
+    await api(`/api/admin/users/${userId}/status`, {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify({status})
+    });
+    await renderAdmin();
+  } catch(e) {
+    toast(e.message, "error");
+  }
+}
+
+async function adminKyc(){
+  return adminKycPending();
+}
+
+function renderKycTabs(active){
+  return `<div class="admin-subtabs">
+    <button class="admin-subtab ${active==="pending"?"active":""}" onclick="adminKycPending()">طلبات التوثيق</button>
+    <button class="admin-subtab ${active==="verified"?"active":""}" onclick="adminKycVerified()">المستخدمون الموثقون</button>
+    <button class="admin-subtab ${active==="unverified"?"active":""}" onclick="adminKycUnverified()">المستخدمون غير الموثقين</button>
+  </div>`;
+}
+
 function confirmDeleteAllUsers(){
   document.getElementById("adminModal").innerHTML = `<div class="modal" style="border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(18, 11, 15, 0.95); backdrop-filter: blur(20px);">
     <h3 style="color: #ef4444; display: flex; align-items: center; gap: 8px; font-weight: bold; margin-bottom: 12px;">⚠️ تحذير أمني خطير!</h3>
