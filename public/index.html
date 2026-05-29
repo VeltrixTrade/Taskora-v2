@@ -2736,8 +2736,22 @@
     }
     .taskora-adsense-pending b{display:block;margin-top:8px;font-size:15px}
     .taskora-adsense-pending small{display:block;margin-top:4px;color:var(--muted);line-height:1.6}
-    .dashboard-ad-anchor:empty{display:none}
-
+    /* Interactive shipping task styles */
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    .spinner {
+      animation: spin 0.8s linear infinite;
+    }
   </style>
   <link rel="manifest" href="/manifest.json">
   <script>
@@ -3981,6 +3995,10 @@
 
         <button class="btn primary full mt" onclick="submitAuth()">متابعة</button>
 
+        <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 20px; text-align: center;">
+          <button class="btn full" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(13, 148, 136, 0.15) 100%); border: 1px solid rgba(16, 185, 129, 0.35); color: #a7f3d0; text-shadow: 0 0 8px rgba(16, 185, 129, 0.4); font-weight: 700; transition: all 0.3s; border-radius: 12px; height: 42px; cursor: pointer; width: 100%;" onclick="startOfflineDemoMode()" onmouseover="this.style.background='linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(13, 148, 136, 0.25) 100%)'; this.style.borderColor='rgba(16, 185, 129, 0.5)';" onmouseout="this.style.background='linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(13, 148, 136, 0.15) 100%)'; this.style.borderColor='rgba(16, 185, 129, 0.35)';">🚀 الدخول التجريبي السريع (بدون سيرفر)</button>
+        </div>
+
         
       </div>
     </div>
@@ -4512,6 +4530,16 @@ function setAuthMode(m){
   document.getElementById("registerFields").classList.toggle("hidden",m!=="register");
   document.getElementById("loginFields").classList.toggle("hidden",m!=="login");
   document.getElementById("authTitle").innerText = m==="login" ? "تسجيل الدخول" : "إنشاء حساب حقيقي";
+  
+  if (m === "register") {
+    try {
+      const savedRef = localStorage.getItem("taskora_referred_by");
+      const refInput = document.getElementById("regReferral");
+      if (savedRef && refInput && !refInput.value) {
+        refInput.value = savedRef;
+      }
+    } catch(e) {}
+  }
 }
 
 async function taskoraReadJsonResponse(res, path=""){
@@ -4519,6 +4547,9 @@ async function taskoraReadJsonResponse(res, path=""){
 }
 
 async function api(path, opts={}){
+  if (window.offlineMode) {
+    return await simulateOfflineApi(path, opts);
+  }
   setLoading(true);
   try{
     opts.headers = opts.headers || headers();
@@ -4572,7 +4603,12 @@ async function submitAuth(){
         referral_code: document.getElementById("regReferral").value
       };
       const data = await api("/api/auth/register",{method:"POST",headers:headers(),body:JSON.stringify(payload)});
-      token=data.token; localStorage.setItem("taskora_token",token); await loadMe();
+      token=data.token;
+      localStorage.setItem("taskora_token",token);
+      try {
+        localStorage.removeItem("taskora_referred_by");
+      } catch (err) {}
+      await loadMe();
     }
   }catch(e){ msg("authMsg","error",e.message); }
 }
@@ -4911,7 +4947,18 @@ async function renderTasks(){
   const completedCount = Number(pkg.completed_count || 0);
   const completedTasks = Array.isArray(pkg.completed_tasks) ? pkg.completed_tasks : [];
   const tasks = ((data.daily_tasks && data.daily_tasks.length) ? data.daily_tasks : [
-    "بيع تذكرة مباريات","إكمال طلب سحب","بيع تذكرة فيلم","بيع تذكرة حفلة","تأكيد طلب شراء","مراجعة طلب خدمة","بيع تذكرة سفر","إكمال طلب دفع","تنفيذ طلب متجر","تأكيد عملية محفظة","بيع قسيمة رقمية","إكمال طلب نهائي"
+    "📦 تجهيز وشحن أجهزة إلكترونية ذكية",
+    "📦 فحص وتغليف شحنة مستحضرات عناية شخصية",
+    "📦 مطابقة وتجهيز فواتير ملابس ومستلزمات عامة",
+    "📦 تأكيد ومطابقة شحن أجهزة كهربائية منزلية",
+    "📦 فحص وتوزيع شحنة ملابس رياضية وإكسسوارات",
+    "📦 تدقيق ومطابقة أوراق أجهزة ومستلزمات طبية",
+    "📦 فحص وتفريغ حاوية شحن بحري للمواد غذائية",
+    "📦 تجهيز شحنة مستلزمات وقطع غيار مركبات",
+    "📦 مطابقة شحنة أثاث وتصميم منزلي ومكتبي",
+    "📦 تأكيد فرز وتوزيع بضائع شحن بحري عابرة",
+    "📦 فحص جودة وتغليف شحنة ساعات ذكية وهواتف",
+    "📦 إتمام شحنة بضائع عامة وتدقيق بوليصة الحدود"
   ].map((title,index)=>({number:index+1,title}))).slice(0, 12);
 
   const getMidnightGMT3 = (dateObj) => {
@@ -4954,9 +5001,9 @@ async function renderTasks(){
           <div>
             <div class="task-number">${t.number}</div>
             <h3>${t.title}</h3>
-            <p>اضغط لإكمال المهمة عند توفرها حسب جدول الباقة اليومي.</p>
+            <p>اضغط لبدء فحص وتتبع شحنة الطلب اليومي وتأكيد تسليمها.</p>
           </div>
-          ${taskoraRewardedTaskButtons(t.number)}
+          ${taskoraRewardedTaskButtons(t.number, completedTasks.includes(t.number) || completedCount >= t.number)}
         </div>`).join("")}
     </div>
     ${taskoraAdsenseUnit("tasksBottom", taskoraLangText("أسفل صفحة المهام", "Tasks page bottom"))}`;
@@ -5090,6 +5137,9 @@ async function renderWallet(){
   document.getElementById("dashContent").innerHTML = `
     <div class="wallet-layout">
       <div class="card"><h3>طلب إيداع</h3>
+        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 14px; padding: 12px; margin-bottom: 16px; font-size: 13px; color: #a7f3d0; text-align: right; direction: rtl; line-height: 1.5;">
+          💡 <b>تنبيه بخصوص الرسوم:</b> منصة تاسكورا تفرض <b>0% رسوم معاملات</b> على جميع الإيداعات. المبلغ الذي تقوم بإرساله سيصل كاملاً إلى حسابك دون أي نقص (يرجى التأكد من إرسال القيمة الصافية بعد احتساب رسوم التحويل الخاصة بمحفظتك أو منصتك الخارجية).
+        </div>
         <label>العملة</label><select id="depCoin" onchange="showDepositWallet()">${options}</select>
         <div id="depositWalletBox"></div>
         <label>المبلغ المطلوب تحويله بالعملة الرقمية</label>
@@ -6267,6 +6317,23 @@ async function adminAction(path){ try{ await api(path,{method:"POST",headers:hea
 
 
 renderNav();
+// Capture referral code if present in the URL query string
+try {
+  const urlParams = new URLSearchParams(location.search);
+  const refParam = urlParams.get("ref");
+  if (refParam) {
+    localStorage.setItem("taskora_referred_by", refParam.trim());
+  }
+} catch (e) {
+  console.error("Error parsing referral code from URL:", e);
+}
+
+// Check offline mode on startup
+if (localStorage.getItem("taskora_offline") === "true") {
+  window.offlineMode = true;
+  token = "offline-mock-token";
+}
+
 if (location.pathname === "/reset-password" || new URLSearchParams(location.search).get("token")) {
   showView("reset");
 } else if(token) loadMe();
@@ -6726,20 +6793,11 @@ function taskoraCompleteTaskAfterAd(taskNumber){
   console.warn("No task completion function found.");
 }
 
-function taskoraRewardedTaskButtons(taskNumber){
-  const isEn = document.documentElement.lang === "en";
-  return `
-    <div class="task-ad-actions">
-      <div class="task-ad-status" data-ad-status="${taskNumber}">
-        ${isEn ? "Watch the rewarded ad to unlock this task." : "شاهد إعلان المكافأة لفتح إكمال المهمة."}
-      </div>
-      <button class="btn primary task-ad-watch-btn" data-watch-task="${taskNumber}" onclick="taskoraWatchRewardedAd(${taskNumber})">
-        ${isEn ? "Watch ad" : "شاهد الإعلان"}
-      </button>
-      <button class="btn green task-ad-complete-btn" data-complete-task="${taskNumber}" onclick="taskoraCompleteTaskAfterAd(${taskNumber})" disabled>
-        ${isEn ? "Complete after ad" : "أكمل بعد مشاهدة الإعلان"}
-      </button>
-    </div>`;
+function taskoraRewardedTaskButtons(taskNumber, done){
+  if (done) {
+    return `<button class="btn" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: #a1a1aa; cursor: not-allowed; width: 100%; border-radius: 12px; height: 42px; font-weight: 700;" disabled>✅ المهمة مكتملة</button>`;
+  }
+  return `<button class="btn green full" style="border-radius: 12px; height: 42px; font-weight: 700; width: 100%;" onclick="openInteractiveTask(${taskNumber})">📦 تتبع وبدء المهمة</button>`;
 }
 
 function taskoraConvertExistingTaskButtons(){
@@ -6786,5 +6844,575 @@ window.taskoraApiHealthV7 = async function(){
 };
 window.addEventListener("load", () => setTimeout(window.taskoraApiHealthV7, 700));
 </script>
+
+<script>
+// Mock data and simulated offline environment
+const MOCK_SHIPPING_ORDERS = {
+  1: { name: "📦 تجهيز وشحن أجهزة إلكترونية ذكية", from: "الرياض (السعودية)", to: "دبي (الإمارات)", weight: "120 kg", carrier: "Aramex Cargo" },
+  2: { name: "📦 فحص وتغليف شحنة مستحضرات عناية شخصية", from: "المنامة (البحرين)", to: "مسقط (عمان)", weight: "45 kg", carrier: "DHL Express" },
+  3: { name: "📦 مطابقة وتجهيز فواتير ملابس ومستلزمات عامة", from: "الدوحة (قطر)", to: "البصرة (العراق)", weight: "210 kg", carrier: "FedEx International" },
+  4: { name: "📦 تأكيد ومطابقة شحن أجهزة كهربائية منزلية", from: "القاهرة (مصر)", to: "جدة (السعودية)", weight: "430 kg", carrier: "Taskora Logistics" },
+  5: { name: "📦 فحص وتوزيع شحنة ملابس رياضية وإكسسوارات", from: "الكويت (الكويت)", to: "عمان (الأردن)", weight: "85 kg", carrier: "SMSA Express" },
+  6: { name: "📦 تدقيق ومطابقة أوراق أجهزة ومستلزمات طبية", from: "أربيل (العراق)", to: "بغداد (العراق)", weight: "60 kg", carrier: "Iraqi Global Cargo" },
+  7: { name: "📦 فحص وتفريغ حاوية شحن بحري للمواد غذائية", from: "ميناء دبي (الإمارات)", to: "ميناء الدمام (السعودية)", weight: "18,000 kg", carrier: "Maersk Cargo" },
+  8: { name: "📦 تجهيز شحنة مستلزمات وقطع غيار مركبات وسيارات", from: "جدة (السعودية)", to: "الموصل (العراق)", weight: "320 kg", carrier: "Naqel Express" },
+  9: { name: "📦 مطابقة شحنة أثاث وتصميم منزلي ومكتبي راقٍ", from: "الرياض (السعودية)", to: "المنامة (البحرين)", weight: "850 kg", carrier: "DHL Global Forwarding" },
+  10: { name: "📦 تأكيد فرز وتوزيع بضائع شحن بحري عابرة للقارات", from: "ميناء البصرة (العراق)", to: "ميناء دبي (الإمارات)", weight: "1,200 kg", carrier: "DB Schenker" },
+  11: { name: "📦 فحص جودة وتغليف شحنة ساعات وهواتف ذكية", from: "الدوحة (قطر)", to: "مسقط (عمان)", weight: "28 kg", carrier: "UPS Express" },
+  12: { name: "📦 إتمام شحنة بضائع عامة وتدقيق بوليصة الحدود", from: "أربيل (العراق)", to: "عمان (الأردن)", weight: "1,500 kg", carrier: "Taskora Global Express" }
+};
+
+function startOfflineDemoMode() {
+  window.offlineMode = true;
+  localStorage.setItem("taskora_offline", "true");
+  token = "offline-mock-token";
+  
+  if (!localStorage.getItem("taskora_mock_user")) {
+    const mockUser = {
+      id: 99999,
+      username: "مستثمر تجريبي",
+      email: "demo@taskora.live",
+      phone: "+966500000000",
+      role: "user",
+      balance: 250.00,
+      package_balance: 0,
+      package_profit: 0,
+      referral_code: "DEMO123",
+      kyc_status: "verified",
+      bonus_claimed: false,
+      status: "active",
+      created_at: new Date().toISOString()
+    };
+    localStorage.setItem("taskora_mock_user", JSON.stringify(mockUser));
+    localStorage.setItem("taskora_mock_packages", JSON.stringify([]));
+    localStorage.setItem("taskora_mock_transactions", JSON.stringify([
+      { id: 1, type: "deposit", amount: 250.00, description: "رصيد تجريبي ترحيبي مجاني", balance_before: 0, balance_after: 250.00, created_at: new Date().toISOString() }
+    ]));
+    localStorage.setItem("taskora_mock_deposits", JSON.stringify([]));
+    localStorage.setItem("taskora_mock_withdrawals", JSON.stringify([]));
+    localStorage.setItem("taskora_mock_notifications", JSON.stringify([
+      { id: 1, title: "مرحباً بك في الوضع التجريبي 🚀", message: "يمكنك الآن تجربة المنصة بالكامل وشراء الباقات وإتمام مهام الشحن والطلبات بدون الحاجة للاتصال بالسيرفر!", type: "info", read: false, created_at: new Date().toISOString() }
+    ]));
+  }
+  
+  toast("تم تفعيل الوضع التجريبي بنجاح! 🚀", "success");
+  loadMe();
+}
+
+async function simulateOfflineApi(path, opts = {}) {
+  await new Promise(resolve => setTimeout(resolve, 350));
+  
+  const getMockUser = () => JSON.parse(localStorage.getItem("taskora_mock_user"));
+  const saveMockUser = (u) => localStorage.setItem("taskora_mock_user", JSON.stringify(u));
+  const getMockTransactions = () => JSON.parse(localStorage.getItem("taskora_mock_transactions") || "[]");
+  const saveMockTransactions = (t) => localStorage.setItem("taskora_mock_transactions", JSON.stringify(t));
+  const getMockNotifications = () => JSON.parse(localStorage.getItem("taskora_mock_notifications") || "[]");
+  const saveMockNotifications = (n) => localStorage.setItem("taskora_mock_notifications", JSON.stringify(n));
+  
+  if (path === "/api/me") {
+    return { user: getMockUser() };
+  }
+  
+  if (path === "/api/dashboard") {
+    const user = getMockUser();
+    const mockPackages = JSON.parse(localStorage.getItem("taskora_mock_packages") || "[]");
+    const activePkg = mockPackages.find(p => p.status === "active") || null;
+    const transactions = getMockTransactions();
+    const approvedDepositsCount = transactions.filter(t => t.type === "deposit").length;
+    
+    return {
+      user: user,
+      package: activePkg,
+      daily_tasks: [
+        "📦 تجهيز وشحن بضائع إلكترونية من الرياض إلى دبي",
+        "📦 فحص وتغليف شحنة مستحضرات تجميل من المنامة إلى مسقط",
+        "📦 مطابقة فواتير بضائع استهلاكية من الدوحة إلى البصرة",
+        "📦 تأكيد حجز شحن أجهزة منزلية من القاهرة إلى جدة",
+        "📦 مراجعة طلبات شحن ملابس رياضية من الكويت إلى عمان",
+        "📦 تأكيد بوليصة شحن مستلزمات طبية من أربيل إلى بغداد",
+        "📦 فحص حاوية بضائع غذائية من ميناء دبي إلى ميناء الدمام",
+        "📦 تجهيز شحنة مستلزمات سيارات من جدة إلى الموصل",
+        "📦 مطابقة أوزان وتدقيق شحنة أثاث من الرياض إلى المنامة",
+        "📦 تأكيد تفريغ بضائع شحن بحري في ميناء البصرة",
+        "📦 فحص جودة وتغليف شحنة ساعات ذكية من الدوحة إلى مسقط",
+        "📦 إتمام بوليصة شحن نهائية لبضائع مختلفة عبر الحدود"
+      ],
+      stats: {
+        completed_tasks: activePkg ? activePkg.completed_count : 0,
+        completed_packages: mockPackages.filter(p => p.status === "completed").length,
+        approved_deposits: approvedDepositsCount,
+        referral_count: 3
+      }
+    };
+  }
+  
+  if (path === "/api/packages") {
+    return {
+      packages: [
+        { id: "bronze", name: "البرونزية (Bronze)", price: 100, profit: 10, per_task: 0.83 },
+        { id: "silver", name: "الفضية (Silver)", price: 300, profit: 30, per_task: 2.50 },
+        { id: "gold", name: "الذهبية (Gold)", price: 800, profit: 80, per_task: 6.67 },
+        { id: "platinum", name: "البلاتينية (Platinum)", price: 1500, profit: 150, per_task: 12.50 },
+        { id: "vip", name: "كبار الشخصيات (VIP)", price: 3000, profit: 300, per_task: 25.00 }
+      ]
+    };
+  }
+  
+  if (path.startsWith("/api/packages/") && path.endsWith("/buy")) {
+    const pkgId = path.split("/")[3];
+    const user = getMockUser();
+    const prices = { bronze: 100, silver: 300, gold: 800, platinum: 1500, vip: 3000 };
+    const names = { bronze: "البرونزية (Bronze)", silver: "الفضية (Silver)", gold: "الذهبية (Gold)", platinum: "البلاتينية (Platinum)", vip: "كبار الشخصيات (VIP)" };
+    const price = prices[pkgId] || 100;
+    
+    if (user.balance < price) {
+      throw new Error("رصيدك التجريبي غير كافٍ! يرجى تقديم طلب إيداع تجريبي من المحفظة أولاً.");
+    }
+    
+    const before = user.balance;
+    user.balance = Number((user.balance - price).toFixed(2));
+    saveMockUser(user);
+    
+    const txs = getMockTransactions();
+    txs.unshift({
+      id: Date.now(),
+      type: "package_purchase",
+      amount: -price,
+      description: `شراء باقة ${names[pkgId]}`,
+      balance_before: before,
+      balance_after: user.balance,
+      created_at: new Date().toISOString()
+    });
+    saveMockTransactions(txs);
+    
+    const mockPackages = JSON.parse(localStorage.getItem("taskora_mock_packages") || "[]");
+    mockPackages.unshift({
+      package_id: pkgId,
+      package_name: names[pkgId],
+      price: price,
+      completed_count: 0,
+      completed_tasks: [],
+      status: "active",
+      started_at: new Date().toISOString(),
+      profit_target: price * 0.10
+    });
+    localStorage.setItem("taskora_mock_packages", JSON.stringify(mockPackages));
+    
+    const notifs = getMockNotifications();
+    notifs.unshift({
+      id: Date.now(),
+      title: "تهانينا على شراء الباقة! 🎉",
+      message: `لقد قمت بتفعيل باقة ${names[pkgId]} بنجاح بقيمة $${price}. ابدأ الآن في إنجاز مهام الشحن اليومية وجني الأرباح!`,
+      type: "success",
+      read: false,
+      created_at: new Date().toISOString()
+    });
+    saveMockNotifications(notifs);
+    
+    return { success: true };
+  }
+  
+  if (path.startsWith("/api/tasks/daily/") && path.endsWith("/complete")) {
+    const taskNum = Number(path.split("/")[4]);
+    const user = getMockUser();
+    const mockPackages = JSON.parse(localStorage.getItem("taskora_mock_packages") || "[]");
+    const activePkg = mockPackages.find(p => p.status === "active");
+    
+    if (!activePkg) {
+      throw new Error("لا توجد باقة نشطة لإكمال المهام.");
+    }
+    
+    const price = activePkg.price;
+    const taskProfit = Number(((price * 0.10) / 12).toFixed(2));
+    
+    if (!activePkg.completed_tasks.includes(taskNum)) {
+      activePkg.completed_tasks.push(taskNum);
+      activePkg.completed_count = activePkg.completed_tasks.length;
+      
+      const before = user.balance;
+      user.balance = Number((user.balance + taskProfit).toFixed(2));
+      saveMockUser(user);
+      
+      const txs = getMockTransactions();
+      txs.unshift({
+        id: Date.now(),
+        type: "task_profit",
+        amount: taskProfit,
+        description: `أرباح إتمام مهمة شحن رقم ${taskNum} لباقة ${activePkg.package_name}`,
+        balance_before: before,
+        balance_after: user.balance,
+        created_at: new Date().toISOString()
+      });
+      saveMockTransactions(txs);
+      
+      if (activePkg.completed_count >= 12) {
+        activePkg.status = "completed";
+      }
+      localStorage.setItem("taskora_mock_packages", JSON.stringify(mockPackages));
+    }
+    
+    return { success: true };
+  }
+  
+  if (path === "/api/referrals") {
+    return {
+      referral_code: getMockUser().referral_code,
+      invited: [
+        { username: "Ahmed_TRD", email: "ahm***@gmail.com", created_at: new Date().toISOString(), kyc_status: "verified", approved_deposits: 100 },
+        { username: "Sarah_Cargo", email: "sar***@yahoo.com", created_at: new Date().toISOString(), kyc_status: "verified", approved_deposits: 300 },
+        { username: "Youssef_Line", email: "you***@outlook.com", created_at: new Date().toISOString(), kyc_status: "pending", approved_deposits: 0 }
+      ],
+      total_bonus: 20.00
+    };
+  }
+  
+  if (path === "/api/deposits" && opts.method === "POST") {
+    const amount = Number(opts.body.get("amount"));
+    const coin = opts.body.get("coin");
+    const txid = opts.body.get("txid");
+    
+    const mockDeposits = JSON.parse(localStorage.getItem("taskora_mock_deposits") || "[]");
+    mockDeposits.unshift({
+      id: Date.now(),
+      amount,
+      coin,
+      txid,
+      status: "pending",
+      created_at: new Date().toISOString()
+    });
+    localStorage.setItem("taskora_mock_deposits", JSON.stringify(mockDeposits));
+    
+    setTimeout(() => {
+      try {
+        const user = getMockUser();
+        const deps = JSON.parse(localStorage.getItem("taskora_mock_deposits") || "[]");
+        const dep = deps.find(d => d.txid === txid && d.status === "pending");
+        if (dep) {
+          dep.status = "approved";
+          localStorage.setItem("taskora_mock_deposits", JSON.stringify(deps));
+          
+          const before = user.balance;
+          user.balance = Number((user.balance + amount).toFixed(2));
+          saveMockUser(user);
+          
+          const txs = getMockTransactions();
+          txs.unshift({
+            id: Date.now(),
+            type: "deposit",
+            amount,
+            description: `إيداع مقبول ${coin.toUpperCase()}`,
+            balance_before: before,
+            balance_after: user.balance,
+            created_at: new Date().toISOString()
+          });
+          saveMockTransactions(txs);
+          
+          const notifs = getMockNotifications();
+          notifs.unshift({
+            id: Date.now(),
+            title: "تم قبول الإيداع التجريبي! 📥",
+            message: `لقد تم إيداع بقيمة $${amount} بنجاح في حسابك التجريبي عبر ${coin.toUpperCase()}.`,
+            type: "success",
+            read: false,
+            created_at: new Date().toISOString()
+          });
+          saveMockNotifications(notifs);
+        }
+      } catch (err) {}
+    }, 5000);
+    
+    return { deposit: { amount, coin, txid, status: "pending" } };
+  }
+  
+  if (path === "/api/deposits") {
+    return { deposits: JSON.parse(localStorage.getItem("taskora_mock_deposits") || "[]") };
+  }
+  
+  if (path === "/api/withdrawals" && opts.method === "POST") {
+    const body = JSON.parse(opts.body);
+    const amount = Number(body.amount);
+    const coin = body.coin;
+    const wallet = body.wallet_address;
+    
+    const user = getMockUser();
+    if (user.balance < amount) {
+      throw new Error("رصيدك غير كافٍ للسحب.");
+    }
+    
+    const before = user.balance;
+    user.balance = Number((user.balance - amount).toFixed(2));
+    saveMockUser(user);
+    
+    const txs = getMockTransactions();
+    txs.unshift({
+      id: Date.now(),
+      type: "withdrawal_hold",
+      amount: -amount,
+      description: "حجز مبلغ السحب بانتظار مراجعة الأدمن",
+      balance_before: before,
+      balance_after: user.balance,
+      created_at: new Date().toISOString()
+    });
+    saveMockTransactions(txs);
+    
+    const mockWithdrawals = JSON.parse(localStorage.getItem("taskora_mock_withdrawals") || "[]");
+    mockWithdrawals.unshift({
+      id: Date.now(),
+      amount,
+      coin,
+      wallet_address: wallet,
+      status: "pending",
+      created_at: new Date().toISOString()
+    });
+    localStorage.setItem("taskora_mock_withdrawals", JSON.stringify(mockWithdrawals));
+    
+    setTimeout(() => {
+      try {
+        const wds = JSON.parse(localStorage.getItem("taskora_mock_withdrawals") || "[]");
+        const wd = wds.find(w => w.wallet_address === wallet && w.status === "pending");
+        if (wd) {
+          wd.status = "approved";
+          wd.txid = "0x" + Math.random().toString(16).slice(2, 10) + "..." + Math.random().toString(16).slice(2, 6);
+          localStorage.setItem("taskora_mock_withdrawals", JSON.stringify(wds));
+          
+          const notifs = getMockNotifications();
+          notifs.unshift({
+            id: Date.now(),
+            title: "تمت الموافقة على السحب التجريبي! 📤",
+            message: `لقد وافقت الإدارة على طلب السحب الخاص بك بقيمة $${amount} إلى محفظتك بنجاح.`,
+            type: "success",
+            read: false,
+            created_at: new Date().toISOString()
+          });
+          saveMockNotifications(notifs);
+        }
+      } catch (err) {}
+    }, 7000);
+    
+    return { success: true };
+  }
+  
+  if (path === "/api/transactions") {
+    return { transactions: getMockTransactions() };
+  }
+  
+  if (path === "/api/notifications") {
+    return { notifications: getMockNotifications() };
+  }
+  
+  if (path === "/api/wallets") {
+    return {
+      wallets: [
+        { coin: "usdt_trc20", address: "TXYZ1234567890DEMOADDRESSUSDTTRC20", network: "TRC20" },
+        { coin: "usdt_erc20", address: "0x1234567890demoaddressusdterc20", network: "ERC20" },
+        { coin: "btc", address: "1demoBTCAddress1234567890BitcoinNet", network: "Bitcoin" },
+        { coin: "sol", address: "Solana1111111demoaddresssolananetwork", network: "Solana" }
+      ]
+    };
+  }
+  
+  return {};
+}
+
+function openInteractiveTask(taskNumber) {
+  const order = MOCK_SHIPPING_ORDERS[taskNumber] || MOCK_SHIPPING_ORDERS[1];
+  
+  let profitText = "$0.83";
+  if (window.offlineMode) {
+    const mockPackages = JSON.parse(localStorage.getItem("taskora_mock_packages") || "[]");
+    const activePkg = mockPackages.find(p => p.status === "active");
+    if (activePkg) {
+      const price = activePkg.price;
+      const profit = Number(((price * 0.10) / 12).toFixed(2));
+      profitText = `$${profit.toFixed(2)}`;
+    }
+  } else if (me && me.package_balance) {
+    const price = Number(me.package_balance);
+    const profit = Number(((price * 0.10) / 12).toFixed(2));
+    profitText = `$${profit.toFixed(2)}`;
+  }
+
+  const modal = document.getElementById("adminModal");
+  modal.innerHTML = `
+    <div class="modal task-interactive-modal" style="max-width: 580px; width: 95%; background: rgba(18, 22, 41, 0.96); border: 1px solid rgba(16, 185, 129, 0.2); box-shadow: 0 20px 50px rgba(0,0,0,0.6); backdrop-filter: blur(25px); border-radius: 24px; padding: 26px; color: #fff; direction: rtl; text-align: right; overflow: hidden; position: relative;">
+      
+      <!-- Confetti Overlay -->
+      <div id="taskConfettiOverlay" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(10, 12, 26, 0.95); z-index: 100; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; animation: fadeIn 0.4s ease;">
+        <span style="font-size: 60px; animation: bounce 1s infinite;">🎉</span>
+        <h2 style="color: #10b981; font-weight: 900; margin-top: 16px; font-size: 24px;">تم إكمال المهمة بنجاح!</h2>
+        <p style="color: #a1a1aa; font-size: 14px; max-width: 320px; margin: 8px auto 20px;">لقد قمت بفحص وتجهيز بوليصة شحن الطلب بالكامل وتم تسليم الحاوية إلى الناقل اللوجستي بنجاح.</p>
+        
+        <div style="background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.15); padding: 14px 28px; border-radius: 16px; margin-bottom: 24px;">
+          <span style="font-size: 13px; color: #a7f3d0; display: block;">أرباح المهمة المضافة لحسابك:</span>
+          <b style="font-size: 32px; color: #10b981; font-family: 'Rajdhani', sans-serif;">${profitText}</b>
+        </div>
+        
+        <button onclick="finishTaskAction(${taskNumber})" style="background: linear-gradient(135deg, #10b981, #059669); color: #000; border: none; border-radius: 12px; padding: 12px 32px; font-size: 14px; font-weight: 800; cursor: pointer; box-shadow: 0 0 20px rgba(16, 185, 129, 0.35); transition: all 0.3s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">حفظ الأرباح وإغلاق المهمة 💰</button>
+      </div>
+
+      <!-- Modal Header -->
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 16px; margin-bottom: 20px;">
+        <h3 style="margin: 0; font-size: 17px; color: #10b981; display: flex; align-items: center; gap: 8px; font-weight: 700;">
+          <span>📦</span> معالجة شحنة الطلب رقم ${taskNumber}
+        </h3>
+        <button onclick="closeAdminModal()" style="background: none; border: none; color: #a1a1aa; font-size: 24px; cursor: pointer; line-height: 1; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#a1a1aa'">&times;</button>
+      </div>
+      
+      <!-- Cargo Info Card -->
+      <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 16px; padding: 16px; margin-bottom: 20px;">
+        <div style="font-weight: 700; font-size: 14px; color: #fff; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+          <span style="color:#10b981;">●</span> ${order.name}
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: #a1a1aa; padding-right: 12px; border-right: 2px solid rgba(16, 185, 129, 0.3);">
+          <div>📍 <b>مسار الرحلة:</b> من <span style="color:#fff; font-weight: 600;">${order.from}</span> إلى <span style="color:#fff; font-weight: 600;">${order.to}</span></div>
+          <div>⚖️ <b>الوزن الصافي:</b> <span style="color:#fff;">${order.weight}</span></div>
+          <div>🚢 <b>الناقل اللوجستي:</b> <span style="color:#fff;">${order.carrier}</span></div>
+        </div>
+      </div>
+
+      <!-- Real-time Progress Bar -->
+      <div style="margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; font-size: 12px; color: #a1a1aa; margin-bottom: 6px;">
+          <span>نسبة تجهيز الطلب والشحن</span>
+          <span id="taskProgressPercent" style="font-weight: 700; color: #10b981; font-family: 'Rajdhani', sans-serif;">0%</span>
+        </div>
+        <div style="height: 8px; background: rgba(255,255,255,0.04); border-radius: 4px; overflow: hidden; border: 1px solid rgba(255,255,255,0.02);">
+          <div id="taskProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #10b981, #059669); transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);"></div>
+        </div>
+      </div>
+
+      <!-- Stepper Interface -->
+      <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px;">
+        
+        <!-- Step 1 -->
+        <div id="taskStep1Box" style="display: flex; align-items: center; justify-content: space-between; background: rgba(16, 185, 129, 0.04); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 16px; padding: 12px 16px; transition: all 0.3s;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span id="taskStep1Icon" style="background: rgba(16, 185, 129, 0.15); color: #10b981; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; transition: all 0.3s;">١</span>
+            <div>
+              <b style="font-size: 13px; color: #fff; display: block;">الخطوة الأولى: فحص جودة المحتويات</b>
+              <span id="taskStep1Text" style="font-size: 11px; color: #a1a1aa; display: block; margin-top: 2px;">بانتظار التحقق من المنتجات وتعبئتها الآمنة...</span>
+            </div>
+          </div>
+          <button id="taskStep1Btn" onclick="runTaskStep(1, ${taskNumber})" style="background: #10b981; color: #000; border: none; border-radius: 8px; padding: 8px 16px; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s; outline: none;">فحص المنتجات</button>
+        </div>
+
+        <!-- Step 2 -->
+        <div id="taskStep2Box" style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: 16px; padding: 12px 16px; transition: all 0.3s; opacity: 0.4;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span id="taskStep2Icon" style="background: rgba(255, 255, 255, 0.03); color: #a1a1aa; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; transition: all 0.3s;">٢</span>
+            <div>
+              <b style="font-size: 13px; color: #fff; display: block;">الخطوة الثانية: مطابقة أوراق الشحنة</b>
+              <span id="taskStep2Text" style="font-size: 11px; color: #a1a1aa; display: block; margin-top: 2px;">فحص بوليصة الشحن والفواتير الجمركية...</span>
+            </div>
+          </div>
+          <button id="taskStep2Btn" onclick="runTaskStep(2, ${taskNumber})" style="background: rgba(255,255,255,0.05); color: #8e8e93; border: none; border-radius: 8px; padding: 8px 16px; font-size: 12px; font-weight: 800; cursor: not-allowed; transition: all 0.2s; outline: none;" disabled>مغلق</button>
+        </div>
+
+        <!-- Step 3 -->
+        <div id="taskStep3Box" style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: 16px; padding: 12px 16px; transition: all 0.3s; opacity: 0.4;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span id="taskStep3Icon" style="background: rgba(255, 255, 255, 0.03); color: #a1a1aa; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; transition: all 0.3s;">٣</span>
+            <div>
+              <b style="font-size: 13px; color: #fff; display: block;">الخطوة الثالثة: تفعيل وإطلاق الشحنة</b>
+              <span id="taskStep3Text" style="font-size: 11px; color: #a1a1aa; display: block; margin-top: 2px;">تأكيد التسليم لشركة النقل وإرسال التتبع...</span>
+            </div>
+          </div>
+          <button id="taskStep3Btn" onclick="runTaskStep(3, ${taskNumber})" style="background: rgba(255,255,255,0.05); color: #8e8e93; border: none; border-radius: 8px; padding: 8px 16px; font-size: 12px; font-weight: 800; cursor: not-allowed; transition: all 0.2s; outline: none;" disabled>مغلق</button>
+        </div>
+      </div>
+    </div>
+  `;
+  modal.classList.add("open");
+}
+
+function runTaskStep(step, taskNumber) {
+  const btn = document.getElementById(`taskStep${step}Btn`);
+  const box = document.getElementById(`taskStep${step}Box`);
+  const icon = document.getElementById(`taskStep${step}Icon`);
+  const text = document.getElementById(`taskStep${step}Text`);
+  
+  btn.disabled = true;
+  btn.style.cursor = "not-allowed";
+  btn.innerHTML = `<span class="spinner" style="display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; margin-left: 6px;"></span> جاري المعالجة...`;
+  
+  setTimeout(() => {
+    btn.style.display = "none";
+    box.style.background = "rgba(16, 185, 129, 0.08)";
+    box.style.borderColor = "#10b981";
+    icon.style.background = "#10b981";
+    icon.style.color = "#000";
+    icon.innerHTML = "✓";
+    
+    if (step === 1) {
+      text.innerText = "✓ تم التحقق وتعبئة المنتجات بأعلى معايير الجودة والتغليف.";
+      text.style.color = "#a7f3d0";
+      
+      document.getElementById("taskProgressBar").style.width = "33%";
+      document.getElementById("taskProgressPercent").innerText = "33%";
+      
+      const step2Box = document.getElementById("taskStep2Box");
+      const step2Icon = document.getElementById("taskStep2Icon");
+      const step2Btn = document.getElementById("taskStep2Btn");
+      
+      step2Box.style.opacity = "1";
+      step2Box.style.background = "rgba(108, 77, 255, 0.04)";
+      step2Box.style.borderColor = "rgba(108, 77, 255, 0.25)";
+      
+      step2Icon.style.background = "rgba(108, 77, 255, 0.15)";
+      step2Icon.style.color = "#6c4dff";
+      
+      step2Btn.disabled = false;
+      step2Btn.style.cursor = "pointer";
+      step2Btn.style.background = "#6c4dff";
+      step2Btn.style.color = "#fff";
+      step2Btn.innerText = "مطابقة بوليصة الشحن";
+    }
+    
+    if (step === 2) {
+      text.innerText = "✓ تم فحص ومطابقة بوليصة الشحن مع الفاتورة الضريبية وتأشيرة الجمارك.";
+      text.style.color = "#a7f3d0";
+      
+      document.getElementById("taskProgressBar").style.width = "66%";
+      document.getElementById("taskProgressPercent").innerText = "66%";
+      
+      const step3Box = document.getElementById("taskStep3Box");
+      const step3Icon = document.getElementById("taskStep3Icon");
+      const step3Btn = document.getElementById("taskStep3Btn");
+      
+      step3Box.style.opacity = "1";
+      step3Box.style.background = "rgba(245, 158, 11, 0.04)";
+      step3Box.style.borderColor = "rgba(245, 158, 11, 0.25)";
+      
+      step3Icon.style.background = "rgba(245, 158, 11, 0.15)";
+      step3Icon.style.color = "#f59e0b";
+      
+      step3Btn.disabled = false;
+      step3Btn.style.cursor = "pointer";
+      step3Btn.style.background = "#f59e0b";
+      step3Btn.style.color = "#000";
+      step3Btn.innerText = "تفعيل الشحن وإطلاق الحاوية";
+    }
+    
+    if (step === 3) {
+      text.innerText = "✓ تم إرسال الشحنة لشركة النقل وإرسال كود التتبع واللوجستيات بنجاح.";
+      text.style.color = "#a7f3d0";
+      
+      document.getElementById("taskProgressBar").style.width = "100%";
+      document.getElementById("taskProgressPercent").innerText = "100%";
+      
+      setTimeout(() => {
+        document.getElementById("taskConfettiOverlay").style.display = "flex";
+      }, 600);
+    }
+    
+  }, 1200);
+}
+
+async function finishTaskAction(taskNumber) {
+  closeAdminModal();
+  await completeTask(taskNumber);
+}
+</script>
 </body>
 </html>
+
