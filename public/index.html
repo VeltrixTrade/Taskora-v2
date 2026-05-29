@@ -6062,6 +6062,26 @@ async function executeSendContactMessage(){
   btn.innerText = "جاري الإرسال...";
   
   try {
+    const res = await api("/api/support/incoming-email", {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify({
+        sender_email: email,
+        sender_name: name,
+        subject: subject,
+        message: message
+      })
+    });
+    toast(res.message || "تم إرسال رسالتك بنجاح وسيقوم الدعم الفني بمراجعتها.", "success");
+    closeAdminModal();
+  } catch(e) {
+    toast(e.message || "فشل إرسال الرسالة، يرجى المحاولة لاحقاً.", "error");
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "إرسال الرسالة 🚀";
+  }
+}
+
 async function loadAdminKycData(){
   const [kycRes, usersRes] = await Promise.all([
     api("/api/admin/kyc",{headers:headers()}),
