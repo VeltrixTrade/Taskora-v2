@@ -369,8 +369,13 @@ async function migrate() {
       sent_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
       sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       completed_at TIMESTAMPTZ
-    );
+    )
   `);
+
+  await query(`ALTER TABLE golden_tasks ADD COLUMN IF NOT EXISTS proof_image VARCHAR(255);`);
+  await query(`ALTER TABLE golden_tasks ADD COLUMN IF NOT EXISTS user_note TEXT;`);
+  await query(`ALTER TABLE golden_tasks ADD COLUMN IF NOT EXISTS admin_note TEXT;`);
+  await query(`ALTER TABLE golden_tasks ADD COLUMN IF NOT EXISTS task_link VARCHAR(500);`);
 
 
 
@@ -1228,6 +1233,100 @@ app.post("/api/golden/:id/complete", auth, async (req, res) => {
     await client.query("ROLLBACK");
     console.error(err);
     res.status(500).json({ error: "Golden task failed." });
+  } finally {
+    client.release();
+  }
+});
+
+app.post("/api/golden/:id/complete-instant", auth, async (req, res) => {
+  const taskId = req.params.id;
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    
+    // 1. Fetch and lock the custom task
+    const gtRes = await client.query(
+      "SELECT * FROM golden_tasks WHERE id=$1 AND user_id=$2 AND status IN ('active', 'rejected') FOR UPDATE",
+      [taskId, req.user.id]
+    );
+    if (gtRes.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "المهمة غير موجودة أو تم إكمالها بالفعل." });
+    }
+    const gt = gtRes.rows[0];
+    const taskReward = Number(gt.reward || 0);
+
+    // 2. Mark the task as completed
+    await client.query(
+      "UPDATE golden_tasks SET status='completed', completed_at=NOW() WHERE id=$1",
+      [taskId]
+    );
+
+    // 3. Credit the custom task reward to available balance
+    if (taskReward > 0) {
+      await addTransaction(client, req.user.id, "golden_task_instant", taskReward, `أرباح إكمال مهمة: ${gt.title}`);
+    }
+
+    // 4. If they have an active package, progress the package!
+    let packageCompleted = false;
+    let newCount = 0;
+    
+    const pkgRes = await client.query(
+      "SELECT * FROM user_packages WHERE user_id=$1 AND status='active' ORDER BY id DESC LIMIT 1 FOR UPDATE",
+      [req.user.id]
+    );
+    if (pkgRes.rowCount > 0) {
+      const pkg = pkgRes.rows[0];
+      const completed = Array.isArray(pkg.completed_tasks) ? pkg.completed_tasks : [];
+      const nextTaskNumber = completed.length + 1;
+      
+      if (nextTaskNumber <= 12) {
+        const newCompleted = [...completed, nextTaskNumber].sort((a,b) => a-b);
+        newCount = newCompleted.length;
+        const packageTaskReward = Number(pkg.profit_target) / 12;
+
+        if (newCount >= 12) {
+          packageCompleted = true;
+          // Package fully completed! Unlock package balance and accumulated profits
+          const userRes = await client.query("SELECT balance, package_balance, package_profit FROM users WHERE id=$1 FOR UPDATE", [req.user.id]);
+          const user = userRes.rows[0];
+          const updatedProfit = Number(user.package_profit) + packageTaskReward;
+          const unlocked = Number(user.package_balance) + updatedProfit;
+          const before = Number(user.balance);
+          const after = before + unlocked;
+
+          await client.query("UPDATE users SET balance=$1, package_balance=0, package_profit=0 WHERE id=$2", [after, req.user.id]);
+          await client.query(
+            "UPDATE user_packages SET completed_tasks=$1, completed_count=12, status='completed', completed_at=NOW() WHERE id=$2",
+            [JSON.stringify(newCompleted), pkg.id]
+          );
+          await client.query(`
+            INSERT INTO transactions (user_id, type, amount, description, balance_before, balance_after)
+            VALUES ($1, 'package_unlocked', $2, $3, $4, $5)
+          `, [req.user.id, unlocked, 'تحويل رصيد الباقة والربح إلى الرصيد المتاح بعد إكمال 12 مهمة حقيقية', before, after]);
+        } else {
+          // Normal progression: add task reward portion to package_profit
+          await client.query("UPDATE users SET package_profit=package_profit+$1 WHERE id=$2", [packageTaskReward, req.user.id]);
+          await client.query(
+            "UPDATE user_packages SET completed_tasks=$1, completed_count=$2 WHERE id=$3",
+            [JSON.stringify(newCompleted), newCount, pkg.id]
+          );
+        }
+      }
+    }
+
+    await client.query("COMMIT");
+    res.json({
+      success: true,
+      reward: taskReward,
+      package_completed: packageCompleted,
+      new_completed_count: newCount,
+      message: "تم إكمال المهمة بنجاح وصرف الأرباح فوراً!"
+    });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error(err);
+    res.status(500).json({ error: "فشل إكمال المهمة فورياً." });
   } finally {
     client.release();
   }
@@ -2256,18 +2355,134 @@ app.get("/api/admin/golden", auth, adminOnly, async (_req, res) => {
 });
 
 app.post("/api/admin/golden", auth, adminOnly, async (req, res) => {
-  const userId = Number(req.body.user_id);
+  const userId = req.body.user_id; // Can be a number, a string "all", or an array of numbers
   const title = normalize(req.body.title || "المهمة الذهبية الأسبوعية");
   const description = normalize(req.body.description || "مهمة ذهبية خاصة مرسلة من الأدمن.");
   const reward = Number(req.body.reward || 10);
+  const taskLink = normalize(req.body.task_link || "");
+  
   if (!userId || reward <= 0) return res.status(422).json({ error: "Invalid request." });
-  await createNotification(pool, userId, "مهمة ذهبية جديدة", title, "golden");
-  await logAdminAction(pool, req.user.id, "send_golden_task", "user", userId, { title, reward });
-  const result = await query(`
-    INSERT INTO golden_tasks (user_id, title, description, reward, sent_by)
-    VALUES ($1,$2,$3,$4,$5) RETURNING *
-  `, [userId, title, description, reward, req.user.id]);
-  res.status(201).json({ golden_task: result.rows[0] });
+  
+  let targetUserIds = [];
+  
+  if (userId === "all") {
+    // Send to all users except admins!
+    const usersRes = await query("SELECT id FROM users WHERE role != 'admin'");
+    targetUserIds = usersRes.rows.map(r => r.id);
+  } else if (Array.isArray(userId)) {
+    targetUserIds = userId.map(Number).filter(id => !isNaN(id));
+  } else {
+    const singleId = Number(userId);
+    if (!isNaN(singleId)) {
+      targetUserIds = [singleId];
+    }
+  }
+
+  if (targetUserIds.length === 0) {
+    return res.status(422).json({ error: "No target users found." });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    for (const uid of targetUserIds) {
+      await createNotification(client, uid, "مهمة خاصة جديدة 🌟", title, "golden");
+      await client.query(`
+        INSERT INTO golden_tasks (user_id, title, description, reward, sent_by, task_link)
+        VALUES ($1,$2,$3,$4,$5,$6)
+      `, [uid, title, description, reward, req.user.id, taskLink]);
+    }
+    await logAdminAction(client, req.user.id, "send_golden_task_multiple", "users", null, { title, reward, task_link: taskLink, count: targetUserIds.length });
+    await client.query("COMMIT");
+    res.status(201).json({ success: true, message: `تم إرسال المهمة لـ ${targetUserIds.length} مستخدم بنجاح.` });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error(err);
+    res.status(500).json({ error: "فشل إرسال المهمة الجماعية." });
+  } finally {
+    client.release();
+  }
+});
+
+app.post("/api/golden/:id/submit-proof", auth, upload.single("proof_image"), async (req, res) => {
+  try {
+    const userNote = normalize(req.body.user_note || "");
+    const taskId = Number(req.params.id);
+    if (!req.file) {
+      return res.status(422).json({ error: "صورة الإثبات (لقطة الشاشة) مطلوبة ومهمة للتأكيد." });
+    }
+    const proofUrl = `/api/files/${req.file.filename}`;
+    const result = await query(`
+      UPDATE golden_tasks 
+      SET status='pending_review', proof_image=$1, user_note=$2, completed_at=NULL
+      WHERE id=$3 AND user_id=$4 AND status IN ('active', 'rejected')
+      RETURNING *
+    `, [proofUrl, userNote, taskId, req.user.id]);
+    
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "المهمة غير صالحة أو تم إرسالها بالفعل." });
+    }
+    
+    res.json({ success: true, golden_task: result.rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "فشل إرسال إثبات المهمة." });
+  }
+});
+
+app.post("/api/admin/golden/:id/approve", auth, adminOnly, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const gtRes = await client.query("SELECT * FROM golden_tasks WHERE id=$1 FOR UPDATE", [req.params.id]);
+    if (gtRes.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "المهمة الخاصة غير موجودة." });
+    }
+    const gt = gtRes.rows[0];
+    if (gt.status !== "pending_review") {
+      await client.query("ROLLBACK");
+      return res.status(409).json({ error: "المهمة ليست قيد المراجعة حاليًا." });
+    }
+    
+    const reward = Number(gt.reward);
+    await addTransaction(client, gt.user_id, "golden_task", reward, `أرباح المهمة الخاصة: ${gt.title}`);
+    await client.query("UPDATE golden_tasks SET status='completed', completed_at=NOW() WHERE id=$1", [gt.id]);
+    await createNotification(client, gt.user_id, "تم قبول إثبات المهمة 🎉", `تم اعتماد إثبات مهمة "${gt.title}" وحصلت على $${reward} كأرباح!`, "success");
+    await logAdminAction(client, req.user.id, "approve_golden_task", "golden_task", gt.id, { user_id: gt.user_id, reward });
+    
+    await client.query("COMMIT");
+    res.json({ success: true });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error(err);
+    res.status(500).json({ error: "فشل قبول المهمة." });
+  } finally {
+    client.release();
+  }
+});
+
+app.post("/api/admin/golden/:id/reject", auth, adminOnly, async (req, res) => {
+  try {
+    const adminNote = normalize(req.body.note || "لم يتم استيفاء شروط المهمة بشكل صحيح.");
+    const gtRes = await query("SELECT * FROM golden_tasks WHERE id=$1", [req.params.id]);
+    if (gtRes.rowCount === 0) {
+      return res.status(404).json({ error: "المهمة غير موجودة." });
+    }
+    const gt = gtRes.rows[0];
+    if (gt.status !== "pending_review") {
+      return res.status(409).json({ error: "المهمة ليست قيد المراجعة." });
+    }
+    
+    await query("UPDATE golden_tasks SET status='rejected', admin_note=$1 WHERE id=$2", [adminNote, gt.id]);
+    await createNotification(pool, gt.user_id, "تم رفض إثبات المهمة ❌", `تم رفض إثبات مهمة "${gt.title}". السبب: ${adminNote}`, "error");
+    await logAdminAction(pool, req.user.id, "reject_golden_task", "golden_task", gt.id, { user_id: gt.user_id, note: adminNote });
+    
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "فشل رفض المهمة." });
+  }
 });
 
 app.use((err, _req, res, _next) => {

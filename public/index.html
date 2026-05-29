@@ -3995,10 +3995,6 @@
 
         <button class="btn primary full mt" onclick="submitAuth()">متابعة</button>
 
-        <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 20px; text-align: center;">
-          <button class="btn full" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(13, 148, 136, 0.15) 100%); border: 1px solid rgba(16, 185, 129, 0.35); color: #a7f3d0; text-shadow: 0 0 8px rgba(16, 185, 129, 0.4); font-weight: 700; transition: all 0.3s; border-radius: 12px; height: 42px; cursor: pointer; width: 100%;" onclick="startOfflineDemoMode()" onmouseover="this.style.background='linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(13, 148, 136, 0.25) 100%)'; this.style.borderColor='rgba(16, 185, 129, 0.5)';" onmouseout="this.style.background='linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(13, 148, 136, 0.15) 100%)'; this.style.borderColor='rgba(16, 185, 129, 0.35)';">🚀 الدخول التجريبي السريع (بدون سيرفر)</button>
-        </div>
-
         
       </div>
     </div>
@@ -4247,6 +4243,15 @@
 
 <script>
 const API = "";
+// Proactively clear legacy demo mode parameters to enforce the real server mode
+localStorage.removeItem("taskora_offline");
+localStorage.removeItem("taskora_mock_user");
+localStorage.removeItem("taskora_mock_packages");
+localStorage.removeItem("taskora_mock_transactions");
+localStorage.removeItem("taskora_mock_deposits");
+localStorage.removeItem("taskora_mock_withdrawals");
+localStorage.removeItem("taskora_mock_notifications");
+
 let token = localStorage.getItem("taskora_token") || "";
 let me = null;
 let authMode = "login";
@@ -4547,9 +4552,6 @@ async function taskoraReadJsonResponse(res, path=""){
 }
 
 async function api(path, opts={}){
-  if (window.offlineMode) {
-    return await simulateOfflineApi(path, opts);
-  }
   setLoading(true);
   try{
     opts.headers = opts.headers || headers();
@@ -4938,7 +4940,7 @@ async function renderTasks(){
   if(!pkg){
     document.getElementById("dashContent").innerHTML = `<div class="card">
       <h3>لا توجد باقة نشطة</h3>
-      <p>اختر باقة أولًا حتى تظهر لك المهام اليومية.</p>
+      <p>اختر باقة أولًا حتى تظهر لك المهام اليومية المخصصة.</p>
       <button class="btn primary" onclick="setDash('packages')">الذهاب إلى الباقات</button>
     </div>`;
     return;
@@ -4946,20 +4948,6 @@ async function renderTasks(){
 
   const completedCount = Number(pkg.completed_count || 0);
   const completedTasks = Array.isArray(pkg.completed_tasks) ? pkg.completed_tasks : [];
-  const tasks = ((data.daily_tasks && data.daily_tasks.length) ? data.daily_tasks : [
-    "📦 تجهيز وشحن أجهزة إلكترونية ذكية",
-    "📦 فحص وتغليف شحنة مستحضرات عناية شخصية",
-    "📦 مطابقة وتجهيز فواتير ملابس ومستلزمات عامة",
-    "📦 تأكيد ومطابقة شحن أجهزة كهربائية منزلية",
-    "📦 فحص وتوزيع شحنة ملابس رياضية وإكسسوارات",
-    "📦 تدقيق ومطابقة أوراق أجهزة ومستلزمات طبية",
-    "📦 فحص وتفريغ حاوية شحن بحري للمواد غذائية",
-    "📦 تجهيز شحنة مستلزمات وقطع غيار مركبات",
-    "📦 مطابقة شحنة أثاث وتصميم منزلي ومكتبي",
-    "📦 تأكيد فرز وتوزيع بضائع شحن بحري عابرة",
-    "📦 فحص جودة وتغليف شحنة ساعات ذكية وهواتف",
-    "📦 إتمام شحنة بضائع عامة وتدقيق بوليصة الحدود"
-  ].map((title,index)=>({number:index+1,title}))).slice(0, 12);
 
   const getMidnightGMT3 = (dateObj) => {
     const timeWithOffset = dateObj.getTime() + (3 * 60 * 60 * 1000);
@@ -4974,6 +4962,67 @@ async function renderTasks(){
   const unlockedDay = daysElapsed;
 
   const isMonthly = false;
+
+  const userTasks = data.golden_tasks || [];
+  
+  let tasksBoardHtml = "";
+  if (userTasks.length === 0) {
+    tasksBoardHtml = `
+      <div class="card" style="text-align: center; padding: 40px 20px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 20px; margin-top: 24px;">
+        <span style="font-size: 48px; display: block; margin-bottom: 12px; animation: pulse 2s infinite;">🌟</span>
+        <h3 style="font-weight: 700; color: #fff; margin: 0 0 8px;">لا توجد مهام نشطة حالياً</h3>
+        <p style="color: #a1a1aa; font-size: 13.5px; max-width: 440px; margin: 0 auto;">يرجى الانتظار حتى تقوم الإدارة بإسناد مهام يومية أو ترويجية جديدة إلى حسابك للبدء في إنجازها وجني الأرباح فوراً!</p>
+      </div>
+    `;
+  } else {
+    tasksBoardHtml = `
+      <div class="task-board mt">
+        ${userTasks.map((t, index) => {
+          const isDone = t.status === "completed";
+          let statusBadge = "";
+          let buttonHtml = "";
+          
+          if (t.status === "completed") {
+            statusBadge = `<span class="status verified" style="font-size: 11px; padding: 4px 10px; border-radius: 8px; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2);">✅ مكتملة</span>`;
+            buttonHtml = `<button class="btn" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); color: #8e8e93; cursor: not-allowed; border-radius: 12px; font-weight: 700; height: 42px; width: 100%;" disabled>تم استلام الأرباح 💰</button>`;
+          } else if (t.status === "pending_review") {
+            statusBadge = `<span class="status pending" style="font-size: 11px; padding: 4px 10px; border-radius: 8px; background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2);">⏳ قيد المراجعة</span>`;
+            buttonHtml = `<button class="btn" style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.15); color: #f59e0b; cursor: not-allowed; border-radius: 12px; font-weight: 700; height: 42px; width: 100%;" disabled>بانتظار الموافقة</button>`;
+          } else if (t.status === "rejected") {
+            statusBadge = `<span class="status rejected" style="font-size: 11px; padding: 4px 10px; border-radius: 8px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2);">❌ مرفوضة</span>`;
+            buttonHtml = `<button class="btn red full" style="border-radius: 12px; height: 42px; font-weight: 700; width: 100%;" onclick="completeTaskInstant(${t.id}, '${escapeHtml(t.task_link)}')">🔄 إعادة الإنجاز السريع</button>`;
+          } else {
+            statusBadge = `<span class="status active" style="font-size: 11px; padding: 4px 10px; border-radius: 8px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2);">✨ مهمة نشطة</span>`;
+            buttonHtml = `<button class="btn green full" style="border-radius: 12px; height: 42px; font-weight: 700; width: 100%;" onclick="completeTaskInstant(${t.id}, '${escapeHtml(t.task_link)}')">📦 إنجاز المهمة وصرف الربح</button>`;
+          }
+
+          return `
+            <div class="card task-card-pro" style="position: relative; overflow: hidden; border-left: 4px solid ${isDone ? '#10b981' : '#6c4dff'};">
+              <div style="margin-bottom: 14px; display: flex; justify-content: space-between; align-items: start; gap: 8px;">
+                <div>
+                  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                    <div class="task-number" style="width: 24px; height: 24px; font-size: 12px; background: ${isDone ? '#10b981' : '#6c4dff'}; color: #fff;">${index + 1}</div>
+                    <h3 style="margin: 0; font-size: 15px; color: #fff; font-weight: 700;">${escapeHtml(t.title)}</h3>
+                  </div>
+                  <p style="color: #a1a1aa; font-size: 12.5px; margin: 4px 0 0; line-height: 1.5;">${escapeHtml(t.description)}</p>
+                  ${t.task_link ? `<div style="margin-top: 8px;"><a href="${escapeHtml(t.task_link)}" target="_blank" style="color: #6c4dff; font-size: 12px; text-decoration: underline; display: inline-flex; align-items: center; gap: 4px;">🔗 فتح الرابط المرفق للمهمة</a></div>` : ''}
+                  ${t.admin_note && t.status === 'rejected' ? `<div style="margin-top: 8px; color: #ef4444; font-size: 11px; background: rgba(239, 68, 68, 0.05); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.1);"><b>سبب الرفض السابق:</b> ${escapeHtml(t.admin_note)}</div>` : ''}
+                </div>
+                <div>
+                  ${statusBadge}
+                </div>
+              </div>
+              <div style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: 12px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 13px;">
+                <span style="color: #a1a1aa;">المكافأة المالية الفورية:</span>
+                <b style="color: #10b981; font-size: 15px; font-family: 'Rajdhani', sans-serif;">${money(t.reward)}</b>
+              </div>
+              ${buttonHtml}
+            </div>
+          `;
+        }).join("")}
+      </div>
+    `;
+  }
 
   document.getElementById("dashContent").innerHTML = `
     <div class="card">
@@ -4995,17 +5044,7 @@ async function renderTasks(){
         }).join("")}
       </div>
     </div>
-    <div class="task-board mt">
-      ${tasks.filter(t => t.number <= maxAllowedTask).map(t=>`
-        <div class="card task-card-pro">
-          <div>
-            <div class="task-number">${t.number}</div>
-            <h3>${t.title}</h3>
-            <p>اضغط لبدء فحص وتتبع شحنة الطلب اليومي وتأكيد تسليمها.</p>
-          </div>
-          ${taskoraRewardedTaskButtons(t.number, completedTasks.includes(t.number) || completedCount >= t.number)}
-        </div>`).join("")}
-    </div>
+    ${tasksBoardHtml}
     ${taskoraAdsenseUnit("tasksBottom", taskoraLangText("أسفل صفحة المهام", "Tasks page bottom"))}`;
 }
 
@@ -5021,6 +5060,53 @@ async function buyPackage(id){
   }
 }
 async function completeTask(n){ try{ await api("/api/tasks/daily/"+n+"/complete",{method:"POST",headers:headers(),body:"{}"}); toast("تم إكمال المهمة", "success"); await loadMe(); setDash("tasks"); }catch(e){ toast(e.message, "error"); } }
+
+async function completeTaskInstant(id, link) {
+  if (link && link !== "undefined" && link !== "") {
+    window.open(link, "_blank");
+  }
+  setLoading(true);
+  try {
+    const res = await api(`/api/golden/${id}/complete-instant`, {
+      method: "POST",
+      headers: headers(),
+      body: "{}"
+    });
+    toast("تم إكمال المهمة وصرف الأرباح! 🎉", "success");
+    
+    // Open interactive confetti/profit modal
+    const modal = document.getElementById("adminModal");
+    modal.innerHTML = `
+      <div class="modal task-interactive-modal" style="max-width: 480px; width: 95%; background: rgba(18, 22, 41, 0.96); border: 1px solid rgba(16, 185, 129, 0.25); box-shadow: 0 20px 50px rgba(0,0,0,0.6); backdrop-filter: blur(25px); border-radius: 24px; padding: 30px; color: #fff; direction: rtl; text-align: center; overflow: hidden; position: relative; animation: zoomIn 0.3s ease;">
+        <span style="font-size: 64px; display: block; margin-bottom: 12px; animation: bounce 1s infinite;">🎉</span>
+        <h2 style="color: #10b981; font-weight: 900; margin-top: 10px; font-size: 22px;">تم إكمال المهمة بنجاح!</h2>
+        <p style="color: #a1a1aa; font-size: 13.5px; max-width: 340px; margin: 8px auto 20px;">تم التحقق من إتمام المهمة وإضافتها بنجاح. أرباحك الفورية تم إيداعها مباشرة في محفظتك المتاحة!</p>
+        
+        <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.15); padding: 14px 28px; border-radius: 16px; margin-bottom: 24px;">
+          <span style="font-size: 13px; color: #a7f3d0; display: block;">المكافأة التي حصلت عليها:</span>
+          <b style="font-size: 30px; color: #10b981; font-family: 'Rajdhani', sans-serif;">+ ${money(res.reward)}</b>
+        </div>
+
+        ${res.package_completed ? `
+          <div style="background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.15); padding: 12px; border-radius: 16px; margin-bottom: 24px; color: #60a5fa; font-size: 12.5px;">
+            🎁 <b>تهانينا! الباقة اكتملت تماماً!</b><br>تم تحرير رأس مال الباقة وأرباحها ونقلها بالكامل إلى رصيدك المتاح للسحب فوراً!
+          </div>
+        ` : ''}
+        
+        <button onclick="closeAdminModal(); loadMe(); setDash('tasks');" style="background: linear-gradient(135deg, #10b981, #059669); color: #000; border: none; border-radius: 12px; padding: 12px 40px; font-size: 14px; font-weight: 800; cursor: pointer; box-shadow: 0 0 20px rgba(16, 185, 129, 0.3); transition: all 0.3s; width: 100%;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">رائع، عودة للمهام 💰</button>
+      </div>
+    `;
+    modal.classList.add("open");
+    
+    await loadMe();
+    renderTasks();
+  } catch (e) {
+    toast(e.message, "error");
+  } finally {
+    setLoading(false);
+  }
+}
+
 let cryptoPrices = { btc: 0, sol: 0 };
 async function fetchCryptoPrices() {
   try {
@@ -5976,102 +6062,6 @@ async function executeSendContactMessage(){
   btn.innerText = "جاري الإرسال...";
   
   try {
-    const res = await fetch("/api/support/incoming-email", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ sender_email: email, sender_name: name, subject, message })
-    });
-    const data = await res.json();
-    if(!res.ok) throw new Error(data.error || "فشل إرسال الرسالة.");
-    
-    closeAdminModal();
-    toast("تم إرسال رسالتك بنجاح إلى support@taskora.live وسجلت باللوحة!", "success");
-  } catch(e) {
-    btn.disabled = false;
-    btn.innerText = "إرسال الرسالة 🚀";
-    toast(e.message || "حدث خطأ أثناء محاولة إرسال الرسالة.", "error");
-  }
-}
-function filterAdminUsers(){
-  const q = (document.getElementById("adminUserSearch")?.value || "").toLowerCase();
-  const k = document.getElementById("adminKycFilter")?.value || "";
-  const rows = cachedAdminUsers.filter(u=>{
-    const okQ = !q || `${u.username} ${u.email} ${u.phone}`.toLowerCase().includes(q);
-    const okK = !k || u.kyc_status === k;
-    return okQ && okK;
-  });
-  document.getElementById("adminUsersTable").innerHTML = `<div class="table-wrap"><table><thead><tr><th>المستخدم</th><th>البريد/الهاتف</th><th>الرصيد</th><th>رصيد الباقة</th><th>ربح الباقة</th><th>KYC</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody>${rows.map(u=>`
-    <tr>
-      <td><b>${u.username}</b><br><span class="muted">ID: ${u.id}</span></td>
-      <td>${u.email}<br>${u.phone}</td>
-      <td class="money-cell">${money(u.balance)}</td>
-      <td class="money-cell">${money(u.package_balance)}</td>
-      <td class="money-cell">${money(u.package_profit)}</td>
-      <td>${u.kyc_status}</td>
-      <td>${u.status}</td>
-      <td><div class="admin-actions">
-        <button class="mini-btn" onclick="openUserDetail(${u.id})">تفاصيل</button><button class="mini-btn green" onclick="openBalanceModal(${u.id},'${u.username}')">تعديل الرصيد</button>
-        <button class="mini-btn amber" onclick="setUserStatus(${u.id},'${u.status==='active'?'blocked':'active'}')">${u.status==='active'?'حظر':'تفعيل'}</button>
-        <button class="mini-btn red" onclick="deleteIndividualUser(${u.id},'${u.username}')">حذف 🗑️</button>
-      </div></td>
-    </tr>`).join("")}</tbody></table></div>`;
-}
-function openBalanceModal(userId, username){
-  document.getElementById("adminModal").innerHTML = `<div class="modal">
-    <h3>تعديل أرصدة المستخدم: ${username}</h3>
-    <div class="form-grid">
-      <div><label>نوع الرصيد</label><select id="balField"><option value="balance">الرصيد المتاح</option><option value="package_balance">رصيد الباقة المقفل</option><option value="package_profit">ربح الباقة</option></select></div>
-      <div><label>الإجراء</label><select id="balAction"><option value="add">إضافة</option><option value="subtract">خصم</option><option value="set">تعيين قيمة مباشرة</option></select></div>
-    </div>
-    <label>المبلغ</label><input id="balAmount" type="number" min="0" class="admin-input" placeholder="100">
-    <label>ملاحظة إدارية</label><textarea id="balNote" class="admin-input" placeholder="سبب التعديل"></textarea>
-    <div class="admin-actions mt">
-      <button class="btn green" onclick="saveBalance(${userId})">حفظ التعديل</button>
-      <button class="btn" onclick="closeAdminModal()">إلغاء</button>
-    </div>
-  </div>`;
-  document.getElementById("adminModal").classList.add("open");
-}
-function closeAdminModal(){ document.getElementById("adminModal").classList.remove("open"); }
-function openWelcomeBonusModal(){ document.getElementById("welcomeBonusModal").classList.add("open"); }
-function closeWelcomeBonusModal(){ document.getElementById("welcomeBonusModal").classList.remove("open"); }
-async function saveBalance(userId){
-  try{
-    await api(`/api/admin/users/${userId}/balance`,{method:"POST",headers:headers(),body:JSON.stringify({field:balField.value,action:balAction.value,amount:balAmount.value,note:balNote.value})});
-    closeAdminModal();
-    await renderAdmin();
-  }catch(e){ toast(e.message, "error"); }
-}
-async function setUserStatus(userId,status){
-  try{
-    await api(`/api/admin/users/${userId}/status`,{method:"POST",headers:headers(),body:JSON.stringify({status})});
-    await renderAdmin();
-  }catch(e){ toast(e.message, "error"); }
-}
-async function deleteIndividualUser(userId, username){
-  if(!confirm(`هل أنت متأكد من رغبتك في حذف حساب المستخدم "${username}" نهائياً من قاعدة البيانات مع كافة بياناته التابعة؟`)) return;
-  try {
-    const res = await api(`/api/admin/users/${userId}`, {
-      method: "DELETE",
-      headers: headers()
-    });
-    toast(res.message || "تم حذف حساب المستخدم بنجاح.", "success");
-    await renderAdmin();
-  } catch(e) {
-    toast(e.message, "error");
-  }
-}
-async function adminKyc(){ return adminKycPending(); }
-
-function renderKycTabs(active){
-  return `<div class="admin-subtabs">
-    <button class="admin-subtab ${active==="pending"?"active":""}" onclick="adminKycPending()">طلبات التوثيق</button>
-    <button class="admin-subtab ${active==="verified"?"active":""}" onclick="adminKycVerified()">المستخدمون الموثقون</button>
-    <button class="admin-subtab ${active==="unverified"?"active":""}" onclick="adminKycUnverified()">المستخدمون غير الموثقين</button>
-  </div>`;
-}
 async function loadAdminKycData(){
   const [kycRes, usersRes] = await Promise.all([
     api("/api/admin/kyc",{headers:headers()}),
@@ -6192,9 +6182,167 @@ async function adminGolden(){
   markAdminNav("golden");
   const users=await api("/api/admin/users",{headers:headers()});
   const list=await api("/api/admin/golden",{headers:headers()});
-  adminBox.innerHTML = `<h3>المهام الذهبية</h3><div class="card"><label>المستخدم</label><select id="goldUser">${users.users.filter(u=>u.role!=="admin").map(u=>`<option value="${u.id}">${u.username} - ${u.email}</option>`).join("")}</select><label>العنوان</label><input id="goldTitle" value="المهمة الذهبية الأسبوعية"><label>الوصف</label><textarea id="goldDesc">مهمة ذهبية خاصة مرسلة من الإدارة.</textarea><label>الربح</label><input id="goldReward" type="number" value="10"><button class="btn amber mt" onclick="sendGolden()">إرسال</button></div><div class="table-wrap mt"><table><thead><tr><th>المستخدم</th><th>العنوان</th><th>الربح</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody>${list.golden_tasks.map(g=>`<tr><td>${g.username}</td><td>${g.title}</td><td class="money-cell">${money(g.reward)}</td><td>${g.status}</td><td>${new Date(g.sent_at).toLocaleString("ar")}</td></tr>`).join("")}</tbody></table></div>`;
+  const pending = list.golden_tasks.filter(t => t.status === "pending_review");
+  const others = list.golden_tasks.filter(t => t.status !== "pending_review");
+  
+  let pendingHtml = "";
+  if (pending.length) {
+    pendingHtml = `
+      <div class="card mt" style="border: 1px solid rgba(59, 130, 246, 0.25); background: rgba(18, 20, 29, 0.95); margin-top: 24px; margin-bottom: 24px;">
+        <h4 style="color: #3b82f6; margin-bottom: 12px; font-weight: 700; font-size: 14px;">🔍 إثباتات المهام الخاصة قيد الانتظار (${pending.length})</h4>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>المستخدم</th>
+                <th>المهمة</th>
+                <th>المكافأة</th>
+                <th>حساب العميل (Instagram ID)</th>
+                <th>لقطة الشاشة</th>
+                <th>إجراءات</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${pending.map(p => `
+                <tr>
+                  <td><b>${p.username}</b><br><span class="muted">${p.email}</span></td>
+                  <td><b>${p.title}</b><br><span class="muted">${p.description}</span></td>
+                  <td class="money-cell" style="color: #10b981; font-weight: 700;">${money(p.reward)}</td>
+                  <td style="font-family: monospace; color: #f59e0b;">${escapeHtml(p.user_note || "-")}</td>
+                  <td>
+                    ${p.proof_image ? `<button class="file-btn" onclick="openSecureFile('${p.proof_image}')">عرض الإثبات 🖼️</button>` : "-"}
+                  </td>
+                  <td>
+                    <div class="admin-actions">
+                      <button class="mini-btn green" onclick="approveGoldenProof(${p.id})">قبول</button>
+                      <button class="mini-btn red" onclick="rejectGoldenProof(${p.id})">رفض</button>
+                    </div>
+                  </td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  adminBox.innerHTML = `
+    <h3>المهام الخاصة والترويجية</h3>
+    <div class="card">
+      <h4 style="margin-bottom: 12px; font-weight: 700; font-size: 14px; color: #fff;">إرسال مهمة ترويجية للمستخدمين</h4>
+      <label>المستهدف (يمكنك اختيار عدة مستخدمين بالضغط المستمر على Ctrl أو Shift)</label>
+      <select id="goldUser" multiple style="height: 140px; padding: 10px; border-radius: 12px; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08); color: #fff; width: 100%; outline: none; margin-bottom: 14px;">
+        <option value="all" selected>📢 جميع المستخدمين (All Users)</option>
+        ${users.users.filter(u=>u.role!=="admin").map(u=>`<option value="${u.id}">${u.username} - ${u.email}</option>`).join("")}
+      </select>
+      
+      <label>عنوان المهمة (نص واضح، مثال: متابعة صفحة انستقرام)</label>
+      <input id="goldTitle" value="متابعة الحساب الرسمي على Instagram">
+      
+      <label>رابط الانتقال (رابط الصفحة، الفيديو أو الريلز - اختياري)</label>
+      <input id="goldLink" placeholder="https://instagram.com/your_page">
+      
+      <label>الشروط والتفاصيل المطلوبة (نص يظهر للعميل)</label>
+      <textarea id="goldDesc">يرجى الانتقال للرابط المرفق ومتابعة الصفحة ومشاركة لقطة الشاشة كإثبات للحصول على المكافأة فورًا.</textarea>
+      
+      <label>المكافأة (USD)</label>
+      <input id="goldReward" type="number" value="1.50" step="0.01">
+      
+      <button class="btn amber mt" onclick="sendGolden()">إرسال المهمة للعميل 🚀</button>
+    </div>
+
+    ${pendingHtml}
+
+    <h4 style="margin-top: 24px; margin-bottom: 12px; font-weight: 700; font-size: 14px; color: #a1a1aa;">📋 قائمة المهام المرسلة سابقاً (${others.length})</h4>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>المستخدم</th>
+            <th>العنوان</th>
+            <th>الرابط</th>
+            <th>الربح</th>
+            <th>الحالة</th>
+            <th>التاريخ</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${others.map(g=>`
+            <tr>
+              <td><b>${g.username}</b><br><span class="muted">${g.email}</span></td>
+              <td><b>${g.title}</b></td>
+              <td>${g.task_link ? `<a href="${g.task_link}" target="_blank" style="color: #6c4dff; text-decoration: underline;">رابط المهمة 🔗</a>` : "-"}</td>
+              <td class="money-cell">${money(g.reward)}</td>
+              <td>
+                <span class="status ${g.status === 'completed' ? 'verified' : (g.status === 'rejected' ? 'rejected' : 'pending')}">
+                  ${g.status === 'completed' ? 'مقبول' : (g.status === 'rejected' ? 'مرفوض' : 'نشط')}
+                </span>
+              </td>
+              <td>${new Date(g.sent_at).toLocaleString("ar")}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
 }
-async function sendGolden(){ try{ await api("/api/admin/golden",{method:"POST",headers:headers(),body:JSON.stringify({user_id:goldUser.value,title:goldTitle.value,description:goldDesc.value,reward:goldReward.value})}); await renderAdmin(); }catch(e){ toast(e.message, "error"); } }
+
+async function sendGolden(){ 
+  try{ 
+    const select = document.getElementById("goldUser");
+    const selectedValues = Array.from(select.selectedOptions).map(o => o.value);
+    
+    let userIdValue;
+    if (selectedValues.includes("all")) {
+      userIdValue = "all";
+    } else {
+      userIdValue = selectedValues.map(Number);
+    }
+
+    const res = await api("/api/admin/golden",{
+      method:"POST",
+      headers:headers(),
+      body:JSON.stringify({
+        user_id:userIdValue,
+        title:goldTitle.value,
+        task_link:goldLink.value,
+        description:goldDesc.value,
+        reward:goldReward.value
+      })
+    }); 
+    toast(res.message || "تم إرسال المهمة بنجاح", "success");
+    await adminGolden(); 
+  }catch(e){ 
+    toast(e.message, "error"); 
+  } 
+}
+
+async function approveGoldenProof(id) {
+  try {
+    await api(`/api/admin/golden/${id}/approve`, {method: "POST", headers: headers(), body: "{}"});
+    toast("تم قبول الإثبات بنجاح وصرف المكافأة للعميل! 🎉", "success");
+    await adminGolden();
+  } catch(e) {
+    toast(e.message, "error");
+  }
+}
+
+async function rejectGoldenProof(id) {
+  const reason = prompt("يرجى كتابة سبب الرفض (سيظهر للمستخدم):", "لم يتم التحقق من المتابعة بشكل صحيح.");
+  if (reason === null) return; // User cancelled
+  try {
+    await api(`/api/admin/golden/${id}/reject`, {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify({note: reason})
+    });
+    toast("تم رفض إثبات المهمة وإعلام المستخدم.", "success");
+    await adminGolden();
+  } catch(e) {
+    toast(e.message, "error");
+  }
+}
 async function adminAdjustments(){
   markAdminNav("adjustments");
   const d=await api("/api/admin/balance-adjustments",{headers:headers()});
@@ -6326,12 +6474,6 @@ try {
   }
 } catch (e) {
   console.error("Error parsing referral code from URL:", e);
-}
-
-// Check offline mode on startup
-if (localStorage.getItem("taskora_offline") === "true") {
-  window.offlineMode = true;
-  token = "offline-mock-token";
 }
 
 if (location.pathname === "/reset-password" || new URLSearchParams(location.search).get("token")) {
