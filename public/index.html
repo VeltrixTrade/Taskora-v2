@@ -547,7 +547,7 @@
       font-weight: 800;
     }
     .hidden{display:none!important}.mt{margin-top:16px}.muted{color:var(--muted)}
-    @media(max-width:900px){.hero-grid,.grid-3,.grid-2,.stats{grid-template-columns:1fr}.visual{min-height:360px}.dashboard-mock{inset:32px 18px}.nav-inner{align-items:flex-start;flex-direction:column}.mock-grid{grid-template-columns:1fr}}
+    @media(max-width:900px){.hero-grid,.grid-3,.grid-2,.stats{grid-template-columns:1fr}.visual{min-height:360px}.dashboard-mock{inset:32px 18px}.nav-inner{align-items:center;flex-direction:row}.mock-grid{grid-template-columns:1fr}}
 
     .admin-stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
     .admin-stat{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:22px;padding:16px}
@@ -953,7 +953,7 @@
 
     body.user-menu-collapsed .user-dashboard-shell{grid-template-columns:0 minmax(0,1fr)}
     body.user-menu-collapsed .user-side{transform:translateX(120%);opacity:0;pointer-events:none;width:0;padding:0;border:0}
-    @media(max-width:1100px){.user-dashboard-shell{grid-template-columns:1fr}.user-side{position:fixed;right:14px;top:88px;width:min(320px,calc(100% - 28px));z-index:50;transform:translateX(115%);opacity:0;pointer-events:none}.user-side.open{transform:translateX(0);opacity:1;pointer-events:auto}.sidebar-overlay.open{display:block;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:45;backdrop-filter:blur(3px)}.side-toggle{display:inline-flex}.user-stats-grid,.package-pro-grid,.task-board,.realistic-details{grid-template-columns:repeat(2,minmax(0,1fr))}.profile-grid,.wallet-layout{grid-template-columns:1fr}}
+    @media(max-width:1100px){.user-dashboard-shell{grid-template-columns:1fr}.user-side{position:fixed;right:14px;top:60px;width:min(320px,calc(100% - 28px));z-index:50;transform:translateX(115%);opacity:0;pointer-events:none}.user-side.open{transform:translateX(0);opacity:1;pointer-events:auto}.sidebar-overlay.open{display:block;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:45;backdrop-filter:blur(3px)}.side-toggle{display:inline-flex}.user-stats-grid,.package-pro-grid,.task-board,.realistic-details{grid-template-columns:repeat(2,minmax(0,1fr))}.profile-grid,.wallet-layout{grid-template-columns:1fr}}
     @media(max-width:700px){.user-stats-grid,.package-pro-grid,.task-board,.realistic-details{grid-template-columns:1fr}.dashboard-top{grid-template-columns:1fr}}
 
 
@@ -2590,7 +2590,8 @@
     /* ============ MOBILE LAYOUT POLISH & OVERRIDES (ANTIGRAVITY) ============ */
     @media (max-width: 1100px) {
       .user-side {
-        max-height: calc(100vh - 120px) !important;
+        top: 60px !important;
+        max-height: calc(100vh - 80px) !important;
         overflow-y: auto !important;
         padding-top: 50px !important;
         scrollbar-width: none; /* Hide scrollbar for clean visual */
@@ -4133,12 +4134,8 @@
         <!-- SOCIALS ON LEFT (Instagram and Telegram monochrome outline circular icons) -->
         <div class="footer-socials">
           <!-- Instagram -->
-          <a href="https://instagram.com/taskora" target="_blank" title="انستجرام" class="footer-social-link">
+          <a href="https://www.instagram.com/tas.kora/" target="_blank" title="انستجرام" class="footer-social-link">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051C.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
-          </a>
-          <!-- Telegram -->
-          <a href="https://t.me/taskora_official" target="_blank" title="تليجرام" class="footer-social-link">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20.665 3.717l-17.73 6.837c-1.21.486-1.203 1.161-.222 1.462l4.552 1.42 10.532-6.645c.498-.303.953-.14.578.192l-8.533 7.701-.332 4.965c.487 0 .702-.223.974-.486l2.338-2.27 4.862 3.593c.896.495 1.543.239 1.766-.83l3.19-15.025c.326-1.307-.492-1.896-1.353-1.503z"/></svg>
           </a>
         </div>
         
@@ -4674,42 +4671,49 @@ async function renderDashboard(dataFromMe){
   setAvatarElements(me.avatar_url, me.username);
   document.getElementById("sideNotifBadge")?.classList.toggle("hidden", !data.unread_notifications);
   if(document.getElementById("sideNotifBadge")) document.getElementById("sideNotifBadge").innerText = data.unread_notifications || 0;
+  const isKycVerified = me.kyc_status === "verified";
+  const kycStatusHtml = isKycVerified 
+    ? '<span style="color:#10b981; font-weight:900; text-shadow:0 0 10px rgba(16,185,129,0.3); font-size:15px; display:inline-flex; align-items:center; gap:4px;">🟢 موثق بنجاح</span>'
+    : (me.kyc_status === "pending" 
+      ? '<span style="color:#f59e0b; font-weight:900; font-size:15px;">⏳ قيد المراجعة</span>'
+      : '<span style="color:#ef4444; font-weight:900; font-size:15px;">⚠️ غير موثق</span>');
+
   document.getElementById("dashStats").innerHTML = `
-    <div class="user-stat">
-      <div class="stat-header">
-        <span>الرصيد المتاح</span>
-        <div class="stat-icon">
-          <svg class="nav-svg-icon" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-        </div>
+    <!-- Spot available balance -->
+    <div class="user-stat" style="border-radius:24px; padding:20px; background:radial-gradient(circle at 10% 10%, rgba(255,255,255,0.03), transparent 28%), linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.08); box-shadow:0 12px 30px rgba(0,0,0,0.4); position:relative;">
+      <div class="stat-header" style="margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; direction:rtl;">
+        <span style="font-weight:700; color:#cbd5e1; font-size:13.5px;">الرصيد المتاح (فوري 🟢)</span>
+        <span style="font-size:11px; padding:3px 8px; border-radius:6px; background:rgba(255,255,255,0.05); color:#a1a1aa; font-weight:bold;">USDT Spot</span>
       </div>
-      <strong>${money(me.balance)}</strong>
+      <strong style="font-size:32px; font-family:\'Rajdhani\',sans-serif; color:#ffffff; font-weight:900; direction:ltr; display:block; letter-spacing:0.5px; text-shadow:0 0 10px rgba(255,255,255,0.1);">${money(me.balance)}</strong>
     </div>
-    <div class="user-stat">
-      <div class="stat-header">
-        <span>رصيد الباقة</span>
-        <div class="stat-icon">
-          <svg class="nav-svg-icon" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-        </div>
+
+    <!-- Locked Package balance -->
+    <div class="user-stat" style="border-radius:24px; padding:20px; background:radial-gradient(circle at 10% 10%, rgba(255,255,255,0.03), transparent 28%), linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.08); box-shadow:0 12px 30px rgba(0,0,0,0.4); position:relative;">
+      <div class="stat-header" style="margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; direction:rtl;">
+        <span style="font-weight:700; color:#cbd5e1; font-size:13.5px;">رصيد الباقة (متجمد 🔒)</span>
+        <span style="font-size:11px; padding:3px 8px; border-radius:6px; background:rgba(239,68,68,0.1); color:#f87171; font-weight:bold;">Locked</span>
       </div>
-      <strong>${money(me.package_balance)}</strong>
+      <strong style="font-size:32px; font-family:\'Rajdhani\',sans-serif; color:#cbd5e1; font-weight:900; direction:ltr; display:block; letter-spacing:0.5px;">${money(me.package_balance)}</strong>
     </div>
-    <div class="user-stat">
-      <div class="stat-header">
-        <span>ربح الباقة</span>
-        <div class="stat-icon" style="background:rgba(247,181,0,0.06); border-color:rgba(247,181,0,0.18);">
-          <svg class="nav-svg-icon" viewBox="0 0 24 24" style="stroke: #F7B500;"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-        </div>
+
+    <!-- Accumulated package yield -->
+    <div class="user-stat" style="border-radius:24px; padding:20px; background:radial-gradient(circle at 10% 10%, rgba(255,255,255,0.03), transparent 28%), linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.08); box-shadow:0 12px 30px rgba(0,0,0,0.4); position:relative;">
+      <div class="stat-header" style="margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; direction:rtl;">
+        <span style="font-weight:700; color:#cbd5e1; font-size:13.5px;">أرباح الباقة (العائد المتراكم 📈)</span>
+        <span style="font-size:11px; padding:3px 8px; border-radius:6px; background:rgba(16,185,129,0.1); color:#34d399; font-weight:bold;">+10% ROI</span>
       </div>
-      <strong>${money(me.package_profit)}</strong>
+      <strong style="font-size:32px; font-family:\'Rajdhani\',sans-serif; color:#10b981; font-weight:900; direction:ltr; display:block; letter-spacing:0.5px; text-shadow:0 0 10px rgba(16,185,129,0.15);">${money(me.package_profit)}</strong>
     </div>
-    <div class="user-stat">
-      <div class="stat-header">
-        <span>التوثيق</span>
-        <div class="stat-icon" style="background:rgba(16,185,129,0.06); border-color:rgba(16,185,129,0.18);">
-          <svg class="nav-svg-icon" viewBox="0 0 24 24" style="stroke: #10B981;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        </div>
+
+    <!-- KYC verification card -->
+    <div class="user-stat" style="border-radius:24px; padding:20px; background:radial-gradient(circle at 10% 10%, rgba(255,255,255,0.03), transparent 28%), linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.08); box-shadow:0 12px 30px rgba(0,0,0,0.4); position:relative; display:flex; flex-direction:column; justify-content:center;">
+      <div class="stat-header" style="margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; direction:rtl;">
+        <span style="font-weight:700; color:#cbd5e1; font-size:13.5px;">توثيق الهوية (KYC 🛡️)</span>
       </div>
-      <strong style="color: #10B981;">${prettyKycStatus(me.kyc_status)}</strong>
+      <div style="margin-top:2px; direction:rtl; text-align:right;">
+        ${kycStatusHtml}
+      </div>
     </div>
   `;
   document.getElementById("dashMsg").innerHTML = me.kyc_status==="verified" ? `<div class="success">حسابك موثق. يمكنك طلب السحب عند توفر رصيد متاح.</div>` : `<div class="notice"><div>قم بتوثيق الحساب للحصول على بونص 10$</div><div class="mt">لايمكن سحب الأرباح إلا بعد توثيق الحساب</div></div>`;
@@ -5142,7 +5146,6 @@ window.startTasksCountdown = function() {
   if (window.tasksInterval) clearInterval(window.tasksInterval);
   window.tasksInterval = setInterval(update, 1000);
 };
-}
 
 async function buyPackage(id){
   try{
@@ -5207,12 +5210,6 @@ async function renderOverview(){
   const s = await api("/api/user/summary",{headers:headers()});
   document.getElementById("dashContent").innerHTML = `
     <h3>ملخص النشاط</h3>
-    <div class="quick-actions">
-      <button class="quick-action" onclick="setDash('packages')">شراء باقة</button>
-      <button class="quick-action" onclick="setDash('tasks')">المهام</button>
-      <button class="quick-action" onclick="setDash('wallet')">إيداع/سحب</button>
-      <button class="quick-action" onclick="setDash('notifications')">الإشعارات</button>
-    </div>
     <div class="grid-2 mt">
       <div class="chart-card"><h3>نشاط الرصيد خلال 30 يوم</h3>${simpleBarChart(s.tx_daily,"day","total")}</div>
       <div class="chart-card"><h3>حالات الإيداع</h3><div class="donut-wrap"><div class="donut"></div>${legendRows(s.deposits)}</div></div>
