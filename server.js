@@ -177,9 +177,34 @@ async function sendMail(to, subject, html) {
 
 
 
+async function saveUploadedFileToDb(file) {
+  if (!file) return;
+  const filePath = file.path;
+  try {
+    const data = fs.readFileSync(filePath);
+    await query(`
+      INSERT INTO uploaded_files (filename, mimetype, data)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (filename) DO UPDATE SET mimetype = EXCLUDED.mimetype, data = EXCLUDED.data
+    `, [file.filename, file.mimetype, data]);
+  } catch (err) {
+    console.error("Failed to save uploaded file to database:", err);
+  }
+}
+
 async function migrate() {
   await query(`
-    CREATE TABLE IF NOT EXISTS users (
+    CREATE TABLE IF NOT EXISTS uploaded_files (
+      id BIGSERIAL PRIMARY KEY,
+      filename VARCHAR(255) UNIQUE NOT NULL,
+      mimetype VARCHAR(100) NOT NULL,
+      data BYTEA NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await query(`
+    CREATE TABLE IF NOT EXISTS users (`,StartLine:179,TargetContent:
       id BIGSERIAL PRIMARY KEY,
       username VARCHAR(50) UNIQUE NOT NULL,
       email VARCHAR(255) UNIQUE NOT NULL,
@@ -993,6 +1018,7 @@ app.post("/api/profile/avatar", auth, upload.single("avatar"), async (req, res) 
     if (!(file.mimetype || "").startsWith("image/")) {
       return res.status(422).json({ error: "Avatar must be an image file." });
     }
+    await saveUploadedFileToDb(file);
     const avatarUrl = `/api/public/avatar/${file.filename}`;
     await query("UPDATE users SET avatar_url=$1, avatar_updated_at=NOW() WHERE id=$2", [avatarUrl, req.user.id]);
     res.json({ success: true, avatar_url: avatarUrl });
@@ -1038,6 +1064,10 @@ app.post("/api/kyc", auth, upload.fields([
     if (duplicate.rowCount > 0) {
       return res.status(409).json({ error: "This identity document has already been used. One identity can receive one account bonus only." });
     }
+
+    if (req.files?.front_image?.[0]) await saveUploadedFileToDb(req.files.front_image[0]);
+    if (req.files?.back_image?.[0]) await saveUploadedFileToDb(req.files.back_image[0]);
+    if (req.files?.selfie_image?.[0]) await saveUploadedFileToDb(req.files.selfie_image[0]);
 
     const back = req.files?.back_image?.[0];
     const selfie = req.files?.selfie_image?.[0];
@@ -1118,7 +1148,8 @@ app.get("/api/dashboard", auth, async (req, res) => {
     package: pkg.rows[0] || null,
     daily_tasks: DAILY_TASKS.map((title, index) => ({ number: index + 1, title })),
     transactions: transactions.rows,
-    golden_tasks: golden.rows
+    golden_tasks: golden.rows,
+    server_time: Date.now()
   });
 });
 
@@ -1306,6 +1337,7 @@ app.post("/api/deposits", auth, upload.single("proof_image"), async (req, res) =
     if (!req.file) {
       return res.status(422).json({ error: "إثبات الدفع (لقطة الشاشة) مطلوب وإجباري لإتمام الإيداع." });
     }
+    await saveUploadedFileToDb(req.file);
     const proof = `/api/files/${req.file.filename}`;
     const result = await query(`
       INSERT INTO deposits (user_id, amount, coin, txid, proof_image)
@@ -1566,10 +1598,15 @@ app.get("/api/public/avatar/:filename", async (req, res) => {
   try {
     const filename = path.basename(req.params.filename);
     const filePath = path.join(uploadDir, filename);
-    if (!filePath.toLowerCase().startsWith(uploadDir.toLowerCase()) || !fs.existsSync(filePath)) {
-      return res.status(404).json({ error: "Avatar file not found." });
+    if (filePath.toLowerCase().startsWith(uploadDir.toLowerCase()) && fs.existsSync(filePath)) {
+      return res.sendFile(filePath);
     }
-    return res.sendFile(filePath);
+    const dbFile = await query("SELECT mimetype, data FROM uploaded_files WHERE filename=$1 LIMIT 1", [filename]);
+    if (dbFile.rowCount > 0) {
+      res.setHeader("Content-Type", dbFile.rows[0].mimetype);
+      return res.send(dbFile.rows[0].data);
+    }
+    return res.status(404).json({ error: "Avatar file not found." });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Avatar access failed." });
@@ -1580,9 +1617,6 @@ app.get("/api/files/:filename", auth, async (req, res) => {
   try {
     const filename = path.basename(req.params.filename);
     const filePath = path.join(uploadDir, filename);
-    if (!filePath.toLowerCase().startsWith(uploadDir.toLowerCase()) || !fs.existsSync(filePath)) {
-      return res.status(404).json({ error: "File not found." });
-    }
 
     if (req.user.role !== "admin") {
       const apiPath = `/api/files/${filename}`;
@@ -1595,7 +1629,17 @@ app.get("/api/files/:filename", auth, async (req, res) => {
       if (allowed.rowCount === 0) return res.status(403).json({ error: "Forbidden file." });
     }
 
-    return res.sendFile(filePath);
+    if (filePath.toLowerCase().startsWith(uploadDir.toLowerCase()) && fs.existsSync(filePath)) {
+      return res.sendFile(filePath);
+    }
+
+    const dbFile = await query("SELECT mimetype, data FROM uploaded_files WHERE filename=$1 LIMIT 1", [filename]);
+    if (dbFile.rowCount > 0) {
+      res.setHeader("Content-Type", dbFile.rows[0].mimetype);
+      return res.send(dbFile.rows[0].data);
+    }
+
+    return res.status(404).json({ error: "File not found." });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "File access failed." });
@@ -2367,6 +2411,7 @@ app.post("/api/golden/:id/submit-proof", auth, upload.single("proof_image"), asy
     if (!req.file) {
       return res.status(422).json({ error: "صورة الإثبات (لقطة الشاشة) مطلوبة ومهمة للتأكيد." });
     }
+    await saveUploadedFileToDb(req.file);
     const proofUrl = `/api/files/${req.file.filename}`;
     const result = await query(`
       UPDATE golden_tasks 

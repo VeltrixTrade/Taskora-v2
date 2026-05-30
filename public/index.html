@@ -2901,6 +2901,35 @@
         gap: 10px;
       }
     }
+
+    /* Mobile-first enhancements and bug fixes */
+    @media (max-width: 900px) {
+      .account-status-grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+      }
+      .level-card {
+        padding: 22px !important;
+      }
+      .level-name {
+        font-size: 28px !important;
+      }
+    }
+    
+    /* Countdown card premium styling */
+    .tasks-countdown-card {
+      background: linear-gradient(135deg, rgba(108,77,255,0.08) 0%, rgba(16,185,129,0.04) 100%);
+      border: 1px solid rgba(108,77,255,0.18);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .tasks-countdown-card:hover {
+      border-color: rgba(108,77,255,0.3);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
+    }
   </style>
   <link rel="manifest" href="/manifest.json">
   <script>
@@ -5210,7 +5239,49 @@ async function renderTasks(){
     `;
   }
 
+  let countdownHtml = "";
+  if (unlockedDay < 4) {
+    countdownHtml = `
+      <div class="card tasks-countdown-card" style="margin-bottom: 20px;">
+        <div style="position: absolute; top: -50px; left: -50px; width: 120px; height: 120px; background: rgba(108,77,255,0.1); filter: blur(40px); border-radius: 50%;"></div>
+        <div style="position: absolute; bottom: -50px; right: -50px; width: 120px; height: 120px; background: rgba(16,185,129,0.1); filter: blur(40px); border-radius: 50%;"></div>
+        <div style="position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;">
+          <span style="font-size: 32px; animation: pulse 2s infinite;">⏳</span>
+          <h3 style="font-weight: 800; font-size: 16px; color: #fff; margin: 0;">مؤقت فتح مهام اليوم التالي</h3>
+          <p style="color: #a1a1aa; font-size: 12.5px; margin: 0; max-width: 420px; line-height: 1.5;">سيتم فتح 3 مهام إضافية لليوم ${unlockedDay + 1} تلقائياً عند الساعة 12:00 منتصف الليل بتوقيت العراق وسوريا.</p>
+          <div style="display: flex; gap: 12px; margin-top: 14px; direction: ltr;">
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); padding: 8px 14px; border-radius: 14px; min-width: 65px; text-align: center;">
+              <span id="countdownHours" style="font-size: 24px; font-weight: 900; color: #6c4dff; font-family: 'Rajdhani', sans-serif; display: block; line-height: 1;">00</span>
+              <span style="font-size: 10px; color: #a1a1aa;">ساعة</span>
+            </div>
+            <div style="font-size: 24px; font-weight: 900; color: #fff; align-self: center;">:</div>
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); padding: 8px 14px; border-radius: 14px; min-width: 65px; text-align: center;">
+              <span id="countdownMinutes" style="font-size: 24px; font-weight: 900; color: #6c4dff; font-family: 'Rajdhani', sans-serif; display: block; line-height: 1;">00</span>
+              <span style="font-size: 10px; color: #a1a1aa;">دقيقة</span>
+            </div>
+            <div style="font-size: 24px; font-weight: 900; color: #fff; align-self: center;">:</div>
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); padding: 8px 14px; border-radius: 14px; min-width: 65px; text-align: center;">
+              <span id="countdownSeconds" style="font-size: 24px; font-weight: 900; color: #10b981; font-family: 'Rajdhani', sans-serif; display: block; line-height: 1;">00</span>
+              <span style="font-size: 10px; color: #a1a1aa;">ثانية</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  } else {
+    countdownHtml = `
+      <div class="card tasks-countdown-card" style="margin-bottom: 20px;">
+        <div style="position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;">
+          <span style="font-size: 32px; animation: bounce 2s infinite;">🎉</span>
+          <h3 style="font-weight: 800; font-size: 16px; color: #10b981; margin: 0;">تم فتح كافة مهام الباقة!</h3>
+          <p style="color: #cbd5e1; font-size: 12.5px; margin: 0; max-width: 420px; line-height: 1.5;">جميع أيام باقتك مفتوحة بالكامل الآن. أكمل المهام لتحرير رصيدك وسحب كامل أرباحك.</p>
+        </div>
+      </div>
+    `;
+  }
+
   document.getElementById("dashContent").innerHTML = `
+    ${countdownHtml}
     <div class="card">
       <h3>${pkg.package_name}</h3>
       <p>التقدم: ${completedCount}/12 — الحالة: ${pkg.status}${isMonthly ? ' (باقة شهرية)' : ''}</p>
@@ -5233,6 +5304,47 @@ async function renderTasks(){
     </div>
     ${tasksBoardHtml}
     ${taskoraAdsenseUnit("tasksBottom", taskoraLangText("أسفل صفحة المهام", "Tasks page bottom"))}`;
+
+  const serverTimeOnLoad = Number(data.server_time || Date.now());
+  const performanceOnLoad = performance.now();
+
+  if (window.__tasksInterval) clearInterval(window.__tasksInterval);
+  if (unlockedDay < 4) {
+    const updateTimer = () => {
+      try {
+        const nowServer = serverTimeOnLoad + (performance.now() - performanceOnLoad);
+        const now = new Date(nowServer);
+        const targetUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 21, 0, 0, 0));
+        if (now.getTime() >= targetUTC.getTime()) {
+          targetUTC.setUTCDate(targetUTC.getUTCDate() + 1);
+        }
+        const diffMs = targetUTC.getTime() - now.getTime();
+        if (diffMs <= 0) {
+          clearInterval(window.__tasksInterval);
+          setDash("tasks");
+          return;
+        }
+        const hours = Math.floor(diffMs / (60 * 60 * 1000));
+        const minutes = Math.floor((diffMs % (60 * 60 * 1000)) / (60 * 1000));
+        const seconds = Math.floor((diffMs % (60 * 1000)) / 1000);
+        const pad = (num) => String(num).padStart(2, '0');
+        const hEl = document.getElementById("countdownHours");
+        const mEl = document.getElementById("countdownMinutes");
+        const sEl = document.getElementById("countdownSeconds");
+        if (hEl && mEl && sEl) {
+          hEl.innerText = pad(hours);
+          mEl.innerText = pad(minutes);
+          sEl.innerText = pad(seconds);
+        } else {
+          clearInterval(window.__tasksInterval);
+        }
+      } catch (err) {
+        console.error("Countdown tick error:", err);
+      }
+    };
+    updateTimer();
+    window.__tasksInterval = setInterval(updateTimer, 1000);
+  }
 }
 
 async function buyPackage(id){
