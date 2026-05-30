@@ -1149,10 +1149,107 @@
     .wallet-big{font-size:44px;font-family:Inter,Tajawal,sans-serif;direction:ltr;color:#ffffff;font-weight:900}
     .referral-panel{display:grid;grid-template-columns:.9fr 1.1fr;gap:18px}
     .referral-link-box{direction:ltr;text-align:left;word-break:break-all;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.03);border-radius:18px;padding:14px;margin:12px 0}
-    .account-status-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-    .check-list{display:grid;gap:10px}
-    .check-item{display:flex;align-items:center;justify-content:space-between;gap:14px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);border-radius:16px;padding:13px}
-    .check-item.ok{border-color:rgba(255,255,255,0.15)}.check-item.no{border-color:rgba(239,68,68,.22)}
+    .account-status-grid{display:flex;flex-direction:column;gap:20px;max-width:680px;margin:0 auto}
+    .check-list{display:grid;gap:12px}
+    .check-item{display:flex;align-items:center;justify-content:space-between;gap:14px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);border-radius:20px;padding:16px 20px;transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);backdrop-filter:blur(10px)}
+    .check-item:hover{transform:translateY(-2px);background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.12)}
+    .check-item.ok{border-color:rgba(16,185,129,0.18);background:rgba(16,185,129,0.02)}
+    .check-item.ok:hover{border-color:rgba(16,185,129,0.3);background:rgba(16,185,129,0.04)}
+    .check-item.no{border-color:rgba(239,68,68,0.18);background:rgba(239,68,68,0.02)}
+    .check-item.no:hover{border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.04)}
+
+    /* Day Tabs Styles */
+    .day-tabs-container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 20px;
+      padding: 8px;
+      backdrop-filter: blur(10px);
+    }
+    .day-tab-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 14px;
+      padding: 12px 6px;
+      color: var(--muted);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      font-family: 'Cairo', 'Tajawal', sans-serif;
+    }
+    .day-tab-btn:hover {
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+    }
+    .day-tab-btn.selected {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.12);
+      color: #ffffff;
+      box-shadow: 0 8px 24px rgba(255,255,255,0.05);
+    }
+    .day-tab-btn.locked {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .tab-day-title {
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .tab-day-status {
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    /* Tasks Timer Banner */
+    .tasks-timer-banner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: linear-gradient(135deg, rgba(108,77,255,0.12), rgba(192,132,252,0.06));
+      border: 1px solid rgba(108,77,255,0.2);
+      border-radius: 20px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 32px rgba(108,77,255,0.05);
+    }
+    .timer-label {
+      font-size: 14px;
+      font-weight: 700;
+      color: #e2e8f0;
+    }
+    .timer-value {
+      font-size: 16px;
+      font-weight: 900;
+      color: #c084fc;
+      font-family: monospace;
+      text-shadow: 0 0 10px rgba(192,132,252,0.4);
+    }
+
+    @media(max-width: 768px) {
+      .day-tabs-container {
+        gap: 6px;
+        padding: 6px;
+        border-radius: 16px;
+      }
+      .day-tab-btn {
+        padding: 8px 4px;
+        border-radius: 10px;
+      }
+      .tab-day-title {
+        font-size: 13px;
+      }
+      .tab-day-status {
+        font-size: 9px;
+      }
+    }
     .admin-note-box{border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);border-radius:16px;padding:12px;margin-bottom:10px}
     .notification-item.sticky{border-color:rgba(255,255,255,0.25);background:rgba(255,255,255,0.04)}
 
@@ -4714,6 +4811,11 @@ function setDash(t){
   dash=t;
   document.getElementById("dashMsg").classList.toggle("hidden", t !== "wallet");
   
+  if (t !== "tasks" && window.tasksInterval) {
+    clearInterval(window.tasksInterval);
+    window.tasksInterval = null;
+  }
+  
   // Hide the stats banner (dashStats) on specific pages: profile, transactions, referrals, notifications
   const hiddenStatsPages = ["profile", "transactions", "referrals", "notifications"];
   const dashStatsEl = document.getElementById("dashStats");
@@ -4896,6 +4998,52 @@ async function renderPackages(){
   }, 50);
 }
 
+window.selectDayTab = function(day) {
+  window.selectedDayTab = day;
+  renderTasks();
+};
+
+window.getMsUntilMidnightGMT3 = function() {
+  const now = new Date();
+  const utcMs = now.getTime();
+  const gmt3Ms = utcMs + (3 * 3600 * 1000);
+  const gmt3Date = new Date(gmt3Ms);
+  const nextMidnightGMT3 = new Date(Date.UTC(
+    gmt3Date.getUTCFullYear(),
+    gmt3Date.getUTCMonth(),
+    gmt3Date.getUTCDate() + 1,
+    0, 0, 0, 0
+  ));
+  const targetUtcMs = nextMidnightGMT3.getTime() - (3 * 3600 * 1000);
+  return targetUtcMs - utcMs;
+};
+
+window.startTasksCountdown = function() {
+  if (window.tasksInterval) clearInterval(window.tasksInterval);
+  
+  const updateTimer = () => {
+    const ms = window.getMsUntilMidnightGMT3();
+    if (ms <= 0) {
+      clearInterval(window.tasksInterval);
+      window.tasksInterval = null;
+      loadMe();
+      setDash("tasks");
+      return;
+    }
+    const totalSecs = Math.floor(ms / 1000);
+    const hours = String(Math.floor(totalSecs / 3600)).padStart(2, '0');
+    const mins = String(Math.floor((totalSecs % 3600) / 60)).padStart(2, '0');
+    const secs = String(totalSecs % 60).padStart(2, '0');
+    const timerEl = document.getElementById("tasksCountdownTimer");
+    if (timerEl) {
+      timerEl.innerText = hours + ":" + mins + ":" + secs;
+    }
+  };
+  
+  updateTimer();
+  window.tasksInterval = setInterval(updateTimer, 1000);
+};
+
 async function renderTasks(){
   let data;
   try{
@@ -4930,38 +5078,72 @@ async function renderTasks(){
   ].map((title,index)=>({number:index+1,title}))).slice(0, 12);
 
   const isMonthly = ["diamond", "crown_vip", "royal_vip"].includes(pkg.package_id);
+  const currentActiveDay = Math.min(4, Math.floor(completedCount / 3) + 1);
+  if (!window.selectedDayTab) {
+    window.selectedDayTab = currentActiveDay;
+  }
+
+  // Generate day tabs HTML cleanly using string concatenation to avoid nested backticks bugs
+  let dayTabsHtml = '<div class="day-tabs-container">';
+  for (let day = 1; day <= 4; day++) {
+    const isCompleted = completedCount >= (day * 3);
+    const isLocked = day > currentActiveDay;
+    const isSelected = day === window.selectedDayTab;
+    
+    let tabStatusText = "";
+    if (isCompleted) tabStatusText = "🟢 مكتمل";
+    else if (isLocked) tabStatusText = "🔒 مغلق";
+    else tabStatusText = "⚡ نشط";
+    
+    const clickAction = isLocked 
+      ? "toast('اليوم غير مفتوح بعد. يفتح بعد تحديث منتصف الليل GMT+3.', 'warning')"
+      : "selectDayTab(" + day + ")";
+      
+    dayTabsHtml += '<button class="day-tab-btn ' + (isSelected ? 'selected' : '') + ' ' + (isLocked ? 'locked' : '') + '" onclick="' + clickAction + '">';
+    dayTabsHtml += '  <span class="tab-day-title">اليوم ' + day + '</span>';
+    dayTabsHtml += '  <span class="tab-day-status">' + tabStatusText + '</span>';
+    dayTabsHtml += '</button>';
+  }
+  dayTabsHtml += '</div>';
+
+  // Get only the 3 tasks corresponding to the selected Day tab
+  const activeTasks = tasks.slice((window.selectedDayTab - 1) * 3, window.selectedDayTab * 3);
+  let taskCardsHtml = '';
+  activeTasks.forEach(t => {
+    taskCardsHtml += '<div class="card task-card-pro">';
+    taskCardsHtml += '  <div>';
+    taskCardsHtml += '    <div class="task-number">' + t.number + '</div>';
+    taskCardsHtml += '    <h3>' + escapeHtml(t.title) + '</h3>';
+    taskCardsHtml += '    <p style="font-size: 13px; color: var(--muted); margin-top: 6px;">شاهد الإعلان المخصص لإكمال المهمة بنجاح وحساب أرباح اليوم.</p>';
+    taskCardsHtml += '  </div>';
+    taskCardsHtml += '  ' + taskoraRewardedTaskButtons(t.number);
+    taskCardsHtml += '</div>';
+  });
 
   document.getElementById("dashContent").innerHTML = `
-    <div class="card">
-      <h3>${pkg.package_name}</h3>
-      <p>التقدم: ${completedCount}/12 — الحالة: ${pkg.status}${isMonthly ? ' (باقة شهرية)' : ''}</p>
-      <div class="timeline">
-        ${[1,2,3,4].map(day=>{
-          const base=(day-1)*3;
-          return `<div class="timeline-day">
-            <div class="day-num">اليوم ${day}</div>
-            <div><b>3 مهام</b><p>تقدم اليوم داخل الباقة.</p><div class="mini-task-dots">${[1,2,3].map(n=>{
-              const taskNo = base+n;
-              const done = completedTasks.includes(taskNo) || completedCount >= taskNo;
-              return `<span class="${done ? "done" : ""}">${taskNo}</span>`;
-            }).join("")}</div></div>
-            <b>${Math.min(Math.max(completedCount-base,0),3)}/3</b>
-          </div>`;
-        }).join("")}
-      </div>
+    <div class="card" style="border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.01); margin-bottom: 20px;">
+      <h3 style="color: #c084fc;">الباقة النشطة: ${pkg.package_name}</h3>
+      <p style="margin-top: 6px; font-size: 14px; color: var(--muted);">
+        التقدم الإجمالي: ${completedCount}/12 — حالة الاشتراك: <b style="color: #10B981;">${pkg.status}</b> ${isMonthly ? ' (باقة شهرية)' : ''}
+      </p>
     </div>
+    
+    <div class="tasks-timer-banner">
+      <span class="timer-icon">⏳</span>
+      <span class="timer-label">تحديث المهام القادم (منتصف الليل GMT+3) خلال:</span>
+      <span id="tasksCountdownTimer" class="timer-value">--:--:--</span>
+    </div>
+    
+    ${dayTabsHtml}
+    
     <div class="task-board mt">
-      ${tasks.map(t=>`
-        <div class="card task-card-pro">
-          <div>
-            <div class="task-number">${t.number}</div>
-            <h3>${t.title}</h3>
-            <p>اضغط لإكمال المهمة عند توفرها حسب جدول الباقة اليومي.</p>
-          </div>
-          ${taskoraRewardedTaskButtons(t.number)}
-        </div>`).join("")}
+      ${taskCardsHtml}
     </div>
+    
     ${taskoraAdsenseUnit("tasksBottom", taskoraLangText("أسفل صفحة المهام", "Tasks page bottom"))}`;
+
+  // Start the dynamically updating time countdown
+  window.startTasksCountdown();
 }
 
 async function buyPackage(id){
@@ -5235,23 +5417,33 @@ async function renderAccountStatus(){
   }
   document.getElementById("dashContent").innerHTML = `
     <div class="account-status-grid">
-      <div class="level-card">
-        <h3>مستواك الحالي</h3>
-        <div class="level-name">${d.level}</div>
-        <div class="level-score">Score: ${d.score}</div>
-        <div class="progress-shell"><div class="progress-fill" style="width:${Math.min(100, d.score)}%"></div></div>
-        <p>المستوى يتطور حسب المهام المكتملة، الباقات المكتملة، الإيداعات المقبولة، والدعوات الناجحة.</p>
+      <div class="level-card" style="border: 1px solid rgba(108,77,255,0.15); background: radial-gradient(circle at 50% 0%, rgba(108,77,255,0.06), transparent 50%), rgba(255,255,255,0.01);">
+        <h3 style="color: #c084fc; font-weight: 800;">مستواك الحالي</h3>
+        <div class="level-name" style="font-size: 32px; font-weight: 900; background: linear-gradient(135deg, #ffffff, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">${d.level}</div>
+        <div class="level-score" style="font-family: monospace; font-size: 16px; margin: 8px 0; color: #a78bfa;">Score: ${d.score}</div>
+        <div class="progress-shell" style="height: 12px; background: rgba(255,255,255,0.03); border-radius: 99px; overflow: hidden; border: 1px solid rgba(255,255,255,0.06); margin: 12px 0;">
+          <div class="progress-fill" style="height: 100%; width:${Math.min(100, d.score)}%; background: linear-gradient(90deg, #6c4dff, #c084fc); border-radius: 99px; box-shadow: 0 0 10px rgba(108,77,255,0.5);"></div>
+        </div>
+        <p class="muted" style="font-size: 13px; line-height: 1.6;">المستوى يتطور تلقائياً بناءً على عدد المهام المكتملة، الباقات المكتملة، الإيداعات المقبولة، والدعوات الناجحة داخل حسابك.</p>
       </div>
-      <div class="card">
-        <h3>حالة الحساب</h3>
+      <div class="card" style="border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.01);">
+        <h3 style="margin-bottom: 16px;">حالة الحساب والأمان</h3>
         <div class="check-list">
-          ${d.checks.map(c=>`<div class="check-item ${c.ok?"ok":"no"}"><span>${c.ok?"✅":"❌"} ${c.label}</span><b>${c.ok?"مكتمل":"ناقص"}</b></div>`).join("")}
+          ${d.checks.map(c => `
+            <div class="check-item ${c.ok ? "ok" : "no"}">
+              <span style="font-weight: 700; display: flex; align-items: center; gap: 8px; font-size: 14px;">
+                <span>${c.ok ? "🟢" : "🔴"}</span>
+                <span>${c.label}</span>
+              </span>
+              <b style="font-size: 12px; padding: 4px 10px; border-radius: 99px; background: ${c.ok ? "rgba(16,185,129,0.12)" : "rgba(239,68,68,0.12)"}; color: ${c.ok ? "#10B981" : "#EF4444"};">${c.ok ? "مكتمل" : "ناقص"}</b>
+            </div>
+          `).join("")}
         </div>
       </div>
     </div>
-    <div class="card mt">
-      <h3>الخطوات الناقصة</h3>
-      ${d.missing.length ? `<ol>${d.missing.map(x=>`<li>${x}</li>`).join("")}</ol>` : `<div class="success">حسابك جاهز بالكامل.</div>`}
+    <div class="card mt" style="border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.01);">
+      <h3 style="margin-bottom: 12px;">الخطوات المطلوبة للتفعيل الكامل</h3>
+      ${d.missing.length ? `<ol style="padding-right: 20px; line-height: 1.8; color: var(--muted); font-size: 13px;">${d.missing.map(x => `<li>${x}</li>`).join("")}</ol>` : `<div class="success" style="font-weight: 700;">🟢 حسابك جاهز بالكامل وموثق، جميع شروط الأمان متوفرة!</div>`}
     </div>`;
 }
 async function renderReferrals(){
