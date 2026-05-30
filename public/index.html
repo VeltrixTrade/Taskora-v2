@@ -2752,6 +2752,141 @@
     .spinner {
       animation: spin 0.8s linear infinite;
     }
+
+    /* Premium Binance-Style Wallet Aesthetics */
+    .user-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .crypto-wallet-card {
+      position: relative;
+      overflow: hidden;
+      border-radius: 24px;
+      padding: 20px;
+      background: linear-gradient(135deg, rgba(20, 21, 26, 0.9) 0%, rgba(11, 12, 16, 0.98) 100%) !important;
+      border: 1px solid rgba(255, 255, 255, 0.08) !important;
+      box-shadow: 0 16px 45px rgba(0, 0, 0, 0.55), inset 0 1px 2px rgba(255, 255, 255, 0.05);
+      transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 155px;
+    }
+
+    .crypto-wallet-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(255, 255, 255, 0.16) !important;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75);
+    }
+
+    /* Specific glows for different cards */
+    .crypto-wallet-card.spot { border-left: 3px solid #10b981 !important; }
+    .crypto-wallet-card.locked { border-left: 3px solid #f59e0b !important; }
+    .crypto-wallet-card.yield { border-left: 3px solid #10b981 !important; }
+    .crypto-wallet-card.kyc.verified { border-left: 3px solid #10b981 !important; }
+    .crypto-wallet-card.kyc.pending { border-left: 3px solid #f59e0b !important; }
+    .crypto-wallet-card.kyc.rejected, .crypto-wallet-card.kyc.not_verified { border-left: 3px solid #ef4444 !important; }
+
+    /* Styling content inside the cards */
+    .crypto-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .crypto-card-title {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #94a3b8;
+    }
+
+    .crypto-icon-wrapper {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      display: grid;
+      place-items: center;
+      transition: all 0.3s;
+    }
+
+    .crypto-wallet-card:hover .crypto-icon-wrapper {
+      background: rgba(255, 255, 255, 0.08);
+      transform: scale(1.08) rotate(4deg);
+    }
+
+    .crypto-icon {
+      width: 18px;
+      height: 18px;
+      stroke: #cbd5e1;
+      stroke-width: 2px;
+      fill: none;
+    }
+
+    .crypto-wallet-card.spot .crypto-icon { stroke: #10b981; }
+    .crypto-wallet-card.locked .crypto-icon { stroke: #f59e0b; }
+    .crypto-wallet-card.yield .crypto-icon { stroke: #10b981; }
+    .crypto-wallet-card.kyc.verified .crypto-icon { stroke: #10b981; }
+
+    .crypto-balance-box {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin: 6px 0;
+    }
+
+    .crypto-balance-amount {
+      font-family: 'Inter', 'Rajdhani', sans-serif;
+      font-size: 26px;
+      font-weight: 900;
+      color: #ffffff;
+      line-height: 1.2;
+    }
+
+    .crypto-sub-value {
+      font-size: 11.5px;
+      color: #64748b;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+    }
+
+    .crypto-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      font-weight: 800;
+      padding: 4px 8px;
+      border-radius: 8px;
+      width: max-content;
+    }
+
+    .crypto-badge.spot-badge { background: rgba(16, 185, 129, 0.08); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.15); }
+    .crypto-badge.frozen-badge { background: rgba(245, 158, 11, 0.08); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.15); }
+    .crypto-badge.profit-badge { background: rgba(16, 185, 129, 0.08); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.15); }
+    .crypto-badge.kyc-verified { background: rgba(16, 185, 129, 0.08); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.15); }
+    .crypto-badge.kyc-pending { background: rgba(245, 158, 11, 0.08); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.15); }
+    .crypto-badge.kyc-rejected { background: rgba(239, 68, 68, 0.08); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.15); }
+    .crypto-badge.kyc-unverified { background: rgba(255, 255, 255, 0.03); color: #cbd5e1; border: 1px solid rgba(255, 255, 255, 0.06); }
+
+    /* Responsive adjustments */
+    @media (max-width: 900px) {
+      .user-stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+    }
+    @media (max-width: 500px) {
+      .user-stats-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+    }
   </style>
   <link rel="manifest" href="/manifest.json">
   <script>
@@ -4691,41 +4826,82 @@ async function renderDashboard(dataFromMe){
   document.getElementById("sideNotifBadge")?.classList.toggle("hidden", !data.unread_notifications);
   if(document.getElementById("sideNotifBadge")) document.getElementById("sideNotifBadge").innerText = data.unread_notifications || 0;
   document.getElementById("dashStats").innerHTML = `
-    <div class="user-stat">
-      <div class="stat-header">
-        <span>الرصيد المتاح</span>
-        <div class="stat-icon">
-          <svg class="nav-svg-icon" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+    <!-- Card 1: Spot Wallet (Available Balance) -->
+    <div class="crypto-wallet-card spot">
+      <div class="crypto-card-header">
+        <span class="crypto-card-title">الرصيد المتاح (Spot Balance)</span>
+        <div class="crypto-icon-wrapper">
+          <svg class="crypto-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 6v12M9 9h6M9 12h6"/>
+          </svg>
         </div>
       </div>
-      <strong>${money(me.balance)}</strong>
+      <div class="crypto-balance-box">
+        <span class="crypto-balance-amount">${money(me.balance)}</span>
+        <span class="crypto-sub-value">≈ ${money(me.balance)} USDT</span>
+      </div>
+      <span class="crypto-badge spot-badge">قابل للسحب فوري ✓</span>
     </div>
-    <div class="user-stat">
-      <div class="stat-header">
-        <span>رصيد الباقة</span>
-        <div class="stat-icon">
-          <svg class="nav-svg-icon" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+
+    <!-- Card 2: Locked Package Balance -->
+    <div class="crypto-wallet-card locked">
+      <div class="crypto-card-header">
+        <span class="crypto-card-title">رصيد الباقة المقيد</span>
+        <div class="crypto-icon-wrapper">
+          <svg class="crypto-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
         </div>
       </div>
-      <strong>${money(me.package_balance)}</strong>
+      <div class="crypto-balance-box">
+        <span class="crypto-balance-amount">${money(me.package_balance)}</span>
+        <span class="crypto-sub-value">ينشط مع المهام اليومية</span>
+      </div>
+      <span class="crypto-badge frozen-badge">مجمّد (Frozen) 🔒</span>
     </div>
-    <div class="user-stat">
-      <div class="stat-header">
-        <span>ربح الباقة</span>
-        <div class="stat-icon" style="background:rgba(247,181,0,0.06); border-color:rgba(247,181,0,0.18);">
-          <svg class="nav-svg-icon" viewBox="0 0 24 24" style="stroke: #F7B500;"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+
+    <!-- Card 3: Yield Earnings (Package Profit) -->
+    <div class="crypto-wallet-card yield">
+      <div class="crypto-card-header">
+        <span class="crypto-card-title">ربح الباقة المتراكم</span>
+        <div class="crypto-icon-wrapper">
+          <svg class="crypto-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M23 6l-9.5 9.5-5-5L1 18"/>
+            <polyline points="17 6 23 6 23 12"/>
+          </svg>
         </div>
       </div>
-      <strong>${money(me.package_profit)}</strong>
+      <div class="crypto-balance-box">
+        <span class="crypto-balance-amount" style="color: #10b981;">${money(me.package_profit)}</span>
+        <span class="crypto-sub-value">يتحول للمتاح بعد الاكتمال</span>
+      </div>
+      <span class="crypto-badge profit-badge">عائد نشط +10% 📈</span>
     </div>
-    <div class="user-stat">
-      <div class="stat-header">
-        <span>التوثيق</span>
-        <div class="stat-icon" style="background:rgba(16,185,129,0.06); border-color:rgba(16,185,129,0.18);">
-          <svg class="nav-svg-icon" viewBox="0 0 24 24" style="stroke: #10B981;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+
+    <!-- Card 4: Identity Verification (KYC) -->
+    <div class="crypto-wallet-card kyc ${me.kyc_status || 'not_verified'}">
+      <div class="crypto-card-header">
+        <span class="crypto-card-title">توثيق الهوية (KYC)</span>
+        <div class="crypto-icon-wrapper">
+          <svg class="crypto-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
         </div>
       </div>
-      <strong style="color: #10B981;">${prettyKycStatus(me.kyc_status)}</strong>
+      <div class="crypto-balance-box">
+        <span class="crypto-balance-amount" style="font-size: 20px;">
+          ${me.kyc_status === 'verified' ? 'موثق بالكامل ✓' : me.kyc_status === 'pending' ? 'قيد المراجعة ⏳' : me.kyc_status === 'rejected' ? 'طلب مرفوض ❌' : 'غير موثق ⚠️'}
+        </span>
+        <span class="crypto-sub-value">حماية إضافية لحسابك</span>
+      </div>
+      ${
+        me.kyc_status === 'verified' ? '<span class="crypto-badge kyc-verified">موثق ✓ (Verified)</span>' :
+        me.kyc_status === 'pending' ? '<span class="crypto-badge kyc-pending">مراجعة أمان ⏳</span>' :
+        me.kyc_status === 'rejected' ? '<span class="crypto-badge kyc-rejected" onclick="setDash(\'profile\')" style="cursor:pointer;">إعادة رفع 🔄</span>' :
+        '<span class="crypto-badge kyc-unverified" onclick="setDash(\'profile\')" style="cursor:pointer;">وثّق الآن ⚠️</span>'
+      }
     </div>
   `;
   document.getElementById("dashMsg").innerHTML = me.kyc_status==="verified" ? `<div class="success">حسابك موثق. يمكنك طلب السحب عند توفر رصيد متاح.</div>` : `<div class="notice"><div>قم بتوثيق الحساب للحصول على بونص 10$</div><div class="mt">لايمكن سحب الأرباح إلا بعد توثيق الحساب</div></div>`;
@@ -5341,12 +5517,6 @@ async function renderOverview(){
   const s = await api("/api/user/summary",{headers:headers()});
   document.getElementById("dashContent").innerHTML = `
     <h3>ملخص النشاط</h3>
-    <div class="quick-actions">
-      <button class="quick-action" onclick="setDash('packages')">شراء باقة</button>
-      <button class="quick-action" onclick="setDash('tasks')">المهام</button>
-      <button class="quick-action" onclick="setDash('wallet')">إيداع/سحب</button>
-      <button class="quick-action" onclick="setDash('notifications')">الإشعارات</button>
-    </div>
     <div class="grid-2 mt">
       <div class="chart-card"><h3>نشاط الرصيد خلال 30 يوم</h3>${simpleBarChart(s.tx_daily,"day","total")}</div>
       <div class="chart-card"><h3>حالات الإيداع</h3><div class="donut-wrap"><div class="donut"></div>${legendRows(s.deposits)}</div></div>
