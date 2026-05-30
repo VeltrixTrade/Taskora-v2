@@ -547,7 +547,7 @@
       font-weight: 800;
     }
     .hidden{display:none!important}.mt{margin-top:16px}.muted{color:var(--muted)}
-    @media(max-width:900px){.hero-grid,.grid-3,.grid-2,.stats{grid-template-columns:1fr}.visual{min-height:360px}.dashboard-mock{inset:32px 18px}.nav-inner{align-items:flex-start;flex-direction:column}.mock-grid{grid-template-columns:1fr}}
+    @media(max-width:900px){.hero-grid,.grid-3,.grid-2,.stats{grid-template-columns:1fr}.visual{min-height:360px}.dashboard-mock{inset:32px 18px}.mock-grid{grid-template-columns:1fr}}
 
     .admin-stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
     .admin-stat{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:22px;padding:16px}
@@ -953,7 +953,7 @@
 
     body.user-menu-collapsed .user-dashboard-shell{grid-template-columns:0 minmax(0,1fr)}
     body.user-menu-collapsed .user-side{transform:translateX(120%);opacity:0;pointer-events:none;width:0;padding:0;border:0}
-    @media(max-width:1100px){.user-dashboard-shell{grid-template-columns:1fr}.user-side{position:fixed;right:14px;top:88px;width:min(320px,calc(100% - 28px));z-index:50;transform:translateX(115%);opacity:0;pointer-events:none}.user-side.open{transform:translateX(0);opacity:1;pointer-events:auto}.sidebar-overlay.open{display:block;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:45;backdrop-filter:blur(3px)}.side-toggle{display:inline-flex}.user-stats-grid,.package-pro-grid,.task-board,.realistic-details{grid-template-columns:repeat(2,minmax(0,1fr))}.profile-grid,.wallet-layout{grid-template-columns:1fr}}
+    @media(max-width:1100px){.user-dashboard-shell{grid-template-columns:1fr}.user-side{position:fixed;right:14px;top:54px;width:min(320px,calc(100% - 28px));z-index:50;transform:translateX(115%);opacity:0;pointer-events:none}.user-side.open{transform:translateX(0);opacity:1;pointer-events:auto}.sidebar-overlay.open{display:block;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:45;backdrop-filter:blur(3px)}.side-toggle{display:inline-flex}.user-stats-grid,.package-pro-grid,.task-board,.realistic-details{grid-template-columns:repeat(2,minmax(0,1fr))}.profile-grid,.wallet-layout{grid-template-columns:1fr}}
     @media(max-width:700px){.user-stats-grid,.package-pro-grid,.task-board,.realistic-details{grid-template-columns:1fr}.dashboard-top{grid-template-columns:1fr}}
 
 
@@ -2588,8 +2588,22 @@
       .user-side {
         max-height: calc(100vh - 120px) !important;
         overflow-y: auto !important;
-        padding-top: 50px !important;
+        padding-top: 24px !important;
         scrollbar-width: none; /* Hide scrollbar for clean visual */
+      }
+      .nav-inner {
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        flex-wrap: nowrap !important;
+        width: 100% !important;
+      }
+      .brand {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        flex-shrink: 0 !important;
       }
       .user-side::-webkit-scrollbar {
         display: none;
@@ -4280,12 +4294,8 @@
         <!-- SOCIALS ON LEFT (Instagram and Telegram monochrome outline circular icons) -->
         <div class="footer-socials">
           <!-- Instagram -->
-          <a href="https://instagram.com/taskora" target="_blank" title="انستجرام" class="footer-social-link">
+          <a href="https://www.instagram.com/tas.kora/" target="_blank" title="انستجرام" class="footer-social-link">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051C.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
-          </a>
-          <!-- Telegram -->
-          <a href="https://t.me/taskora_official" target="_blank" title="تليجرام" class="footer-social-link">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20.665 3.717l-17.73 6.837c-1.21.486-1.203 1.161-.222 1.462l4.552 1.42 10.532-6.645c.498-.303.953-.14.578.192l-8.533 7.701-.332 4.965c.487 0 .702-.223.974-.486l2.338-2.27 4.862 3.593c.896.495 1.543.239 1.766-.83l3.19-15.025c.326-1.307-.492-1.896-1.353-1.503z"/></svg>
           </a>
         </div>
         
@@ -4847,7 +4857,7 @@ async function renderDashboard(dataFromMe){
     <!-- Card 2: Locked Package Balance -->
     <div class="crypto-wallet-card locked">
       <div class="crypto-card-header">
-        <span class="crypto-card-title">رصيد الباقة المقيد</span>
+        <span class="crypto-card-title">رصيد الباقة</span>
         <div class="crypto-icon-wrapper">
           <svg class="crypto-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
@@ -4915,7 +4925,7 @@ function setDash(t){
   document.getElementById("dashMsg").classList.toggle("hidden", t !== "wallet");
   
   // Hide the stats banner (dashStats) on specific pages: profile, transactions, referrals, notifications
-  const hiddenStatsPages = ["profile", "transactions", "referrals", "notifications"];
+  const hiddenStatsPages = ["profile", "transactions", "referrals", "notifications", "support", "help", "settings", "status"];
   const dashStatsEl = document.getElementById("dashStats");
   if (dashStatsEl) {
     dashStatsEl.style.display = hiddenStatsPages.includes(t) ? "none" : "";
@@ -5213,7 +5223,8 @@ async function renderTasks(){
             <div><b>3 مهام</b><p>${isDayUnlocked ? 'تقدم اليوم داخل الباقة.' : 'مغلق حتى يحين اليوم المخصص لها.'}</p><div class="mini-task-dots">${[1,2,3].map(n=>{
               const taskNo = base+n;
               const done = completedTasks.includes(taskNo) || completedCount >= taskNo;
-              return `<span class="${done ? "done" : ""}">${taskNo}</span>`;
+              const clickable = !done && isDayUnlocked;
+              return `<span class="${done ? "done" : ""}" style="${clickable ? 'cursor:pointer; background:rgba(108,77,255,0.15); border:1px solid rgba(108,77,255,0.3); font-weight:bold; transition:all 0.2s;' : ''}" ${clickable ? `onclick="completeTask(${taskNo})"` : ''}>${taskNo}</span>`;
             }).join("")}</div></div>
             <b>${Math.min(Math.max(completedCount-base,0),3)}/3</b>
           </div>`;

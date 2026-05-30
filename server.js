@@ -1147,7 +1147,7 @@ app.post("/api/tasks/daily/:number/complete", auth, async (req, res) => {
 
     if (taskNumber > allowedMax) {
       await client.query("ROLLBACK");
-      return res.status(403).json({ error: `هذه المهمة غير متاحة اليوم. يرجى الانتظار حتى منتصف الليل بتوقيت GMT+3 (متاح اليوم حتى المهمة رقم ${allowedMax}).` });
+      return res.status(403).json({ error: `هذه المهمة غير متاحة اليوم. يرجى الانتظار حتى الساعة 12:00 ليلاً بتوقيت العراق وسوريا (GMT+3) (متاح اليوم حتى المهمة رقم ${allowedMax}).` });
     }
 
     const completed = Array.isArray(pkg.completed_tasks) ? pkg.completed_tasks : [];
@@ -1267,53 +1267,9 @@ app.post("/api/golden/:id/complete-instant", auth, async (req, res) => {
       await addTransaction(client, req.user.id, "golden_task_instant", taskReward, `أرباح إكمال مهمة: ${gt.title}`);
     }
 
-    // 4. If they have an active package, progress the package!
+    // 4. Excluded from package progression (only regular daily tasks advance the active package)
     let packageCompleted = false;
     let newCount = 0;
-    
-    const pkgRes = await client.query(
-      "SELECT * FROM user_packages WHERE user_id=$1 AND status='active' ORDER BY id DESC LIMIT 1 FOR UPDATE",
-      [req.user.id]
-    );
-    if (pkgRes.rowCount > 0) {
-      const pkg = pkgRes.rows[0];
-      const completed = Array.isArray(pkg.completed_tasks) ? pkg.completed_tasks : [];
-      const nextTaskNumber = completed.length + 1;
-      
-      if (nextTaskNumber <= 12) {
-        const newCompleted = [...completed, nextTaskNumber].sort((a,b) => a-b);
-        newCount = newCompleted.length;
-        const packageTaskReward = Number(pkg.profit_target) / 12;
-
-        if (newCount >= 12) {
-          packageCompleted = true;
-          // Package fully completed! Unlock package balance and accumulated profits
-          const userRes = await client.query("SELECT balance, package_balance, package_profit FROM users WHERE id=$1 FOR UPDATE", [req.user.id]);
-          const user = userRes.rows[0];
-          const updatedProfit = Number(user.package_profit) + packageTaskReward;
-          const unlocked = Number(user.package_balance) + updatedProfit;
-          const before = Number(user.balance);
-          const after = before + unlocked;
-
-          await client.query("UPDATE users SET balance=$1, package_balance=0, package_profit=0 WHERE id=$2", [after, req.user.id]);
-          await client.query(
-            "UPDATE user_packages SET completed_tasks=$1, completed_count=12, status='completed', completed_at=NOW() WHERE id=$2",
-            [JSON.stringify(newCompleted), pkg.id]
-          );
-          await client.query(`
-            INSERT INTO transactions (user_id, type, amount, description, balance_before, balance_after)
-            VALUES ($1, 'package_unlocked', $2, $3, $4, $5)
-          `, [req.user.id, unlocked, 'تحويل رصيد الباقة والربح إلى الرصيد المتاح بعد إكمال 12 مهمة حقيقية', before, after]);
-        } else {
-          // Normal progression: add task reward portion to package_profit
-          await client.query("UPDATE users SET package_profit=package_profit+$1 WHERE id=$2", [packageTaskReward, req.user.id]);
-          await client.query(
-            "UPDATE user_packages SET completed_tasks=$1, completed_count=$2 WHERE id=$3",
-            [JSON.stringify(newCompleted), newCount, pkg.id]
-          );
-        }
-      }
-    }
 
     await client.query("COMMIT");
     res.json({
