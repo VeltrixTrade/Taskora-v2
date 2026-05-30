@@ -5280,27 +5280,78 @@ async function renderTasks(){
     `;
   }
 
+  if (!window.__activeDayTab) {
+    window.__activeDayTab = Math.min(4, unlockedDay);
+  }
+
+  const activeDay = window.__activeDayTab;
+  const base = (activeDay - 1) * 3;
+
+  const tabsHtml = `
+    <div class="days-tabs-row" style="display: flex; gap: 10px; margin-bottom: 20px; direction: rtl; overflow-x: auto; padding-bottom: 6px;">
+      ${[1, 2, 3, 4].map(day => {
+        const isDayUnlocked = day <= unlockedDay;
+        const isActive = day === activeDay;
+        return `
+          <button onclick="switchDayTab(${day}, ${isDayUnlocked})" style="flex: 1; min-width: 80px; padding: 12px 6px; border-radius: 16px; border: 1px solid ${isActive ? '#6c4dff' : 'rgba(255,255,255,0.06)'}; background: ${isActive ? 'linear-gradient(135deg, rgba(108,77,255,0.18) 0%, rgba(108,77,255,0.05) 100%)' : 'rgba(255,255,255,0.02)'}; color: ${isActive ? '#fff' : '#a1a1aa'}; cursor: pointer; transition: all 0.25s; font-weight: 700; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: ${isActive ? '0 0 15px rgba(108,77,255,0.2)' : 'none'};">
+            <span style="font-size: 11px; color: ${isActive ? '#a7f3d0' : '#8e8e93'};">${isDayUnlocked ? 'مفتوح ✓' : '🔒 مغلق'}</span>
+            <span style="font-size: 15px;">اليوم ${day}</span>
+          </button>
+        `;
+      }).join("")}
+    </div>
+  `;
+
+  const activeDayTasksHtml = `
+    <div class="active-day-tasks-list" style="display: grid; gap: 16px; direction: rtl; margin-top: 14px;">
+      ${[1, 2, 3].map(n => {
+        const taskNo = base + n;
+        const isDone = completedTasks.includes(taskNo) || completedCount >= taskNo;
+        const taskTitle = data.daily_tasks[taskNo - 1]?.title || `معالجة تذكرة رقم ${taskNo}`;
+        
+        let statusBadge = "";
+        let buttonHtml = "";
+        
+        if (isDone) {
+          statusBadge = `<span style="font-size: 11px; padding: 4px 10px; border-radius: 8px; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); font-weight: bold;">✅ مكتملة</span>`;
+          buttonHtml = `<button class="btn" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); color: #8e8e93; cursor: not-allowed; border-radius: 12px; font-weight: 700; height: 42px; width: 100%;" disabled>تم استلام الأرباح 💰</button>`;
+        } else {
+          statusBadge = `<span style="font-size: 11px; padding: 4px 10px; border-radius: 8px; background: rgba(108, 77, 255, 0.1); color: #a7f3d0; border: 1px solid rgba(108, 77, 255, 0.2); font-weight: bold;">⚡ جاهزة للبدء</span>`;
+          buttonHtml = `<button class="btn green full" style="border-radius: 12px; height: 42px; font-weight: 800; width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: #000; border: none; box-shadow: 0 4px 12px rgba(16,185,129,0.25);" onclick="openTaskSimulationModal(${taskNo}, '${escapeHtml(taskTitle)}')">⚡ ابدأ معالجة التذكرة وصرف الربح</button>`;
+        }
+
+        return `
+          <div class="card task-card-pro" style="position: relative; overflow: hidden; border-left: 4px solid ${isDone ? '#10b981' : '#6c4dff'}; background: rgba(255,255,255,0.02); border-radius: 20px; padding: 18px; border: 1px solid rgba(255,255,255,0.04); border-left-width: 4px;">
+            <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: start; gap: 8px;">
+              <div style="text-align: right;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                  <div class="task-number" style="width: 24px; height: 24px; font-size: 12px; background: ${isDone ? '#10b981' : '#6c4dff'}; color: #fff; border-radius: 50%; display: grid; place-items: center; font-weight: bold;">${taskNo}</div>
+                  <h3 style="margin: 0; font-size: 15px; color: #fff; font-weight: 700;">${escapeHtml(taskTitle)}</h3>
+                </div>
+                <p style="color: #a1a1aa; font-size: 12.5px; margin: 4px 0 0; line-height: 1.5;">قم بالضغط على الزر أدناه لبدء عملية محاكاة حجز وإصدار التذكرة عبر خوادم تذكرتي للتحقق التلقائي وصرف المكافأة.</p>
+              </div>
+              <div>
+                ${statusBadge}
+              </div>
+            </div>
+            ${buttonHtml}
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `;
+
   document.getElementById("dashContent").innerHTML = `
     ${countdownHtml}
-    <div class="card">
-      <h3>${pkg.package_name}</h3>
-      <p>التقدم: ${completedCount}/12 — الحالة: ${pkg.status}${isMonthly ? ' (باقة شهرية)' : ''}</p>
-      <div class="timeline">
-        ${[1,2,3,4].map(day=>{
-          const base=(day-1)*3;
-          const isDayUnlocked = day <= unlockedDay;
-          return `<div class="timeline-day" style="${!isDayUnlocked ? 'opacity: 0.55; filter: grayscale(0.8);' : ''}">
-            <div class="day-num">اليوم ${day} ${!isDayUnlocked ? '🔒' : ''}</div>
-            <div><b>3 مهام</b><p>${isDayUnlocked ? 'تقدم اليوم داخل الباقة.' : 'مغلق حتى يحين اليوم المخصص لها.'}</p><div class="mini-task-dots">${[1,2,3].map(n=>{
-              const taskNo = base+n;
-              const done = completedTasks.includes(taskNo) || completedCount >= taskNo;
-              const clickable = !done && isDayUnlocked;
-              return `<span class="${done ? "done" : ""}" style="${clickable ? 'cursor:pointer; background:rgba(108,77,255,0.15); border:1px solid rgba(108,77,255,0.3); font-weight:bold; transition:all 0.2s;' : ''}" ${clickable ? `onclick="completeTask(${taskNo})"` : ''}>${taskNo}</span>`;
-            }).join("")}</div></div>
-            <b>${Math.min(Math.max(completedCount-base,0),3)}/3</b>
-          </div>`;
-        }).join("")}
+    <div class="card" style="margin-bottom: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; direction: rtl;">
+        <h3 style="margin: 0; font-weight: 900; font-size: 18px; color: #fff;">${pkg.package_name}</h3>
+        <span style="font-size: 13px; color: #cbd5e1; background: rgba(108,77,255,0.15); padding: 4px 12px; border-radius: 8px; border: 1px solid rgba(108,77,255,0.25); font-weight: bold;">التقدم: ${completedCount}/12</span>
       </div>
+      <p style="color: #cbd5e1; font-size: 13px; margin: 0 0 18px; direction: rtl; text-align: right;">اختر اليوم من التبويبات الأفقية لعرض المهام الثلاث المخصصة له وإنجازها:</p>
+      
+      ${tabsHtml}
+      ${activeDayTasksHtml}
     </div>
     ${tasksBoardHtml}
     ${taskoraAdsenseUnit("tasksBottom", taskoraLangText("أسفل صفحة المهام", "Tasks page bottom"))}`;
@@ -5345,6 +5396,78 @@ async function renderTasks(){
     updateTimer();
     window.__tasksInterval = setInterval(updateTimer, 1000);
   }
+}
+
+function switchDayTab(day, isUnlocked) {
+  if (!isUnlocked) {
+    toast("هذا اليوم مغلق حالياً. يرجى الانتظار حتى انتهاء مؤقت العد التنازلي.", "info");
+    return;
+  }
+  window.__activeDayTab = day;
+  renderTasks();
+}
+
+function openTaskSimulationModal(taskNo, taskTitle) {
+  const modal = document.getElementById("adminModal");
+  modal.innerHTML = `
+    <div class="modal task-simulation-modal" style="max-width: 480px; width: 95%; background: rgba(18, 22, 41, 0.98); border: 1px solid rgba(108, 77, 255, 0.3); box-shadow: 0 20px 50px rgba(0,0,0,0.7); backdrop-filter: blur(25px); border-radius: 28px; padding: 30px; color: #fff; direction: rtl; text-align: center; overflow: hidden; position: relative; animation: zoomIn 0.3s ease;">
+      <div style="position: absolute; top: -50px; left: -50px; width: 120px; height: 120px; background: rgba(108,77,255,0.2); filter: blur(40px); border-radius: 50%;"></div>
+      <div style="position: absolute; bottom: -50px; right: -50px; width: 120px; height: 120px; background: rgba(16,185,129,0.2); filter: blur(40px); border-radius: 50%;"></div>
+      <div style="position: relative; z-index: 2;">
+        <span style="font-size: 48px; display: block; margin-bottom: 12px; animation: pulse 1.5s infinite;">🎫</span>
+        <h2 style="color: #fff; font-weight: 900; margin: 0 0 4px; font-size: 20px;">محاكاة معالجة التذكرة</h2>
+        <p style="color: #a1a1aa; font-size: 13px; margin: 0 0 24px;">${escapeHtml(taskTitle)}</p>
+        <div style="position: relative; width: 100px; height: 100px; margin: 0 auto 24px; display: flex; align-items: center; justify-content: center;">
+          <div class="loader-circle" style="position: absolute; width: 100%; height: 100%; border: 4px dashed rgba(108, 77, 255, 0.2); border-top-color: #6c4dff; border-radius: 50%; animation: spin 2s linear infinite;"></div>
+          <span style="font-size: 28px; animation: heartbeat 1.5s infinite;">⚡</span>
+        </div>
+        <div id="simulationLogs" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.05); padding: 14px; border-radius: 16px; margin-bottom: 24px; min-height: 80px; text-align: right; font-family: monospace; font-size: 12px; line-height: 1.6;">
+          <div style="color: #6c4dff;">⏳ الاتصال بخادم التذاكر المركزي...</div>
+        </div>
+        <div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.06); height: 8px; border-radius: 99px; overflow: hidden; margin-bottom: 24px;">
+          <div id="simulationProgress" style="width: 0%; height: 100%; background: linear-gradient(90deg, #6c4dff, #10b981); border-radius: inherit; transition: width 0.1s linear;"></div>
+        </div>
+        <button id="claimSimulationBtn" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: #8e8e93; border-radius: 14px; padding: 12px 40px; font-size: 14px; font-weight: 800; cursor: not-allowed; transition: all 0.3s; width: 100%;" disabled>يرجى الانتظار لإكمال المعالجة...</button>
+      </div>
+    </div>
+  `;
+  modal.classList.add("open");
+  
+  const logsEl = document.getElementById("simulationLogs");
+  const progressEl = document.getElementById("simulationProgress");
+  const btnEl = document.getElementById("claimSimulationBtn");
+  
+  let percent = 0;
+  const logs = [
+    { p: 25, text: "<div style='color: #6c4dff;'>✓ تم الاتصال بخادم التذاكر بنجاح.</div><div style='color: #f59e0b;'>⏳ جاري مزامنة بيانات المعاملة المزدوجة...</div>" },
+    { p: 60, text: "<div style='color: #6c4dff;'>✓ تم الاتصال بخادم التذاكر بنجاح.</div><div style='color: #6c4dff;'>✓ تم مزامنة بيانات المعاملة.</div><div style='color: #3b82f6;'>⏳ جاري توليد الرقم التسلسلي والتشفير...</div>" },
+    { p: 100, text: "<div style='color: #6c4dff;'>✓ تم الاتصال بخادم التذاكر بنجاح.</div><div style='color: #6c4dff;'>✓ تم مزامنة بيانات المعاملة.</div><div style='color: #6c4dff;'>✓ تم تشفير وتأكيد التذكرة بنجاح.</div><div style='color: #10b981; font-weight: bold; margin-top: 4px;'>🎉 جاهز لصرف الأرباح الآن!</div>" }
+  ];
+  
+  const interval = setInterval(() => {
+    percent += 2;
+    if (percent > 100) percent = 100;
+    progressEl.style.width = percent + "%";
+    
+    const log = logs.find(x => percent >= x.p);
+    if (log) {
+      logsEl.innerHTML = log.text;
+    }
+    
+    if (percent >= 100) {
+      clearInterval(interval);
+      btnEl.disabled = false;
+      btnEl.style.background = "linear-gradient(135deg, #10b981, #059669)";
+      btnEl.style.color = "#000";
+      btnEl.style.cursor = "pointer";
+      btnEl.style.boxShadow = "0 0 20px rgba(16, 185, 129, 0.35)";
+      btnEl.innerText = "صرف الأرباح الفورية 💰";
+      btnEl.onclick = async () => {
+        closeAdminModal();
+        await completeTask(taskNo);
+      };
+    }
+  }, 80);
 }
 
 async function buyPackage(id){
