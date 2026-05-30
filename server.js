@@ -177,32 +177,7 @@ async function sendMail(to, subject, html) {
 
 
 
-async function saveUploadedFileToDb(file) {
-  if (!file) return;
-  const filePath = file.path;
-  try {
-    const data = fs.readFileSync(filePath);
-    await query(`
-      INSERT INTO uploaded_files (filename, mimetype, data)
-      VALUES ($1, $2, $3)
-      ON CONFLICT (filename) DO UPDATE SET mimetype = EXCLUDED.mimetype, data = EXCLUDED.data
-    `, [file.filename, file.mimetype, data]);
-  } catch (err) {
-    console.error("Failed to save uploaded file to database:", err);
-  }
-}
-
 async function migrate() {
-  await query(`
-    CREATE TABLE IF NOT EXISTS uploaded_files (
-      id BIGSERIAL PRIMARY KEY,
-      filename VARCHAR(255) UNIQUE NOT NULL,
-      mimetype VARCHAR(100) NOT NULL,
-      data BYTEA NOT NULL,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    );
-  `);
-
   await query(`
     CREATE TABLE IF NOT EXISTS users (
       id BIGSERIAL PRIMARY KEY,
@@ -1018,7 +993,6 @@ app.post("/api/profile/avatar", auth, upload.single("avatar"), async (req, res) 
     if (!(file.mimetype || "").startsWith("image/")) {
       return res.status(422).json({ error: "Avatar must be an image file." });
     }
-    await saveUploadedFileToDb(file);
     const avatarUrl = `/api/public/avatar/${file.filename}`;
     await query("UPDATE users SET avatar_url=$1, avatar_updated_at=NOW() WHERE id=$2", [avatarUrl, req.user.id]);
     res.json({ success: true, avatar_url: avatarUrl });
@@ -1064,10 +1038,6 @@ app.post("/api/kyc", auth, upload.fields([
     if (duplicate.rowCount > 0) {
       return res.status(409).json({ error: "This identity document has already been used. One identity can receive one account bonus only." });
     }
-
-    if (req.files?.front_image?.[0]) await saveUploadedFileToDb(req.files.front_image[0]);
-    if (req.files?.back_image?.[0]) await saveUploadedFileToDb(req.files.back_image[0]);
-    if (req.files?.selfie_image?.[0]) await saveUploadedFileToDb(req.files.selfie_image[0]);
 
     const back = req.files?.back_image?.[0];
     const selfie = req.files?.selfie_image?.[0];
@@ -1148,8 +1118,7 @@ app.get("/api/dashboard", auth, async (req, res) => {
     package: pkg.rows[0] || null,
     daily_tasks: DAILY_TASKS.map((title, index) => ({ number: index + 1, title })),
     transactions: transactions.rows,
-    golden_tasks: golden.rows,
-    server_time: Date.now()
+    golden_tasks: golden.rows
   });
 });
 
@@ -1178,7 +1147,7 @@ app.post("/api/tasks/daily/:number/complete", auth, async (req, res) => {
 
     if (taskNumber > allowedMax) {
       await client.query("ROLLBACK");
-      return res.status(403).json({ error: `هذه المهمة غير متاحة اليوم. يرجى الانتظار حتى الساعة 12:00 ليلاً بتوقيت العراق وسوريا (GMT+3) (متاح اليوم حتى المهمة رقم ${allowedMax}).` });
+      return res.status(403).json({ error: `هذه المهمة غير متاحة اليوم. يرجى الانتظار حتى منتصف الليل بتوقيت GMT+3 (متاح اليوم حتى المهمة رقم ${allowedMax}).` });
     }
 
     const completed = Array.isArray(pkg.completed_tasks) ? pkg.completed_tasks : [];
@@ -1298,9 +1267,53 @@ app.post("/api/golden/:id/complete-instant", auth, async (req, res) => {
       await addTransaction(client, req.user.id, "golden_task_instant", taskReward, `أرباح إكمال مهمة: ${gt.title}`);
     }
 
-    // 4. Excluded from package progression (only regular daily tasks advance the active package)
+    // 4. If they have an active package, progress the package!
     let packageCompleted = false;
     let newCount = 0;
+    
+    const pkgRes = await client.query(
+      "SELECT * FROM user_packages WHERE user_id=$1 AND status='active' ORDER BY id DESC LIMIT 1 FOR UPDATE",
+      [req.user.id]
+    );
+    if (pkgRes.rowCount > 0) {
+      const pkg = pkgRes.rows[0];
+      const completed = Array.isArray(pkg.completed_tasks) ? pkg.completed_tasks : [];
+      const nextTaskNumber = completed.length + 1;
+      
+      if (nextTaskNumber <= 12) {
+        const newCompleted = [...completed, nextTaskNumber].sort((a,b) => a-b);
+        newCount = newCompleted.length;
+        const packageTaskReward = Number(pkg.profit_target) / 12;
+
+        if (newCount >= 12) {
+          packageCompleted = true;
+          // Package fully completed! Unlock package balance and accumulated profits
+          const userRes = await client.query("SELECT balance, package_balance, package_profit FROM users WHERE id=$1 FOR UPDATE", [req.user.id]);
+          const user = userRes.rows[0];
+          const updatedProfit = Number(user.package_profit) + packageTaskReward;
+          const unlocked = Number(user.package_balance) + updatedProfit;
+          const before = Number(user.balance);
+          const after = before + unlocked;
+
+          await client.query("UPDATE users SET balance=$1, package_balance=0, package_profit=0 WHERE id=$2", [after, req.user.id]);
+          await client.query(
+            "UPDATE user_packages SET completed_tasks=$1, completed_count=12, status='completed', completed_at=NOW() WHERE id=$2",
+            [JSON.stringify(newCompleted), pkg.id]
+          );
+          await client.query(`
+            INSERT INTO transactions (user_id, type, amount, description, balance_before, balance_after)
+            VALUES ($1, 'package_unlocked', $2, $3, $4, $5)
+          `, [req.user.id, unlocked, 'تحويل رصيد الباقة والربح إلى الرصيد المتاح بعد إكمال 12 مهمة حقيقية', before, after]);
+        } else {
+          // Normal progression: add task reward portion to package_profit
+          await client.query("UPDATE users SET package_profit=package_profit+$1 WHERE id=$2", [packageTaskReward, req.user.id]);
+          await client.query(
+            "UPDATE user_packages SET completed_tasks=$1, completed_count=$2 WHERE id=$3",
+            [JSON.stringify(newCompleted), newCount, pkg.id]
+          );
+        }
+      }
+    }
 
     await client.query("COMMIT");
     res.json({
@@ -1337,7 +1350,6 @@ app.post("/api/deposits", auth, upload.single("proof_image"), async (req, res) =
     if (!req.file) {
       return res.status(422).json({ error: "إثبات الدفع (لقطة الشاشة) مطلوب وإجباري لإتمام الإيداع." });
     }
-    await saveUploadedFileToDb(req.file);
     const proof = `/api/files/${req.file.filename}`;
     const result = await query(`
       INSERT INTO deposits (user_id, amount, coin, txid, proof_image)
@@ -1598,15 +1610,10 @@ app.get("/api/public/avatar/:filename", async (req, res) => {
   try {
     const filename = path.basename(req.params.filename);
     const filePath = path.join(uploadDir, filename);
-    if (filePath.toLowerCase().startsWith(uploadDir.toLowerCase()) && fs.existsSync(filePath)) {
-      return res.sendFile(filePath);
+    if (!filePath.toLowerCase().startsWith(uploadDir.toLowerCase()) || !fs.existsSync(filePath)) {
+      return res.status(404).json({ error: "Avatar file not found." });
     }
-    const dbFile = await query("SELECT mimetype, data FROM uploaded_files WHERE filename=$1 LIMIT 1", [filename]);
-    if (dbFile.rowCount > 0) {
-      res.setHeader("Content-Type", dbFile.rows[0].mimetype);
-      return res.send(dbFile.rows[0].data);
-    }
-    return res.status(404).json({ error: "Avatar file not found." });
+    return res.sendFile(filePath);
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Avatar access failed." });
@@ -1617,6 +1624,9 @@ app.get("/api/files/:filename", auth, async (req, res) => {
   try {
     const filename = path.basename(req.params.filename);
     const filePath = path.join(uploadDir, filename);
+    if (!filePath.toLowerCase().startsWith(uploadDir.toLowerCase()) || !fs.existsSync(filePath)) {
+      return res.status(404).json({ error: "File not found." });
+    }
 
     if (req.user.role !== "admin") {
       const apiPath = `/api/files/${filename}`;
@@ -1629,17 +1639,7 @@ app.get("/api/files/:filename", auth, async (req, res) => {
       if (allowed.rowCount === 0) return res.status(403).json({ error: "Forbidden file." });
     }
 
-    if (filePath.toLowerCase().startsWith(uploadDir.toLowerCase()) && fs.existsSync(filePath)) {
-      return res.sendFile(filePath);
-    }
-
-    const dbFile = await query("SELECT mimetype, data FROM uploaded_files WHERE filename=$1 LIMIT 1", [filename]);
-    if (dbFile.rowCount > 0) {
-      res.setHeader("Content-Type", dbFile.rows[0].mimetype);
-      return res.send(dbFile.rows[0].data);
-    }
-
-    return res.status(404).json({ error: "File not found." });
+    return res.sendFile(filePath);
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "File access failed." });
@@ -2411,7 +2411,6 @@ app.post("/api/golden/:id/submit-proof", auth, upload.single("proof_image"), asy
     if (!req.file) {
       return res.status(422).json({ error: "صورة الإثبات (لقطة الشاشة) مطلوبة ومهمة للتأكيد." });
     }
-    await saveUploadedFileToDb(req.file);
     const proofUrl = `/api/files/${req.file.filename}`;
     const result = await query(`
       UPDATE golden_tasks 

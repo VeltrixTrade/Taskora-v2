@@ -547,7 +547,7 @@
       font-weight: 800;
     }
     .hidden{display:none!important}.mt{margin-top:16px}.muted{color:var(--muted)}
-    @media(max-width:900px){.hero-grid,.grid-3,.grid-2,.stats{grid-template-columns:1fr}.visual{min-height:360px}.dashboard-mock{inset:32px 18px}.mock-grid{grid-template-columns:1fr}}
+    @media(max-width:900px){.hero-grid,.grid-3,.grid-2,.stats{grid-template-columns:1fr}.visual{min-height:360px}.dashboard-mock{inset:32px 18px}.nav-inner{align-items:flex-start;flex-direction:column}.mock-grid{grid-template-columns:1fr}}
 
     .admin-stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
     .admin-stat{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:22px;padding:16px}
@@ -953,7 +953,7 @@
 
     body.user-menu-collapsed .user-dashboard-shell{grid-template-columns:0 minmax(0,1fr)}
     body.user-menu-collapsed .user-side{transform:translateX(120%);opacity:0;pointer-events:none;width:0;padding:0;border:0}
-    @media(max-width:1100px){.user-dashboard-shell{grid-template-columns:1fr}.user-side{position:fixed;right:14px;top:54px;width:min(320px,calc(100% - 28px));z-index:50;transform:translateX(115%);opacity:0;pointer-events:none}.user-side.open{transform:translateX(0);opacity:1;pointer-events:auto}.sidebar-overlay.open{display:block;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:45;backdrop-filter:blur(3px)}.side-toggle{display:inline-flex}.user-stats-grid,.package-pro-grid,.task-board,.realistic-details{grid-template-columns:repeat(2,minmax(0,1fr))}.profile-grid,.wallet-layout{grid-template-columns:1fr}}
+    @media(max-width:1100px){.user-dashboard-shell{grid-template-columns:1fr}.user-side{position:fixed;right:14px;top:88px;width:min(320px,calc(100% - 28px));z-index:50;transform:translateX(115%);opacity:0;pointer-events:none}.user-side.open{transform:translateX(0);opacity:1;pointer-events:auto}.sidebar-overlay.open{display:block;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:45;backdrop-filter:blur(3px)}.side-toggle{display:inline-flex}.user-stats-grid,.package-pro-grid,.task-board,.realistic-details{grid-template-columns:repeat(2,minmax(0,1fr))}.profile-grid,.wallet-layout{grid-template-columns:1fr}}
     @media(max-width:700px){.user-stats-grid,.package-pro-grid,.task-board,.realistic-details{grid-template-columns:1fr}.dashboard-top{grid-template-columns:1fr}}
 
 
@@ -2588,22 +2588,8 @@
       .user-side {
         max-height: calc(100vh - 120px) !important;
         overflow-y: auto !important;
-        padding-top: 24px !important;
+        padding-top: 50px !important;
         scrollbar-width: none; /* Hide scrollbar for clean visual */
-      }
-      .nav-inner {
-        display: flex !important;
-        flex-direction: row !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        flex-wrap: nowrap !important;
-        width: 100% !important;
-      }
-      .brand {
-        display: flex !important;
-        flex-direction: row !important;
-        align-items: center !important;
-        flex-shrink: 0 !important;
       }
       .user-side::-webkit-scrollbar {
         display: none;
@@ -2765,170 +2751,6 @@
     }
     .spinner {
       animation: spin 0.8s linear infinite;
-    }
-
-    /* Premium Binance-Style Wallet Aesthetics */
-    .user-stats-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .crypto-wallet-card {
-      position: relative;
-      overflow: hidden;
-      border-radius: 24px;
-      padding: 20px;
-      background: linear-gradient(135deg, rgba(20, 21, 26, 0.9) 0%, rgba(11, 12, 16, 0.98) 100%) !important;
-      border: 1px solid rgba(255, 255, 255, 0.08) !important;
-      box-shadow: 0 16px 45px rgba(0, 0, 0, 0.55), inset 0 1px 2px rgba(255, 255, 255, 0.05);
-      transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      min-height: 155px;
-    }
-
-    .crypto-wallet-card:hover {
-      transform: translateY(-5px);
-      border-color: rgba(255, 255, 255, 0.16) !important;
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75);
-    }
-
-    /* Specific glows for different cards */
-    .crypto-wallet-card.spot { border-left: 3px solid #10b981 !important; }
-    .crypto-wallet-card.locked { border-left: 3px solid #f59e0b !important; }
-    .crypto-wallet-card.yield { border-left: 3px solid #10b981 !important; }
-    .crypto-wallet-card.kyc.verified { border-left: 3px solid #10b981 !important; }
-    .crypto-wallet-card.kyc.pending { border-left: 3px solid #f59e0b !important; }
-    .crypto-wallet-card.kyc.rejected, .crypto-wallet-card.kyc.not_verified { border-left: 3px solid #ef4444 !important; }
-
-    /* Styling content inside the cards */
-    .crypto-card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-    }
-
-    .crypto-card-title {
-      font-size: 13.5px;
-      font-weight: 800;
-      color: #94a3b8;
-    }
-
-    .crypto-icon-wrapper {
-      width: 34px;
-      height: 34px;
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      display: grid;
-      place-items: center;
-      transition: all 0.3s;
-    }
-
-    .crypto-wallet-card:hover .crypto-icon-wrapper {
-      background: rgba(255, 255, 255, 0.08);
-      transform: scale(1.08) rotate(4deg);
-    }
-
-    .crypto-icon {
-      width: 18px;
-      height: 18px;
-      stroke: #cbd5e1;
-      stroke-width: 2px;
-      fill: none;
-    }
-
-    .crypto-wallet-card.spot .crypto-icon { stroke: #10b981; }
-    .crypto-wallet-card.locked .crypto-icon { stroke: #f59e0b; }
-    .crypto-wallet-card.yield .crypto-icon { stroke: #10b981; }
-    .crypto-wallet-card.kyc.verified .crypto-icon { stroke: #10b981; }
-
-    .crypto-balance-box {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      margin: 6px 0;
-    }
-
-    .crypto-balance-amount {
-      font-family: 'Inter', 'Rajdhani', sans-serif;
-      font-size: 26px;
-      font-weight: 900;
-      color: #ffffff;
-      line-height: 1.2;
-    }
-
-    .crypto-sub-value {
-      font-size: 11.5px;
-      color: #64748b;
-      font-family: 'Inter', sans-serif;
-      font-weight: 600;
-    }
-
-    .crypto-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 11.5px;
-      font-weight: 800;
-      padding: 4px 8px;
-      border-radius: 8px;
-      width: max-content;
-    }
-
-    .crypto-badge.spot-badge { background: rgba(16, 185, 129, 0.08); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.15); }
-    .crypto-badge.frozen-badge { background: rgba(245, 158, 11, 0.08); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.15); }
-    .crypto-badge.profit-badge { background: rgba(16, 185, 129, 0.08); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.15); }
-    .crypto-badge.kyc-verified { background: rgba(16, 185, 129, 0.08); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.15); }
-    .crypto-badge.kyc-pending { background: rgba(245, 158, 11, 0.08); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.15); }
-    .crypto-badge.kyc-rejected { background: rgba(239, 68, 68, 0.08); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.15); }
-    .crypto-badge.kyc-unverified { background: rgba(255, 255, 255, 0.03); color: #cbd5e1; border: 1px solid rgba(255, 255, 255, 0.06); }
-
-    /* Responsive adjustments */
-    @media (max-width: 900px) {
-      .user-stats-grid {
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-      }
-    }
-    @media (max-width: 500px) {
-      .user-stats-grid {
-        grid-template-columns: 1fr;
-        gap: 10px;
-      }
-    }
-
-    /* Mobile-first enhancements and bug fixes */
-    @media (max-width: 900px) {
-      .account-status-grid {
-        grid-template-columns: 1fr !important;
-        gap: 16px !important;
-      }
-      .level-card {
-        padding: 22px !important;
-      }
-      .level-name {
-        font-size: 28px !important;
-      }
-    }
-    
-    /* Countdown card premium styling */
-    .tasks-countdown-card {
-      background: linear-gradient(135deg, rgba(108,77,255,0.08) 0%, rgba(16,185,129,0.04) 100%);
-      border: 1px solid rgba(108,77,255,0.18);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
-      position: relative;
-      overflow: hidden;
-      transition: all 0.3s ease;
-    }
-    
-    .tasks-countdown-card:hover {
-      border-color: rgba(108,77,255,0.3);
-      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
     }
   </style>
   <link rel="manifest" href="/manifest.json">
@@ -4323,8 +4145,12 @@
         <!-- SOCIALS ON LEFT (Instagram and Telegram monochrome outline circular icons) -->
         <div class="footer-socials">
           <!-- Instagram -->
-          <a href="https://www.instagram.com/tas.kora/" target="_blank" title="انستجرام" class="footer-social-link">
+          <a href="https://instagram.com/taskora" target="_blank" title="انستجرام" class="footer-social-link">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051C.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+          </a>
+          <!-- Telegram -->
+          <a href="https://t.me/taskora_official" target="_blank" title="تليجرام" class="footer-social-link">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20.665 3.717l-17.73 6.837c-1.21.486-1.203 1.161-.222 1.462l4.552 1.42 10.532-6.645c.498-.303.953-.14.578.192l-8.533 7.701-.332 4.965c.487 0 .702-.223.974-.486l2.338-2.27 4.862 3.593c.896.495 1.543.239 1.766-.83l3.19-15.025c.326-1.307-.492-1.896-1.353-1.503z"/></svg>
           </a>
         </div>
         
@@ -4865,82 +4691,41 @@ async function renderDashboard(dataFromMe){
   document.getElementById("sideNotifBadge")?.classList.toggle("hidden", !data.unread_notifications);
   if(document.getElementById("sideNotifBadge")) document.getElementById("sideNotifBadge").innerText = data.unread_notifications || 0;
   document.getElementById("dashStats").innerHTML = `
-    <!-- Card 1: Spot Wallet (Available Balance) -->
-    <div class="crypto-wallet-card spot">
-      <div class="crypto-card-header">
-        <span class="crypto-card-title">الرصيد المتاح (Spot Balance)</span>
-        <div class="crypto-icon-wrapper">
-          <svg class="crypto-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M12 6v12M9 9h6M9 12h6"/>
-          </svg>
+    <div class="user-stat">
+      <div class="stat-header">
+        <span>الرصيد المتاح</span>
+        <div class="stat-icon">
+          <svg class="nav-svg-icon" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
         </div>
       </div>
-      <div class="crypto-balance-box">
-        <span class="crypto-balance-amount">${money(me.balance)}</span>
-        <span class="crypto-sub-value">≈ ${money(me.balance)} USDT</span>
-      </div>
-      <span class="crypto-badge spot-badge">قابل للسحب فوري ✓</span>
+      <strong>${money(me.balance)}</strong>
     </div>
-
-    <!-- Card 2: Locked Package Balance -->
-    <div class="crypto-wallet-card locked">
-      <div class="crypto-card-header">
-        <span class="crypto-card-title">رصيد الباقة</span>
-        <div class="crypto-icon-wrapper">
-          <svg class="crypto-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
+    <div class="user-stat">
+      <div class="stat-header">
+        <span>رصيد الباقة</span>
+        <div class="stat-icon">
+          <svg class="nav-svg-icon" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
         </div>
       </div>
-      <div class="crypto-balance-box">
-        <span class="crypto-balance-amount">${money(me.package_balance)}</span>
-        <span class="crypto-sub-value">ينشط مع المهام اليومية</span>
-      </div>
-      <span class="crypto-badge frozen-badge">مجمّد (Frozen) 🔒</span>
+      <strong>${money(me.package_balance)}</strong>
     </div>
-
-    <!-- Card 3: Yield Earnings (Package Profit) -->
-    <div class="crypto-wallet-card yield">
-      <div class="crypto-card-header">
-        <span class="crypto-card-title">ربح الباقة المتراكم</span>
-        <div class="crypto-icon-wrapper">
-          <svg class="crypto-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <path d="M23 6l-9.5 9.5-5-5L1 18"/>
-            <polyline points="17 6 23 6 23 12"/>
-          </svg>
+    <div class="user-stat">
+      <div class="stat-header">
+        <span>ربح الباقة</span>
+        <div class="stat-icon" style="background:rgba(247,181,0,0.06); border-color:rgba(247,181,0,0.18);">
+          <svg class="nav-svg-icon" viewBox="0 0 24 24" style="stroke: #F7B500;"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
         </div>
       </div>
-      <div class="crypto-balance-box">
-        <span class="crypto-balance-amount" style="color: #10b981;">${money(me.package_profit)}</span>
-        <span class="crypto-sub-value">يتحول للمتاح بعد الاكتمال</span>
-      </div>
-      <span class="crypto-badge profit-badge">عائد نشط +10% 📈</span>
+      <strong>${money(me.package_profit)}</strong>
     </div>
-
-    <!-- Card 4: Identity Verification (KYC) -->
-    <div class="crypto-wallet-card kyc ${me.kyc_status || 'not_verified'}">
-      <div class="crypto-card-header">
-        <span class="crypto-card-title">توثيق الهوية (KYC)</span>
-        <div class="crypto-icon-wrapper">
-          <svg class="crypto-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          </svg>
+    <div class="user-stat">
+      <div class="stat-header">
+        <span>التوثيق</span>
+        <div class="stat-icon" style="background:rgba(16,185,129,0.06); border-color:rgba(16,185,129,0.18);">
+          <svg class="nav-svg-icon" viewBox="0 0 24 24" style="stroke: #10B981;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         </div>
       </div>
-      <div class="crypto-balance-box">
-        <span class="crypto-balance-amount" style="font-size: 20px;">
-          ${me.kyc_status === 'verified' ? 'موثق بالكامل ✓' : me.kyc_status === 'pending' ? 'قيد المراجعة ⏳' : me.kyc_status === 'rejected' ? 'طلب مرفوض ❌' : 'غير موثق ⚠️'}
-        </span>
-        <span class="crypto-sub-value">حماية إضافية لحسابك</span>
-      </div>
-      ${
-        me.kyc_status === 'verified' ? '<span class="crypto-badge kyc-verified">موثق ✓ (Verified)</span>' :
-        me.kyc_status === 'pending' ? '<span class="crypto-badge kyc-pending">مراجعة أمان ⏳</span>' :
-        me.kyc_status === 'rejected' ? '<span class="crypto-badge kyc-rejected" onclick="setDash(\'profile\')" style="cursor:pointer;">إعادة رفع 🔄</span>' :
-        '<span class="crypto-badge kyc-unverified" onclick="setDash(\'profile\')" style="cursor:pointer;">وثّق الآن ⚠️</span>'
-      }
+      <strong style="color: #10B981;">${prettyKycStatus(me.kyc_status)}</strong>
     </div>
   `;
   document.getElementById("dashMsg").innerHTML = me.kyc_status==="verified" ? `<div class="success">حسابك موثق. يمكنك طلب السحب عند توفر رصيد متاح.</div>` : `<div class="notice"><div>قم بتوثيق الحساب للحصول على بونص 10$</div><div class="mt">لايمكن سحب الأرباح إلا بعد توثيق الحساب</div></div>`;
@@ -4954,7 +4739,7 @@ function setDash(t){
   document.getElementById("dashMsg").classList.toggle("hidden", t !== "wallet");
   
   // Hide the stats banner (dashStats) on specific pages: profile, transactions, referrals, notifications
-  const hiddenStatsPages = ["profile", "transactions", "referrals", "notifications", "support", "help", "settings", "status"];
+  const hiddenStatsPages = ["profile", "transactions", "referrals", "notifications"];
   const dashStatsEl = document.getElementById("dashStats");
   if (dashStatsEl) {
     dashStatsEl.style.display = hiddenStatsPages.includes(t) ? "none" : "";
@@ -5239,235 +5024,28 @@ async function renderTasks(){
     `;
   }
 
-  let countdownHtml = "";
-  if (unlockedDay < 4) {
-    countdownHtml = `
-      <div class="card tasks-countdown-card" style="margin-bottom: 20px;">
-        <div style="position: absolute; top: -50px; left: -50px; width: 120px; height: 120px; background: rgba(108,77,255,0.1); filter: blur(40px); border-radius: 50%;"></div>
-        <div style="position: absolute; bottom: -50px; right: -50px; width: 120px; height: 120px; background: rgba(16,185,129,0.1); filter: blur(40px); border-radius: 50%;"></div>
-        <div style="position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;">
-          <span style="font-size: 32px; animation: pulse 2s infinite;">⏳</span>
-          <h3 style="font-weight: 800; font-size: 16px; color: #fff; margin: 0;">مؤقت فتح مهام اليوم التالي</h3>
-          <p style="color: #a1a1aa; font-size: 12.5px; margin: 0; max-width: 420px; line-height: 1.5;">سيتم فتح 3 مهام إضافية لليوم ${unlockedDay + 1} تلقائياً عند الساعة 12:00 منتصف الليل بتوقيت العراق وسوريا.</p>
-          <div style="display: flex; gap: 12px; margin-top: 14px; direction: ltr;">
-            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); padding: 8px 14px; border-radius: 14px; min-width: 65px; text-align: center;">
-              <span id="countdownHours" style="font-size: 24px; font-weight: 900; color: #6c4dff; font-family: 'Rajdhani', sans-serif; display: block; line-height: 1;">00</span>
-              <span style="font-size: 10px; color: #a1a1aa;">ساعة</span>
-            </div>
-            <div style="font-size: 24px; font-weight: 900; color: #fff; align-self: center;">:</div>
-            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); padding: 8px 14px; border-radius: 14px; min-width: 65px; text-align: center;">
-              <span id="countdownMinutes" style="font-size: 24px; font-weight: 900; color: #6c4dff; font-family: 'Rajdhani', sans-serif; display: block; line-height: 1;">00</span>
-              <span style="font-size: 10px; color: #a1a1aa;">دقيقة</span>
-            </div>
-            <div style="font-size: 24px; font-weight: 900; color: #fff; align-self: center;">:</div>
-            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); padding: 8px 14px; border-radius: 14px; min-width: 65px; text-align: center;">
-              <span id="countdownSeconds" style="font-size: 24px; font-weight: 900; color: #10b981; font-family: 'Rajdhani', sans-serif; display: block; line-height: 1;">00</span>
-              <span style="font-size: 10px; color: #a1a1aa;">ثانية</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-  } else {
-    countdownHtml = `
-      <div class="card tasks-countdown-card" style="margin-bottom: 20px;">
-        <div style="position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;">
-          <span style="font-size: 32px; animation: bounce 2s infinite;">🎉</span>
-          <h3 style="font-weight: 800; font-size: 16px; color: #10b981; margin: 0;">تم فتح كافة مهام الباقة!</h3>
-          <p style="color: #cbd5e1; font-size: 12.5px; margin: 0; max-width: 420px; line-height: 1.5;">جميع أيام باقتك مفتوحة بالكامل الآن. أكمل المهام لتحرير رصيدك وسحب كامل أرباحك.</p>
-        </div>
-      </div>
-    `;
-  }
-
-  if (!window.__activeDayTab) {
-    window.__activeDayTab = Math.min(4, unlockedDay);
-  }
-
-  const activeDay = window.__activeDayTab;
-  const base = (activeDay - 1) * 3;
-
-  const tabsHtml = `
-    <div class="days-tabs-row" style="display: flex; gap: 10px; margin-bottom: 20px; direction: rtl; overflow-x: auto; padding-bottom: 6px;">
-      ${[1, 2, 3, 4].map(day => {
-        const isDayUnlocked = day <= unlockedDay;
-        const isActive = day === activeDay;
-        return `
-          <button onclick="switchDayTab(${day}, ${isDayUnlocked})" style="flex: 1; min-width: 80px; padding: 12px 6px; border-radius: 16px; border: 1px solid ${isActive ? '#6c4dff' : 'rgba(255,255,255,0.06)'}; background: ${isActive ? 'linear-gradient(135deg, rgba(108,77,255,0.18) 0%, rgba(108,77,255,0.05) 100%)' : 'rgba(255,255,255,0.02)'}; color: ${isActive ? '#fff' : '#a1a1aa'}; cursor: pointer; transition: all 0.25s; font-weight: 700; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: ${isActive ? '0 0 15px rgba(108,77,255,0.2)' : 'none'};">
-            <span style="font-size: 11px; color: ${isActive ? '#a7f3d0' : '#8e8e93'};">${isDayUnlocked ? 'مفتوح ✓' : '🔒 مغلق'}</span>
-            <span style="font-size: 15px;">اليوم ${day}</span>
-          </button>
-        `;
-      }).join("")}
-    </div>
-  `;
-
-  const activeDayTasksHtml = `
-    <div class="active-day-tasks-list" style="display: grid; gap: 16px; direction: rtl; margin-top: 14px;">
-      ${[1, 2, 3].map(n => {
-        const taskNo = base + n;
-        const isDone = completedTasks.includes(taskNo) || completedCount >= taskNo;
-        const taskTitle = data.daily_tasks[taskNo - 1]?.title || `معالجة تذكرة رقم ${taskNo}`;
-        
-        let statusBadge = "";
-        let buttonHtml = "";
-        
-        if (isDone) {
-          statusBadge = `<span style="font-size: 11px; padding: 4px 10px; border-radius: 8px; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); font-weight: bold;">✅ مكتملة</span>`;
-          buttonHtml = `<button class="btn" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); color: #8e8e93; cursor: not-allowed; border-radius: 12px; font-weight: 700; height: 42px; width: 100%;" disabled>تم استلام الأرباح 💰</button>`;
-        } else {
-          statusBadge = `<span style="font-size: 11px; padding: 4px 10px; border-radius: 8px; background: rgba(108, 77, 255, 0.1); color: #a7f3d0; border: 1px solid rgba(108, 77, 255, 0.2); font-weight: bold;">⚡ جاهزة للبدء</span>`;
-          buttonHtml = `<button class="btn green full" style="border-radius: 12px; height: 42px; font-weight: 800; width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: #000; border: none; box-shadow: 0 4px 12px rgba(16,185,129,0.25);" onclick="openTaskSimulationModal(${taskNo}, '${escapeHtml(taskTitle)}')">⚡ ابدأ معالجة التذكرة وصرف الربح</button>`;
-        }
-
-        return `
-          <div class="card task-card-pro" style="position: relative; overflow: hidden; border-left: 4px solid ${isDone ? '#10b981' : '#6c4dff'}; background: rgba(255,255,255,0.02); border-radius: 20px; padding: 18px; border: 1px solid rgba(255,255,255,0.04); border-left-width: 4px;">
-            <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: start; gap: 8px;">
-              <div style="text-align: right;">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-                  <div class="task-number" style="width: 24px; height: 24px; font-size: 12px; background: ${isDone ? '#10b981' : '#6c4dff'}; color: #fff; border-radius: 50%; display: grid; place-items: center; font-weight: bold;">${taskNo}</div>
-                  <h3 style="margin: 0; font-size: 15px; color: #fff; font-weight: 700;">${escapeHtml(taskTitle)}</h3>
-                </div>
-                <p style="color: #a1a1aa; font-size: 12.5px; margin: 4px 0 0; line-height: 1.5;">قم بالضغط على الزر أدناه لبدء عملية محاكاة حجز وإصدار التذكرة عبر خوادم تذكرتي للتحقق التلقائي وصرف المكافأة.</p>
-              </div>
-              <div>
-                ${statusBadge}
-              </div>
-            </div>
-            ${buttonHtml}
-          </div>
-        `;
-      }).join("")}
-    </div>
-  `;
-
   document.getElementById("dashContent").innerHTML = `
-    ${countdownHtml}
-    <div class="card" style="margin-bottom: 24px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; direction: rtl;">
-        <h3 style="margin: 0; font-weight: 900; font-size: 18px; color: #fff;">${pkg.package_name}</h3>
-        <span style="font-size: 13px; color: #cbd5e1; background: rgba(108,77,255,0.15); padding: 4px 12px; border-radius: 8px; border: 1px solid rgba(108,77,255,0.25); font-weight: bold;">التقدم: ${completedCount}/12</span>
+    <div class="card">
+      <h3>${pkg.package_name}</h3>
+      <p>التقدم: ${completedCount}/12 — الحالة: ${pkg.status}${isMonthly ? ' (باقة شهرية)' : ''}</p>
+      <div class="timeline">
+        ${[1,2,3,4].map(day=>{
+          const base=(day-1)*3;
+          const isDayUnlocked = day <= unlockedDay;
+          return `<div class="timeline-day" style="${!isDayUnlocked ? 'opacity: 0.55; filter: grayscale(0.8);' : ''}">
+            <div class="day-num">اليوم ${day} ${!isDayUnlocked ? '🔒' : ''}</div>
+            <div><b>3 مهام</b><p>${isDayUnlocked ? 'تقدم اليوم داخل الباقة.' : 'مغلق حتى يحين اليوم المخصص لها.'}</p><div class="mini-task-dots">${[1,2,3].map(n=>{
+              const taskNo = base+n;
+              const done = completedTasks.includes(taskNo) || completedCount >= taskNo;
+              return `<span class="${done ? "done" : ""}">${taskNo}</span>`;
+            }).join("")}</div></div>
+            <b>${Math.min(Math.max(completedCount-base,0),3)}/3</b>
+          </div>`;
+        }).join("")}
       </div>
-      <p style="color: #cbd5e1; font-size: 13px; margin: 0 0 18px; direction: rtl; text-align: right;">اختر اليوم من التبويبات الأفقية لعرض المهام الثلاث المخصصة له وإنجازها:</p>
-      
-      ${tabsHtml}
-      ${activeDayTasksHtml}
     </div>
     ${tasksBoardHtml}
     ${taskoraAdsenseUnit("tasksBottom", taskoraLangText("أسفل صفحة المهام", "Tasks page bottom"))}`;
-
-  const serverTimeOnLoad = Number(data.server_time || Date.now());
-  const performanceOnLoad = performance.now();
-
-  if (window.__tasksInterval) clearInterval(window.__tasksInterval);
-  if (unlockedDay < 4) {
-    const updateTimer = () => {
-      try {
-        const nowServer = serverTimeOnLoad + (performance.now() - performanceOnLoad);
-        const now = new Date(nowServer);
-        const targetUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 21, 0, 0, 0));
-        if (now.getTime() >= targetUTC.getTime()) {
-          targetUTC.setUTCDate(targetUTC.getUTCDate() + 1);
-        }
-        const diffMs = targetUTC.getTime() - now.getTime();
-        if (diffMs <= 0) {
-          clearInterval(window.__tasksInterval);
-          setDash("tasks");
-          return;
-        }
-        const hours = Math.floor(diffMs / (60 * 60 * 1000));
-        const minutes = Math.floor((diffMs % (60 * 60 * 1000)) / (60 * 1000));
-        const seconds = Math.floor((diffMs % (60 * 1000)) / 1000);
-        const pad = (num) => String(num).padStart(2, '0');
-        const hEl = document.getElementById("countdownHours");
-        const mEl = document.getElementById("countdownMinutes");
-        const sEl = document.getElementById("countdownSeconds");
-        if (hEl && mEl && sEl) {
-          hEl.innerText = pad(hours);
-          mEl.innerText = pad(minutes);
-          sEl.innerText = pad(seconds);
-        } else {
-          clearInterval(window.__tasksInterval);
-        }
-      } catch (err) {
-        console.error("Countdown tick error:", err);
-      }
-    };
-    updateTimer();
-    window.__tasksInterval = setInterval(updateTimer, 1000);
-  }
-}
-
-function switchDayTab(day, isUnlocked) {
-  if (!isUnlocked) {
-    toast("هذا اليوم مغلق حالياً. يرجى الانتظار حتى انتهاء مؤقت العد التنازلي.", "info");
-    return;
-  }
-  window.__activeDayTab = day;
-  renderTasks();
-}
-
-function openTaskSimulationModal(taskNo, taskTitle) {
-  const modal = document.getElementById("adminModal");
-  modal.innerHTML = `
-    <div class="modal task-simulation-modal" style="max-width: 480px; width: 95%; background: rgba(18, 22, 41, 0.98); border: 1px solid rgba(108, 77, 255, 0.3); box-shadow: 0 20px 50px rgba(0,0,0,0.7); backdrop-filter: blur(25px); border-radius: 28px; padding: 30px; color: #fff; direction: rtl; text-align: center; overflow: hidden; position: relative; animation: zoomIn 0.3s ease;">
-      <div style="position: absolute; top: -50px; left: -50px; width: 120px; height: 120px; background: rgba(108,77,255,0.2); filter: blur(40px); border-radius: 50%;"></div>
-      <div style="position: absolute; bottom: -50px; right: -50px; width: 120px; height: 120px; background: rgba(16,185,129,0.2); filter: blur(40px); border-radius: 50%;"></div>
-      <div style="position: relative; z-index: 2;">
-        <span style="font-size: 48px; display: block; margin-bottom: 12px; animation: pulse 1.5s infinite;">🎫</span>
-        <h2 style="color: #fff; font-weight: 900; margin: 0 0 4px; font-size: 20px;">محاكاة معالجة التذكرة</h2>
-        <p style="color: #a1a1aa; font-size: 13px; margin: 0 0 24px;">${escapeHtml(taskTitle)}</p>
-        <div style="position: relative; width: 100px; height: 100px; margin: 0 auto 24px; display: flex; align-items: center; justify-content: center;">
-          <div class="loader-circle" style="position: absolute; width: 100%; height: 100%; border: 4px dashed rgba(108, 77, 255, 0.2); border-top-color: #6c4dff; border-radius: 50%; animation: spin 2s linear infinite;"></div>
-          <span style="font-size: 28px; animation: heartbeat 1.5s infinite;">⚡</span>
-        </div>
-        <div id="simulationLogs" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.05); padding: 14px; border-radius: 16px; margin-bottom: 24px; min-height: 80px; text-align: right; font-family: monospace; font-size: 12px; line-height: 1.6;">
-          <div style="color: #6c4dff;">⏳ الاتصال بخادم التذاكر المركزي...</div>
-        </div>
-        <div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.06); height: 8px; border-radius: 99px; overflow: hidden; margin-bottom: 24px;">
-          <div id="simulationProgress" style="width: 0%; height: 100%; background: linear-gradient(90deg, #6c4dff, #10b981); border-radius: inherit; transition: width 0.1s linear;"></div>
-        </div>
-        <button id="claimSimulationBtn" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: #8e8e93; border-radius: 14px; padding: 12px 40px; font-size: 14px; font-weight: 800; cursor: not-allowed; transition: all 0.3s; width: 100%;" disabled>يرجى الانتظار لإكمال المعالجة...</button>
-      </div>
-    </div>
-  `;
-  modal.classList.add("open");
-  
-  const logsEl = document.getElementById("simulationLogs");
-  const progressEl = document.getElementById("simulationProgress");
-  const btnEl = document.getElementById("claimSimulationBtn");
-  
-  let percent = 0;
-  const logs = [
-    { p: 25, text: "<div style='color: #6c4dff;'>✓ تم الاتصال بخادم التذاكر بنجاح.</div><div style='color: #f59e0b;'>⏳ جاري مزامنة بيانات المعاملة المزدوجة...</div>" },
-    { p: 60, text: "<div style='color: #6c4dff;'>✓ تم الاتصال بخادم التذاكر بنجاح.</div><div style='color: #6c4dff;'>✓ تم مزامنة بيانات المعاملة.</div><div style='color: #3b82f6;'>⏳ جاري توليد الرقم التسلسلي والتشفير...</div>" },
-    { p: 100, text: "<div style='color: #6c4dff;'>✓ تم الاتصال بخادم التذاكر بنجاح.</div><div style='color: #6c4dff;'>✓ تم مزامنة بيانات المعاملة.</div><div style='color: #6c4dff;'>✓ تم تشفير وتأكيد التذكرة بنجاح.</div><div style='color: #10b981; font-weight: bold; margin-top: 4px;'>🎉 جاهز لصرف الأرباح الآن!</div>" }
-  ];
-  
-  const interval = setInterval(() => {
-    percent += 2;
-    if (percent > 100) percent = 100;
-    progressEl.style.width = percent + "%";
-    
-    const log = logs.find(x => percent >= x.p);
-    if (log) {
-      logsEl.innerHTML = log.text;
-    }
-    
-    if (percent >= 100) {
-      clearInterval(interval);
-      btnEl.disabled = false;
-      btnEl.style.background = "linear-gradient(135deg, #10b981, #059669)";
-      btnEl.style.color = "#000";
-      btnEl.style.cursor = "pointer";
-      btnEl.style.boxShadow = "0 0 20px rgba(16, 185, 129, 0.35)";
-      btnEl.innerText = "صرف الأرباح الفورية 💰";
-      btnEl.onclick = async () => {
-        closeAdminModal();
-        await completeTask(taskNo);
-      };
-    }
-  }, 80);
 }
 
 async function buyPackage(id){
@@ -5763,6 +5341,12 @@ async function renderOverview(){
   const s = await api("/api/user/summary",{headers:headers()});
   document.getElementById("dashContent").innerHTML = `
     <h3>ملخص النشاط</h3>
+    <div class="quick-actions">
+      <button class="quick-action" onclick="setDash('packages')">شراء باقة</button>
+      <button class="quick-action" onclick="setDash('tasks')">المهام</button>
+      <button class="quick-action" onclick="setDash('wallet')">إيداع/سحب</button>
+      <button class="quick-action" onclick="setDash('notifications')">الإشعارات</button>
+    </div>
     <div class="grid-2 mt">
       <div class="chart-card"><h3>نشاط الرصيد خلال 30 يوم</h3>${simpleBarChart(s.tx_daily,"day","total")}</div>
       <div class="chart-card"><h3>حالات الإيداع</h3><div class="donut-wrap"><div class="donut"></div>${legendRows(s.deposits)}</div></div>
