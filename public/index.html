@@ -547,7 +547,7 @@
       font-weight: 800;
     }
     .hidden{display:none!important}.mt{margin-top:16px}.muted{color:var(--muted)}
-    @media(max-width:900px){.hero-grid,.grid-3,.grid-2,.stats{grid-template-columns:1fr}.visual{min-height:360px}.dashboard-mock{inset:32px 18px}.mock-grid{grid-template-columns:1fr}}
+    @media(max-width:900px){.hero-grid,.grid-3,.grid-2,.stats{grid-template-columns:1fr}.visual{min-height:360px}.dashboard-mock{inset:32px 18px}.nav-inner{align-items:flex-start;flex-direction:column}.mock-grid{grid-template-columns:1fr}}
 
     .admin-stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
     .admin-stat{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:22px;padding:16px}
@@ -953,7 +953,7 @@
 
     body.user-menu-collapsed .user-dashboard-shell{grid-template-columns:0 minmax(0,1fr)}
     body.user-menu-collapsed .user-side{transform:translateX(120%);opacity:0;pointer-events:none;width:0;padding:0;border:0}
-    @media(max-width:1100px){.user-dashboard-shell{grid-template-columns:1fr}.user-side{position:fixed;right:14px;top:54px;width:min(320px,calc(100% - 28px));z-index:50;transform:translateX(115%);opacity:0;pointer-events:none}.user-side.open{transform:translateX(0);opacity:1;pointer-events:auto}.sidebar-overlay.open{display:block;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:45;backdrop-filter:blur(3px)}.side-toggle{display:inline-flex}.user-stats-grid,.package-pro-grid,.task-board,.realistic-details{grid-template-columns:repeat(2,minmax(0,1fr))}.profile-grid,.wallet-layout{grid-template-columns:1fr}}
+    @media(max-width:1100px){.user-dashboard-shell{grid-template-columns:1fr}.user-side{position:fixed;right:14px;top:88px;width:min(320px,calc(100% - 28px));z-index:50;transform:translateX(115%);opacity:0;pointer-events:none}.user-side.open{transform:translateX(0);opacity:1;pointer-events:auto}.sidebar-overlay.open{display:block;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:45;backdrop-filter:blur(3px)}.side-toggle{display:inline-flex}.user-stats-grid,.package-pro-grid,.task-board,.realistic-details{grid-template-columns:repeat(2,minmax(0,1fr))}.profile-grid,.wallet-layout{grid-template-columns:1fr}}
     @media(max-width:700px){.user-stats-grid,.package-pro-grid,.task-board,.realistic-details{grid-template-columns:1fr}.dashboard-top{grid-template-columns:1fr}}
 
 
@@ -1149,10 +1149,14 @@
     .wallet-big{font-size:44px;font-family:Inter,Tajawal,sans-serif;direction:ltr;color:#ffffff;font-weight:900}
     .referral-panel{display:grid;grid-template-columns:.9fr 1.1fr;gap:18px}
     .referral-link-box{direction:ltr;text-align:left;word-break:break-all;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.03);border-radius:18px;padding:14px;margin:12px 0}
-    .account-status-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-    .check-list{display:grid;gap:10px}
-    .check-item{display:flex;align-items:center;justify-content:space-between;gap:14px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);border-radius:16px;padding:13px}
-    .check-item.ok{border-color:rgba(255,255,255,0.15)}.check-item.no{border-color:rgba(239,68,68,.22)}
+    .account-status-grid{display:flex;flex-direction:column;gap:20px;max-width:680px;margin:0 auto}
+    .check-list{display:grid;gap:12px}
+    .check-item{display:flex;align-items:center;justify-content:space-between;gap:14px;border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);border-radius:20px;padding:16px 20px;transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1);backdrop-filter:blur(10px)}
+    .check-item:hover{transform:translateY(-2px);background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.12)}
+    .check-item.ok{border-color:rgba(16,185,129,0.18);background:rgba(16,185,129,0.02)}
+    .check-item.ok:hover{border-color:rgba(16,185,129,0.3);background:rgba(16,185,129,0.04)}
+    .check-item.no{border-color:rgba(239,68,68,0.18);background:rgba(239,68,68,0.02)}
+    .check-item.no:hover{border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.04)}
     .admin-note-box{border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);border-radius:16px;padding:12px;margin-bottom:10px}
     .notification-item.sticky{border-color:rgba(255,255,255,0.25);background:rgba(255,255,255,0.04)}
 
@@ -2588,22 +2592,8 @@
       .user-side {
         max-height: calc(100vh - 120px) !important;
         overflow-y: auto !important;
-        padding-top: 24px !important;
+        padding-top: 50px !important;
         scrollbar-width: none; /* Hide scrollbar for clean visual */
-      }
-      .nav-inner {
-        display: flex !important;
-        flex-direction: row !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-        flex-wrap: nowrap !important;
-        width: 100% !important;
-      }
-      .brand {
-        display: flex !important;
-        flex-direction: row !important;
-        align-items: center !important;
-        flex-shrink: 0 !important;
       }
       .user-side::-webkit-scrollbar {
         display: none;
@@ -2730,7 +2720,16 @@
     .task-ad-watch-btn,.task-ad-complete-btn{width:100%}
     .task-ad-complete-btn:disabled{opacity:.55;cursor:not-allowed;filter:grayscale(.2)}
     .taskora-adsense-unit{
-      display: none !important;
+      margin:18px 0;
+      min-height:92px;
+      display:grid;
+      place-items:center;
+      border:1px dashed rgba(255,255,255,.14);
+      border-radius:22px;
+      background:linear-gradient(135deg,rgba(255,255,255,.035),rgba(255,255,255,.01));
+      color:var(--text);
+      overflow:hidden;
+      text-align:center;
     }
     .taskora-adsense-unit .adsbygoogle{width:100%;min-height:92px}
     .taskora-adsense-pending{padding:16px}
@@ -2750,22 +2749,7 @@
     }
     .taskora-adsense-pending b{display:block;margin-top:8px;font-size:15px}
     .taskora-adsense-pending small{display:block;margin-top:4px;color:var(--muted);line-height:1.6}
-    /* Interactive shipping task styles */
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-    .spinner {
-      animation: spin 0.8s linear infinite;
-    }
+    .dashboard-ad-anchor:empty{display:none}
 
     /* Premium Binance-Style Wallet Aesthetics */
     .user-stats-grid {
@@ -2823,39 +2807,24 @@
       height: 34px;
       border-radius: 10px;
       background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       display: grid;
       place-items: center;
-      transition: all 0.3s;
-    }
-
-    .crypto-wallet-card:hover .crypto-icon-wrapper {
-      background: rgba(255, 255, 255, 0.08);
-      transform: scale(1.08) rotate(4deg);
     }
 
     .crypto-icon {
       width: 18px;
       height: 18px;
       stroke: #cbd5e1;
-      stroke-width: 2px;
-      fill: none;
     }
 
-    .crypto-wallet-card.spot .crypto-icon { stroke: #10b981; }
-    .crypto-wallet-card.locked .crypto-icon { stroke: #f59e0b; }
-    .crypto-wallet-card.yield .crypto-icon { stroke: #10b981; }
-    .crypto-wallet-card.kyc.verified .crypto-icon { stroke: #10b981; }
-
     .crypto-balance-box {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      margin: 6px 0;
+      margin-bottom: 14px;
+      text-align: right;
     }
 
     .crypto-balance-amount {
-      font-family: 'Inter', 'Rajdhani', sans-serif;
+      display: block;
       font-size: 26px;
       font-weight: 900;
       color: #ffffff;
@@ -2901,6 +2870,39 @@
         gap: 10px;
       }
     }
+
+    /* Mobile Overrides & Polish */
+    @media (max-width: 1100px) {
+      .user-side {
+        max-height: calc(100vh - 120px) !important;
+        overflow-y: auto !important;
+        padding-top: 24px !important;
+        scrollbar-width: none;
+        position: fixed;
+        right: 14px;
+        top: 54px;
+        width: min(320px, calc(100% - 28px));
+        z-index: 50;
+      }
+      .nav-inner {
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        flex-wrap: nowrap !important;
+        width: 100% !important;
+      }
+      .brand {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        flex-shrink: 0 !important;
+      }
+      .account-status-grid {
+        max-width: 100% !important;
+        gap: 16px !important;
+      }
+    }
   </style>
   <link rel="manifest" href="/manifest.json">
   <script>
@@ -2918,6 +2920,10 @@
     };
     window.googletag = window.googletag || { cmd: [] };
   </script>
+  <script async src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"></script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3936169440487132"
+     crossorigin="anonymous"></script>
+  <meta name="google-adsense-account" content="ca-pub-3936169440487132">
 
 
 
@@ -3611,29 +3617,19 @@
           };
 
           window.toggleSideMenu = function() {
-            const isDashboard = document.getElementById("dashboardView").style.display === "block";
-            if (isDashboard) {
-              const isMobile = window.innerWidth <= 1100;
-              if (isMobile) {
-                toggleUserSide();
-              } else {
-                toggleCollapseUserSide();
-              }
+            const backdrop = document.getElementById("sideMenuBackdrop");
+            if (!backdrop) return;
+            const isOpen = backdrop.classList.contains("open");
+            if (isOpen) {
+              backdrop.classList.remove("open");
+              setTimeout(() => {
+                backdrop.style.display = "none";
+              }, 300);
             } else {
-              const backdrop = document.getElementById("sideMenuBackdrop");
-              if (!backdrop) return;
-              const isOpen = backdrop.classList.contains("open");
-              if (isOpen) {
-                backdrop.classList.remove("open");
-                setTimeout(() => {
-                  backdrop.style.display = "none";
-                }, 300);
-              } else {
-                backdrop.style.display = "block";
-                setTimeout(() => {
-                  backdrop.classList.add("open");
-                }, 10);
-              }
+              backdrop.style.display = "block";
+              setTimeout(() => {
+                backdrop.classList.add("open");
+              }, 10);
             }
           };
 
@@ -3893,7 +3889,7 @@
               </div>
               <div class="package-card-feature">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                مدة الباقة: 4 أيام
+                مدة الباقة: 30 يوم (دورات 4 أيام)
               </div>
             </div>
             <button class="package-card-action" onclick="showView('auth');">تفعيل الباقة</button>
@@ -3925,7 +3921,7 @@
               </div>
               <div class="package-card-feature">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                مدة الباقة: 4 أيام
+                مدة الباقة: 30 يوم (دورات 4 أيام)
               </div>
             </div>
             <button class="package-card-action" onclick="showView('auth');">تفعيل الباقة</button>
@@ -3957,7 +3953,7 @@
               </div>
               <div class="package-card-feature">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                مدة الباقة: 4 أيام
+                مدة الباقة: 30 يوم (دورات 4 أيام)
               </div>
             </div>
             <button class="package-card-action" onclick="showView('auth');">تفعيل الباقة</button>
@@ -4020,25 +4016,15 @@
   
   <section id="resetView" class="auth-wrap">
     <div class="container">
-      <div class="card auth-box" style="backdrop-filter: blur(16px); background: rgba(21, 26, 38, 0.85); border: 1px solid rgba(108, 77, 255, 0.2);">
+      <div class="card auth-box">
         <h2>استعادة كلمة المرور</h2>
         <div id="resetMsg"></div>
-        
-        <label>البريد الإلكتروني</label>
-        <input id="resetEmail" type="email" placeholder="example@domain.com" style="margin-bottom: 12px;">
-
-        <label>كود الاستعادة (6 أرقام)</label>
-        <input id="resetOtpCode" type="text" maxlength="6" style="text-align: center; font-size: 22px; letter-spacing: 6px; font-weight: bold; margin-bottom: 12px; background: rgba(0,0,0,0.2); border: 1px solid rgba(108,77,255,0.25); color: #fff;" placeholder="000000">
-
         <label>كلمة المرور الجديدة</label>
-        <input id="resetNewPassword" type="password" placeholder="8 خانات، حروف وأرقام" style="margin-bottom: 16px;">
-        
+        <input id="resetNewPassword" type="password" placeholder="8 خانات، حروف وأرقام">
         <button class="btn primary full mt" onclick="submitPasswordReset()">تعيين كلمة المرور</button>
-        <button class="btn full mt" style="background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #e4e7eb;" onclick="showView('auth'); setAuthMode('login');">العودة لتسجيل الدخول</button>
       </div>
     </div>
   </section>
-
 
 <section id="authView" class="auth-wrap">
     <div class="container">
@@ -4190,8 +4176,6 @@
             <button class="user-nav" data-dash="help" onclick="setDash('help')">المساعدة <svg class="nav-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></button>
             <button class="user-nav" data-dash="support" onclick="setDash('support')">الدعم <svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
             <button class="user-nav adminOnly hidden" data-dash="admin" onclick="setDash('admin')">لوحة الإدارة <svg class="nav-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
-            <button class="user-nav" onclick="showView('home')">الرئيسية <svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></button>
-            <button class="user-nav logout-btn" onclick="logout()" style="color: #fca5a5; border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.02);">تسجيل الخروج <svg class="nav-svg-icon" viewBox="0 0 24 24" style="stroke: #ef4444;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
           </div>
           <div class="side-title">معلومات واقعية</div>
           <div class="detail-chip"><b>السحب</b>متاح فقط للحسابات الموثقة.</div>
@@ -4204,7 +4188,10 @@
               <h2 id="dashTitle">لوحة المستخدم</h2>
               <p id="dashSubtitle">إدارة الرصيد، الباقات، المهام، التوثيق والسحب من مكان واحد.</p>
             </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn side-toggle" onclick="toggleUserSide()">☰ القائمة</button>
+              <button class="btn desktop-only-btn" onclick="toggleCollapseUserSide()">إخفاء/إظهار</button>
+            </div>
           </div>
 
           <div id="dashStats" class="user-stats-grid"></div>
@@ -4294,8 +4281,12 @@
         <!-- SOCIALS ON LEFT (Instagram and Telegram monochrome outline circular icons) -->
         <div class="footer-socials">
           <!-- Instagram -->
-          <a href="https://www.instagram.com/tas.kora/" target="_blank" title="انستجرام" class="footer-social-link">
+          <a href="https://instagram.com/taskora" target="_blank" title="انستجرام" class="footer-social-link">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051C.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+          </a>
+          <!-- Telegram -->
+          <a href="https://t.me/taskora_official" target="_blank" title="تليجرام" class="footer-social-link">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20.665 3.717l-17.73 6.837c-1.21.486-1.203 1.161-.222 1.462l4.552 1.42 10.532-6.645c.498-.303.953-.14.578.192l-8.533 7.701-.332 4.965c.487 0 .702-.223.974-.486l2.338-2.27 4.862 3.593c.896.495 1.543.239 1.766-.83l3.19-15.025c.326-1.307-.492-1.896-1.353-1.503z"/></svg>
           </a>
         </div>
         
@@ -4366,12 +4357,16 @@
                 <span>مبنى تاسكورا، الطابق الرابع، شارع الاستقلال 45، ليماسول، قبرص</span>
               </div>
               <div class="footer-contact-item" style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #94a3b8; direction: rtl; justify-content: flex-start;">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: rgba(255,255,255,0.6); flex-shrink: 0;"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                <a href="tel:+35725896450" style="color: inherit; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#ffffff'" onmouseout="this.style.color='inherit'">+357 25 896 450</a>
+              </div>
+              <div class="footer-contact-item" style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #94a3b8; direction: rtl; justify-content: flex-start;">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: rgba(255,255,255,0.6); flex-shrink: 0;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                <a href="javascript:void(0)" onclick="openContactSupportModal()" style="color: inherit; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#ffffff'" onmouseout="this.style.color='inherit'">support@taskora.live</a>
+                <a href="mailto:support@taskora.com" style="color: inherit; text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='#ffffff'" onmouseout="this.style.color='inherit'">support@taskora.com</a>
               </div>
               <div class="footer-contact-item" style="display: flex; align-items: center; gap: 8px; font-size: 14px; color: #94a3b8; direction: rtl; justify-content: flex-start;">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: rgba(255,255,255,0.6); flex-shrink: 0;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                <span>ساعات العمل: طوال أيام الأسبوع (10:00 ص - 8:00 م)</span>
+                <span>ساعات العمل: الاثنين - الجمعة (9:00 ص - 6:00 م)</span>
               </div>
             </div>
           </div>
@@ -4388,15 +4383,6 @@
 
 <script>
 const API = "";
-// Proactively clear legacy demo mode parameters to enforce the real server mode
-localStorage.removeItem("taskora_offline");
-localStorage.removeItem("taskora_mock_user");
-localStorage.removeItem("taskora_mock_packages");
-localStorage.removeItem("taskora_mock_transactions");
-localStorage.removeItem("taskora_mock_deposits");
-localStorage.removeItem("taskora_mock_withdrawals");
-localStorage.removeItem("taskora_mock_notifications");
-
 let token = localStorage.getItem("taskora_token") || "";
 let me = null;
 let authMode = "login";
@@ -4490,12 +4476,7 @@ async function openSecureFile(filePath){
   try{
     setLoading(true);
     const res = await fetch(filePath, { headers: headers(false) });
-    if(!res.ok) {
-      if (res.status === 404) {
-        throw new Error("عذراً، لم يتم العثور على الملف على الخادم (غالباً بسبب إعادة تشغيل خادم Railway ومسح الملفات المؤقتة).");
-      }
-      throw new Error(`تعذر فتح الملف: رمز الخطأ ${res.status} (${res.statusText || 'غير معروف'})`);
-    }
+    if(!res.ok) throw new Error("لا يمكن فتح الملف أو لا تملك صلاحية الوصول.");
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     window.open(url, "_blank");
@@ -4524,16 +4505,62 @@ function taskoraGetAdsenseSlot(key){
 }
 
 function taskoraAdsenseUnit(key, label){
-  return "";
+  const slot = taskoraGetAdsenseSlot(key);
+  const safeKey = escapeHtml(key);
+  const safeLabel = escapeHtml(label || "AdSense");
+  if(!slot){
+    return `<div class="taskora-adsense-unit taskora-adsense-pending" id="taskora-ad-${safeKey}" data-ad-key="${safeKey}">
+      <div>
+        <span>AdSense</span>
+        <b>${taskoraLangText("الإعلانات قيد التجهيز", "Ads are being prepared")}</b>
+        <small>${safeLabel} - ${taskoraLangText("أضف data-ad-slot لاحقًا من حساب AdSense لتظهر الإعلانات هنا.", "Add the AdSense data-ad-slot later to show ads here.")}</small>
+      </div>
+    </div>`;
+  }
+  return `<div class="taskora-adsense-unit" id="taskora-ad-${safeKey}" data-ad-key="${safeKey}" aria-label="${safeLabel}">
+    <ins class="adsbygoogle"
+      data-taskora-ad="true"
+      style="display:block"
+      data-ad-client="${escapeHtml(window.TASKORA_ADSENSE_CLIENT_ID || "ca-pub-3936169440487132")}"
+      data-ad-slot="${escapeHtml(slot)}"
+      data-ad-format="auto"
+      data-full-width-responsive="true"></ins>
+  </div>`;
 }
 
 function taskoraMountStaticAds(){
+  const home = document.getElementById("homeView");
+  if(home && !document.getElementById("taskoraHomeAdWrap")){
+    const html = `<div class="container" id="taskoraHomeAdWrap">${taskoraAdsenseUnit("home", taskoraLangText("الصفحة الرئيسية", "Home page"))}</div>`;
+    const firstSection = home.querySelector("section");
+    if(firstSection) firstSection.insertAdjacentHTML("afterend", html);
+    else home.insertAdjacentHTML("beforeend", html);
+  }
+  const dashTopAd = document.getElementById("dashTopAd");
+  if(dashTopAd && !dashTopAd.dataset.taskoraReady){
+    dashTopAd.innerHTML = taskoraAdsenseUnit("dashboardTop", taskoraLangText("أعلى لوحة المستخدم", "User dashboard top"));
+    dashTopAd.dataset.taskoraReady = "1";
+  }
 }
 
 function taskoraInitAdsenseBlocks(){
+  document.querySelectorAll("ins.adsbygoogle[data-taskora-ad]:not([data-taskora-requested])").forEach(ad => {
+    if(!ad.getAttribute("data-ad-slot")) return;
+    ad.dataset.taskoraRequested = "1";
+    try{
+      window.adsbygoogle = window.adsbygoogle || [];
+      window.adsbygoogle.push({});
+    }catch(e){
+      console.warn("AdSense is not ready yet:", e);
+    }
+  });
 }
 
 function taskoraAfterRenderAds(){
+  setTimeout(() => {
+    taskoraMountStaticAds();
+    taskoraInitAdsenseBlocks();
+  }, 80);
 }
 function prettyKycStatus(status){ return ({verified:"موثق",pending:"قيد المراجعة",rejected:"مرفوض",not_verified:"غير موثق"})[status || "not_verified"] || status; }
 function setAvatarElements(avatarUrl, username){
@@ -4680,16 +4707,6 @@ function setAuthMode(m){
   document.getElementById("registerFields").classList.toggle("hidden",m!=="register");
   document.getElementById("loginFields").classList.toggle("hidden",m!=="login");
   document.getElementById("authTitle").innerText = m==="login" ? "تسجيل الدخول" : "إنشاء حساب حقيقي";
-  
-  if (m === "register") {
-    try {
-      const savedRef = localStorage.getItem("taskora_referred_by");
-      const refInput = document.getElementById("regReferral");
-      if (savedRef && refInput && !refInput.value) {
-        refInput.value = savedRef;
-      }
-    } catch(e) {}
-  }
 }
 
 async function taskoraReadJsonResponse(res, path=""){
@@ -4750,12 +4767,7 @@ async function submitAuth(){
         referral_code: document.getElementById("regReferral").value
       };
       const data = await api("/api/auth/register",{method:"POST",headers:headers(),body:JSON.stringify(payload)});
-      token=data.token;
-      localStorage.setItem("taskora_token",token);
-      try {
-        localStorage.removeItem("taskora_referred_by");
-      } catch (err) {}
-      await loadMe();
+      token=data.token; localStorage.setItem("taskora_token",token); await loadMe();
     }
   }catch(e){ msg("authMsg","error",e.message); }
 }
@@ -4764,41 +4776,16 @@ async function requestPasswordReset(){
   try{
     const email = authMode === "register" ? document.getElementById("regEmail").value : document.getElementById("authLogin").value;
     if(!email || !email.includes("@")) return toast("اكتب البريد الإلكتروني أولًا", "error");
-    await api("/api/auth/request-password-reset",{method:"POST",headers:headers(),body:JSON.stringify({email})});
-    
-    // Clear passwordResetBox
-    document.getElementById("passwordResetBox").innerHTML = "";
-    
-    // Pre-fill the email in the reset view
-    if (document.getElementById("resetEmail")) {
-      document.getElementById("resetEmail").value = email;
-    }
-    
-    // Show the reset password page where they can enter their OTP code
-    showView("reset");
-    
-    toast("تم إرسال رمز التحقق OTP إلى بريدك الإلكتروني بنجاح.", "success");
+    const d = await api("/api/auth/request-password-reset",{method:"POST",headers:headers(),body:JSON.stringify({email})});
+    document.getElementById("passwordResetBox").innerHTML = d.reset_url ? `<div class="wallet-box">${location.origin}${d.reset_url}</div>` : `<div class="success mt">إذا كان البريد موجودًا، سيتم إرسال رابط الاستعادة.</div>`;
+    toast("تم إنشاء طلب استعادة كلمة المرور", "success");
   }catch(e){ toast(e.message, "error"); }
 }
 async function submitPasswordReset(){
   try{
-    msg("resetMsg","","");
-    const email = document.getElementById("resetEmail")?.value.trim();
-    const code = document.getElementById("resetOtpCode")?.value.trim();
-    const new_password = resetNewPassword.value;
     const token = new URLSearchParams(location.search).get("token");
-
-    if (token) {
-      // Token fallback
-      await api("/api/auth/reset-password",{method:"POST",headers:headers(),body:JSON.stringify({token,new_password})});
-    } else {
-      // Premium OTP Reset
-      if (!email) return toast("يرجى إدخال البريد الإلكتروني.", "error");
-      if (!code || !/^\d{6}$/.test(code)) return toast("يرجى إدخال كود استعادة مكون من 6 أرقام.", "error");
-      await api("/api/auth/reset-password-otp",{method:"POST",headers:headers(),body:JSON.stringify({email,code,new_password})});
-    }
-
-    toast("تم تعيين كلمة المرور الجديدة بنجاح!", "success");
+    await api("/api/auth/reset-password",{method:"POST",headers:headers(),body:JSON.stringify({token,new_password:resetNewPassword.value})});
+    toast("تم تعيين كلمة المرور الجديدة", "success");
     history.replaceState(null,"","/");
     showView("auth");
     setAuthMode("login");
@@ -4836,10 +4823,10 @@ async function renderDashboard(dataFromMe){
   document.getElementById("sideNotifBadge")?.classList.toggle("hidden", !data.unread_notifications);
   if(document.getElementById("sideNotifBadge")) document.getElementById("sideNotifBadge").innerText = data.unread_notifications || 0;
   document.getElementById("dashStats").innerHTML = `
-    <!-- Card 1: Spot Wallet (Available Balance) -->
+    <!-- Card 1: Spot Available Balance -->
     <div class="crypto-wallet-card spot">
       <div class="crypto-card-header">
-        <span class="crypto-card-title">الرصيد المتاح (Spot Balance)</span>
+        <span class="crypto-card-title">الرصيد المتاح (Spot)</span>
         <div class="crypto-icon-wrapper">
           <svg class="crypto-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <circle cx="12" cy="12" r="10"/>
@@ -4869,7 +4856,7 @@ async function renderDashboard(dataFromMe){
         <span class="crypto-balance-amount">${money(me.package_balance)}</span>
         <span class="crypto-sub-value">ينشط مع المهام اليومية</span>
       </div>
-      <span class="crypto-badge frozen-badge">مجمّد (Frozen) 🔒</span>
+      <span class="crypto-badge locked-badge">مجمد (Frozen) 🔒</span>
     </div>
 
     <!-- Card 3: Yield Earnings (Package Profit) -->
@@ -4924,7 +4911,12 @@ function setDash(t){
   dash=t;
   document.getElementById("dashMsg").classList.toggle("hidden", t !== "wallet");
   
-  // Hide the stats banner (dashStats) on specific pages: profile, transactions, referrals, notifications
+  if (t !== "tasks" && window.tasksInterval) {
+    clearInterval(window.tasksInterval);
+    window.tasksInterval = null;
+  }
+  
+  // Hide the stats banner (dashStats) on specific pages: profile, transactions, referrals, notifications, support, help, settings, status
   const hiddenStatsPages = ["profile", "transactions", "referrals", "notifications", "support", "help", "settings", "status"];
   const dashStatsEl = document.getElementById("dashStats");
   if (dashStatsEl) {
@@ -5039,9 +5031,9 @@ function getFallbackPackages(){
     {id:"gold",name:"الذهبية",price:50,profit:5,per_task:0.42},
     {id:"platinum",name:"البلاتينيوم",price:100,profit:10,per_task:0.83},
     {id:"vip",name:"VIP",price:500,profit:50,per_task:4.17},
-    {id:"diamond",name:"VIP النخبة",price:1000,profit:100,per_task:8.33},
-    {id:"crown_vip",name:"VIP التاج",price:2000,profit:200,per_task:16.67},
-    {id:"royal_vip",name:"VIP الملكية",price:5000,profit:500,per_task:41.67}
+    {id:"diamond",name:"VIP النخبة",price:1000,profit:100,per_task:8.33,monthly:true},
+    {id:"crown_vip",name:"VIP التاج",price:2000,profit:200,per_task:16.67,monthly:true},
+    {id:"royal_vip",name:"VIP الملكية",price:5000,profit:500,per_task:41.67,monthly:true}
   ];
 }
 
@@ -5072,18 +5064,19 @@ async function renderPackages(){
       <h2>اختر باقتك</h2>
       <p>اختر الباقة المناسبة لتفعيل المهام اليومية وجني الأرباح.</p>
     </div>
-    ${active ? `<div class="success">لديك باقة حالية: <b>${active.package_name}</b> — التقدم ${active.completed_count}/12 — الحالة ${active.status}</div>` : ""}
+    ${active ? `<div class="success">لديك باقة حالية: <b>${active.package_name}</b> — التقدم ${active.completed_count}/${["diamond", "crown_vip", "royal_vip"].includes(active.package_id) ? '12 لكل دورة' : '12'} — الحالة ${active.status}</div>` : ""}
     <div class="package-pro-grid mt">
       ${packages.map(p=>`
         <div class="card package-pro-card">
+          <span class="package-badge">${p.monthly || ["diamond", "crown_vip", "royal_vip"].includes(p.id) ? '12 مهمة كل 4 أيام • لمدة شهر' : '12 مهمة • 4 أيام'} • عائد 10%</span>
           <canvas class="pkg-icon3d" data-pkg-id="${p.id}" width="56" height="56" style="display:block;margin-bottom:12px;cursor:pointer;"></canvas>
           <h3>${p.name}</h3>
           <div class="package-pro-price">${money(p.price)}</div>
-          <p>تظهر 3 مهام يوميًا. ربح المهام المستهدف ${money(p.profit)} بعد 4 أيام.</p>
+          <p>${p.monthly || ["diamond", "crown_vip", "royal_vip"].includes(p.id) ? 'تظهر 3 مهام يوميًا. إجمالي 12 مهمة كل 4 أيام للحصول على 10% من قيمة الباقة.' : 'تظهر 3 مهام يوميًا. ربح المهام المستهدف ' + money(p.profit) + ' بعد 4 أيام.'}</p>
           <div class="package-feature-list">
-            <div><span>المهام</span><b>12</b></div>
-            <div><span>المدة</span><b>4 أيام</b></div>
-            <div><span>ربح مستهدف</span><b>${money(p.profit)}</b></div>
+            <div><span>المهام</span><b>12${p.monthly || ["diamond", "crown_vip", "royal_vip"].includes(p.id) ? ' لكل دورة' : ''}</b></div>
+            <div><span>المدة</span><b>${p.monthly || ["diamond", "crown_vip", "royal_vip"].includes(p.id) ? 'شهر (30 يوم)' : '4 أيام'}</b></div>
+            <div><span>ربح مستهدف</span><b>${money(p.profit)}${p.monthly || ["diamond", "crown_vip", "royal_vip"].includes(p.id) ? ' / دورة' : ''}</b></div>
             <div><span>ربح المهمة</span><b>${money(p.per_task || (p.profit/12))}</b></div>
           </div>
           <div class="admin-actions mt">
@@ -5126,7 +5119,7 @@ async function renderTasks(){
   if(!pkg){
     document.getElementById("dashContent").innerHTML = `<div class="card">
       <h3>لا توجد باقة نشطة</h3>
-      <p>اختر باقة أولًا حتى تظهر لك المهام اليومية المخصصة.</p>
+      <p>اختر باقة أولًا حتى تظهر لك المهام اليومية.</p>
       <button class="btn primary" onclick="setDash('packages')">الذهاب إلى الباقات</button>
     </div>`;
     return;
@@ -5134,6 +5127,20 @@ async function renderTasks(){
 
   const completedCount = Number(pkg.completed_count || 0);
   const completedTasks = Array.isArray(pkg.completed_tasks) ? pkg.completed_tasks : [];
+  const DAILY_TASKS_NAMES = [
+    "محاكاة بيع تذكرة مباراة",
+    "محاكاة بيع تذكرة فيلم",
+    "محاكاة إكمال طلب سحب",
+    "محاكاة تأكيد حجز تذكرة حفل",
+    "محاكاة تأكيد طلب تذكرة سفر",
+    "محاكاة معالجة طلب استرجاع تذكرة",
+    "محاكاة بيع تذكرة مسرح",
+    "محاكاة تأكيد طلب تذكرة قطار",
+    "محاكاة مراجعة طلب تذكرة VIP",
+    "محاكاة إغلاق طلب حجز فعالية",
+    "محاكاة تأكيد تذكرة مهرجان",
+    "محاكاة مراجعة طلب تذكرة رياضية"
+  ];
 
   const getMidnightGMT3 = (dateObj) => {
     const timeWithOffset = dateObj.getTime() + (3 * 60 * 60 * 1000);
@@ -5141,53 +5148,47 @@ async function renderTasks(){
     return Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate());
   };
 
-  const startedMidnight = getMidnightGMT3(new Date(pkg.started_at));
+  const startedAtStr = pkg.started_at || new Date().toISOString();
+  const startedMidnight = getMidnightGMT3(new Date(startedAtStr));
   const currentMidnight = getMidnightGMT3(new Date());
   const daysElapsed = Math.max(1, Math.floor((currentMidnight - startedMidnight) / (24 * 60 * 60 * 1000)) + 1);
   const maxAllowedTask = Math.min(12, daysElapsed * 3);
   const unlockedDay = daysElapsed;
 
-  const isMonthly = false;
+  const isMonthly = ["diamond", "crown_vip", "royal_vip"].includes(pkg.package_id);
 
   const userTasks = data.golden_tasks || [];
   
   let tasksBoardHtml = "";
-  if (userTasks.length === 0) {
+  if (userTasks.length > 0) {
     tasksBoardHtml = `
-      <div class="card" style="text-align: center; padding: 40px 20px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 20px; margin-top: 24px;">
-        <span style="font-size: 48px; display: block; margin-bottom: 12px; animation: pulse 2s infinite;">🌟</span>
-        <h3 style="font-weight: 700; color: #fff; margin: 0 0 8px;">لا توجد مهام نشطة حالياً</h3>
-        <p style="color: #a1a1aa; font-size: 13.5px; max-width: 440px; margin: 0 auto;">يرجى الانتظار حتى تقوم الإدارة بإسناد مهام يومية أو ترويجية جديدة إلى حسابك للبدء في إنجازها وجني الأرباح فوراً!</p>
-      </div>
-    `;
-  } else {
-    tasksBoardHtml = `
-      <div class="task-board mt">
+      <div style="margin-top: 30px; margin-bottom: 12px; font-weight: 800; font-size: 16px; color: #fff; text-align: right; direction: rtl;">📢 المهام الترويجية والذهبية الخاصة</div>
+      <div class="task-board">
         ${userTasks.map((t, index) => {
           const isDone = t.status === "completed";
           let statusBadge = "";
           let buttonHtml = "";
           
           if (t.status === "completed") {
-            statusBadge = `<span class="status verified" style="font-size: 11px; padding: 4px 10px; border-radius: 8px; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2);">✅ مكتملة</span>`;
+            statusBadge = `<span class="status verified" style="font-size: 11px; padding: 4px 10px; border-radius: 8px; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); font-weight: bold;">✅ مكتملة</span>`;
             buttonHtml = `<button class="btn" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); color: #8e8e93; cursor: not-allowed; border-radius: 12px; font-weight: 700; height: 42px; width: 100%;" disabled>تم استلام الأرباح 💰</button>`;
           } else if (t.status === "pending_review") {
-            statusBadge = `<span class="status pending" style="font-size: 11px; padding: 4px 10px; border-radius: 8px; background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2);">⏳ قيد المراجعة</span>`;
+            statusBadge = `<span class="status pending" style="font-size: 11px; padding: 4px 10px; border-radius: 8px; background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); font-weight: bold;">⏳ قيد المراجعة</span>`;
             buttonHtml = `<button class="btn" style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.15); color: #f59e0b; cursor: not-allowed; border-radius: 12px; font-weight: 700; height: 42px; width: 100%;" disabled>بانتظار الموافقة</button>`;
           } else if (t.status === "rejected") {
-            statusBadge = `<span class="status rejected" style="font-size: 11px; padding: 4px 10px; border-radius: 8px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2);">❌ مرفوضة</span>`;
+            statusBadge = `<span class="status rejected" style="font-size: 11px; padding: 4px 10px; border-radius: 8px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); font-weight: bold;">❌ مرفوضة</span>`;
             buttonHtml = `<button class="btn red full" style="border-radius: 12px; height: 42px; font-weight: 700; width: 100%;" onclick="completeTaskInstant(${t.id}, '${escapeHtml(t.task_link)}')">🔄 إعادة الإنجاز السريع</button>`;
           } else {
-            statusBadge = `<span class="status active" style="font-size: 11px; padding: 4px 10px; border-radius: 8px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2);">✨ مهمة نشطة</span>`;
+            statusBadge = `<span class="status active" style="font-size: 11px; padding: 4px 10px; border-radius: 8px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2); font-weight: bold;">✨ مهمة نشطة</span>`;
             buttonHtml = `<button class="btn green full" style="border-radius: 12px; height: 42px; font-weight: 700; width: 100%;" onclick="completeTaskInstant(${t.id}, '${escapeHtml(t.task_link)}')">📦 إنجاز المهمة وصرف الربح</button>`;
           }
 
           return `
             <div class="card task-card-pro" style="position: relative; overflow: hidden; border-left: 4px solid ${isDone ? '#10b981' : '#6c4dff'};">
-              <div style="margin-bottom: 14px; display: flex; justify-content: space-between; align-items: start; gap: 8px;">
+              <div style="margin-bottom: 14px; display: flex; justify-content: space-between; align-items: start; gap: 8px; direction: rtl; text-align: right;">
                 <div>
                   <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-                    <div class="task-number" style="width: 24px; height: 24px; font-size: 12px; background: ${isDone ? '#10b981' : '#6c4dff'}; color: #fff;">${index + 1}</div>
+                    <div class="task-number" style="width: 24px; height: 24px; font-size: 12px; display: grid; place-items: center; border-radius: 8px; background: ${isDone ? '#10b981' : '#6c4dff'}; color: #fff; font-weight: 900;">${index + 1}</div>
                     <h3 style="margin: 0; font-size: 15px; color: #fff; font-weight: 700;">${escapeHtml(t.title)}</h3>
                   </div>
                   <p style="color: #a1a1aa; font-size: 12.5px; margin: 4px 0 0; line-height: 1.5;">${escapeHtml(t.description)}</p>
@@ -5198,7 +5199,7 @@ async function renderTasks(){
                   ${statusBadge}
                 </div>
               </div>
-              <div style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: 12px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 13px;">
+              <div style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: 12px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 13px; direction: rtl;">
                 <span style="color: #a1a1aa;">المكافأة المالية الفورية:</span>
                 <b style="color: #10b981; font-size: 15px; font-family: 'Rajdhani', sans-serif;">${money(t.reward)}</b>
               </div>
@@ -5210,30 +5211,277 @@ async function renderTasks(){
     `;
   }
 
+  // Active package day tab selection state initialization
+  if (window.selectedTaskDay === undefined) {
+    window.selectedTaskDay = Math.min(4, Math.floor(completedCount / 3) + 1);
+  }
+  const activeDay = window.selectedTaskDay;
+  window.activeTaskReward = Number(pkg.profit_target) / 12;
+
+  // Render Horizontal Tabs for Days (Day 1, Day 2, Day 3, Day 4)
+  const days = [1, 2, 3, 4];
+  const dayTabsHtml = days.map(dNum => {
+    const isLocked = dNum > unlockedDay;
+    const isActive = dNum === activeDay;
+    const base = (dNum - 1) * 3;
+    let completedInDay = 0;
+    for (let o=1; o<=3; o++) {
+      if (completedTasks.includes(base+o) || completedCount >= (base+o)) {
+        completedInDay++;
+      }
+    }
+    const isDayDone = completedInDay === 3;
+    
+    let tabStyle = "flex: 1; border-radius: 14px; padding: 12px 8px; font-weight: 800; font-size: 13px; text-align: center; cursor: pointer; transition: all 0.25s;";
+    if (isActive) {
+      tabStyle += " background: linear-gradient(135deg, #6c4dff, #8b5cf6) !important; border: 1px solid #8b5cf6 !important; color: #fff !important; box-shadow: 0 0 15px rgba(108,77,255,0.4);";
+    } else if (isLocked) {
+      tabStyle += " background: rgba(255,255,255,0.01) !important; border: 1px solid rgba(255,255,255,0.04) !important; color: #8e8e93 !important; opacity: 0.65;";
+    } else {
+      tabStyle += " background: rgba(255,255,255,0.03) !important; border: 1px solid rgba(255,255,255,0.08) !important; color: #cbd5e1 !important;";
+    }
+    
+    return `
+      <button class="btn" style="${tabStyle}" onclick="changeTaskDay(${dNum})">
+        اليوم ${dNum} ${isLocked ? '🔒' : isDayDone ? '✅' : '⚡'}
+      </button>
+    `;
+  }).join("");
+
+  // Daily Tasks for selected Day
+  const baseTaskNo = (activeDay - 1) * 3;
+  const isDayLocked = activeDay > unlockedDay;
+  const dailyTasksHtml = [1, 2, 3].map(offset => {
+    const taskNo = baseTaskNo + offset;
+    const taskTitle = DAILY_TASKS_NAMES[taskNo - 1] || `مهمة معالجة تذكرة رقم ${taskNo}`;
+    const done = completedTasks.includes(taskNo) || completedCount >= taskNo;
+    
+    let cardStyle = "border-radius: 20px; border: 1px solid rgba(255,255,255,0.07); padding: 18px; margin-bottom: 12px; background: linear-gradient(145deg, rgba(20,20,25,0.65), rgba(8,8,10,0.85)); transition: all 0.3s; position: relative;";
+    if (done) {
+      cardStyle += " border-left: 4px solid #10b981;";
+    } else if (isDayLocked) {
+      cardStyle += " border-left: 4px solid rgba(255,255,255,0.1); opacity: 0.65;";
+    } else {
+      cardStyle += " border-left: 4px solid #6c4dff;";
+    }
+    
+    let badgeHtml = "";
+    let btnHtml = "";
+    
+    if (done) {
+      badgeHtml = `<span style="font-size: 11px; padding: 4px 10px; border-radius: 8px; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); font-weight: bold;">✅ مكتملة</span>`;
+      btnHtml = `<button class="btn" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); color: #8e8e93; cursor: not-allowed; border-radius: 12px; font-weight: 700; height: 42px; width: 100%;" disabled>تم استلام الأرباح 💰</button>`;
+    } else if (isDayLocked) {
+      badgeHtml = `<span style="font-size: 11px; padding: 4px 10px; border-radius: 8px; background: rgba(255,255,255,0.03); color: #8e8e93; border: 1px solid rgba(255,255,255,0.06); font-weight: bold;">🔒 مغلقة</span>`;
+      btnHtml = `<button class="btn" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); color: #8e8e93; cursor: not-allowed; border-radius: 12px; font-weight: 700; height: 42px; width: 100%;" disabled>اليوم المخصص مغلق حالياً</button>`;
+    } else {
+      badgeHtml = `<span style="font-size: 11px; padding: 4px 10px; border-radius: 8px; background: rgba(108, 77, 255, 0.1); color: #c084fc; border: 1px solid rgba(108, 77, 255, 0.2); font-weight: bold;">✨ متاحة للبدء</span>`;
+      btnHtml = `<button class="btn green full" style="border-radius: 12px; height: 42px; font-weight: 700; width: 100%; background: linear-gradient(135deg, #10b981, #059669); border: none; color: #fff; box-shadow: 0 4px 12px rgba(16,185,129,0.25);" onclick="startDailyTaskSimulation(${taskNo}, '${escapeHtml(taskTitle)}')">⚙️ بدء إجراءات المعالجة الفورية</button>`;
+    }
+    
+    return `
+      <div style="${cardStyle}">
+        <div style="margin-bottom: 14px; display: flex; justify-content: space-between; align-items: start; gap: 8px; direction: rtl;">
+          <div style="text-align: right;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+              <div class="task-number" style="width: 24px; height: 24px; font-size: 12px; display: grid; place-items: center; border-radius: 8px; background: ${done ? '#10b981' : isDayLocked ? 'rgba(255,255,255,0.08)' : '#6c4dff'}; color: #fff; font-weight: 900; line-height: 1;">${taskNo}</div>
+              <h3 style="margin: 0; font-size: 15px; color: #fff; font-weight: 700;">${escapeHtml(taskTitle)}</h3>
+            </div>
+            <p style="color: #a1a1aa; font-size: 12.5px; margin: 4px 0 0; line-height: 1.5;">الرجاء تشغيل محاكي معالجة التذكرة لإتمام عملية حجز النظام وصرف أرباح المعاملة الفورية في محفظتك.</p>
+          </div>
+          <div>
+            ${badgeHtml}
+          </div>
+        </div>
+        <div style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: 12px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 13px; direction: rtl;">
+          <span style="color: #a1a1aa;">أرباح التذكرة الفورية:</span>
+          <b style="color: #10b981; font-size: 15px; font-family: 'Rajdhani', sans-serif;">+ ${money(window.activeTaskReward)}</b>
+        </div>
+        ${btnHtml}
+      </div>
+    `;
+  }).join("");
+
   document.getElementById("dashContent").innerHTML = `
-    <div class="card">
-      <h3>${pkg.package_name}</h3>
-      <p>التقدم: ${completedCount}/12 — الحالة: ${pkg.status}${isMonthly ? ' (باقة شهرية)' : ''}</p>
-      <div class="timeline">
-        ${[1,2,3,4].map(day=>{
-          const base=(day-1)*3;
-          const isDayUnlocked = day <= unlockedDay;
-          return `<div class="timeline-day" style="${!isDayUnlocked ? 'opacity: 0.55; filter: grayscale(0.8);' : ''}">
-            <div class="day-num">اليوم ${day} ${!isDayUnlocked ? '🔒' : ''}</div>
-            <div><b>3 مهام</b><p>${isDayUnlocked ? 'تقدم اليوم داخل الباقة.' : 'مغلق حتى يحين اليوم المخصص لها.'}</p><div class="mini-task-dots">${[1,2,3].map(n=>{
-              const taskNo = base+n;
-              const done = completedTasks.includes(taskNo) || completedCount >= taskNo;
-              const clickable = !done && isDayUnlocked;
-              return `<span class="${done ? "done" : ""}" style="${clickable ? 'cursor:pointer; background:rgba(108,77,255,0.15); border:1px solid rgba(108,77,255,0.3); font-weight:bold; transition:all 0.2s;' : ''}" ${clickable ? `onclick="completeTask(${taskNo})"` : ''}>${taskNo}</span>`;
-            }).join("")}</div></div>
-            <b>${Math.min(Math.max(completedCount-base,0),3)}/3</b>
-          </div>`;
-        }).join("")}
+    <div class="card" style="position: relative; overflow: hidden; padding: 22px; border-radius: 28px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; direction: rtl; text-align: right;">
+        <div>
+          <h3 style="margin: 0; font-size: 18px; color: #fff; font-weight: 800;">${escapeHtml(pkg.package_name)}</h3>
+          <p style="color: #a1a1aa; font-size: 12.5px; margin: 4px 0 0;">التقدم الكلي للباقة: ${completedCount}/12 — الحالة: ${pkg.status}</p>
+        </div>
+        <div style="text-align: left;">
+          <span style="font-size: 12px; color: var(--muted); display: block;">نسبة الإنجاز</span>
+          <b style="font-size: 18px; color: #6c4dff; font-family: 'Rajdhani', sans-serif;">${Math.round((completedCount/12)*100)}%</b>
+        </div>
+      </div>
+      
+      <!-- Premium Progress Bar -->
+      <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.04); border-radius: 99px; overflow: hidden; margin-bottom: 20px;">
+        <div style="width: ${(completedCount/12)*100}%; height: 100%; background: linear-gradient(90deg, #6c4dff, #8b5cf6); border-radius: 99px; box-shadow: 0 0 8px #6c4dff;"></div>
+      </div>
+      
+      <!-- Day Tabs Selection -->
+      <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px; direction: rtl;">
+        ${dayTabsHtml}
+      </div>
+      
+      <!-- Selected Day tasks header -->
+      <div style="margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; direction: rtl; text-align: right; flex-wrap: wrap; gap: 8px;">
+        <span style="font-weight: 800; font-size: 15px; color: #fff;">📋 قائمة مهام اليوم ${activeDay}</span>
+        <div id="tasksCountdownContainer" style="font-size: 12px; color: #cbd5e1; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); padding: 5px 12px; border-radius: 10px; display: none;">
+          ⏳ تفتح المهام التالية خلال: <span id="tasksCountdownTimer" style="font-weight: bold; color: #c084fc; font-family: monospace;">--:--:--</span>
+        </div>
+      </div>
+      
+      <!-- Tasks list -->
+      <div>
+        ${dailyTasksHtml}
       </div>
     </div>
     ${tasksBoardHtml}
     ${taskoraAdsenseUnit("tasksBottom", taskoraLangText("أسفل صفحة المهام", "Tasks page bottom"))}`;
+    
+  // Start countdown if next days are locked
+  if (unlockedDay < 4 && completedCount < 12) {
+    if (window.startTasksCountdown) {
+      window.startTasksCountdown();
+    }
+  }
 }
+
+window.changeTaskDay = function(day) {
+  window.selectedTaskDay = day;
+  renderTasks();
+};
+
+if (window.tasksInterval) {
+  clearInterval(window.tasksInterval);
+  window.tasksInterval = null;
+}
+
+window.startTasksCountdown = function() {
+  const timerSpan = document.getElementById("tasksCountdownTimer");
+  const container = document.getElementById("tasksCountdownContainer");
+  if (!timerSpan || !container) return;
+
+  function update() {
+    const now = new Date();
+    const timeWithOffset = now.getTime() + (3 * 60 * 60 * 1000);
+    const shifted = new Date(timeWithOffset);
+    const tomorrowShifted = Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate() + 1);
+    const nextMidnight = tomorrowShifted - (3 * 60 * 60 * 1000);
+
+    const diff = nextMidnight - now.getTime();
+    if (diff <= 0) {
+      container.style.display = "none";
+      if (window.tasksInterval) {
+        clearInterval(window.tasksInterval);
+        window.tasksInterval = null;
+      }
+      loadMe().then(() => renderTasks()).catch(() => null);
+      return;
+    }
+
+    container.style.display = "block";
+    const hours = String(Math.floor(diff / (1000 * 60 * 60))).padStart(2, '0');
+    const minutes = String(Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, '0');
+    const seconds = String(Math.floor((diff % (1000 * 60)) / 1000)).padStart(2, '0');
+    timerSpan.innerText = `${hours}:${minutes}:${seconds}`;
+  }
+
+  update();
+  if (window.tasksInterval) clearInterval(window.tasksInterval);
+  window.tasksInterval = setInterval(update, 1000);
+};
+
+window.startDailyTaskSimulation = function(taskNo, taskTitle) {
+  const rewardVal = window.activeTaskReward || 1.5;
+  const mockTicketNo = `TKT-${Math.floor(10000 + Math.random() * 90000)}-${taskNo}`;
+  const mockSeat = `Zone ${String.fromCharCode(65 + Math.floor(Math.random() * 4))}, Row ${Math.floor(1 + Math.random() * 15)}, Seat ${Math.floor(1 + Math.random() * 30)}`;
+  
+  const modal = document.getElementById("adminModal");
+  modal.style.display = "block";
+  modal.innerHTML = `
+    <div class="modal task-interactive-modal" style="max-width: 480px; width: 95%; background: rgba(18, 22, 41, 0.96); border: 1px solid rgba(108, 77, 255, 0.25); box-shadow: 0 20px 50px rgba(0,0,0,0.6); backdrop-filter: blur(25px); border-radius: 24px; padding: 30px; color: #fff; direction: rtl; text-align: right; overflow: hidden; position: relative; animation: zoomIn 0.3s ease;">
+      <button onclick="closeAdminModal()" style="position: absolute; top: 14px; left: 14px; background: none; border: none; color: #a1a1aa; font-size: 24px; cursor: pointer; z-index: 10;">×</button>
+      <span style="font-size: 48px; display: block; text-align: center; margin-bottom: 12px; animation: pulse 2s infinite;">🎫</span>
+      <h2 style="color: #c084fc; font-weight: 900; margin-top: 10px; font-size: 20px; text-align: center; margin-bottom: 18px;">معالجة طلب تذكرة الحجز اليومي</h2>
+      
+      <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 14px; border-radius: 16px; margin-bottom: 20px; font-size: 13px; line-height: 1.8;">
+        <div><b>نوع المهمة:</b> <span style="color: #cbd5e1;">معالجة وحجز تذاكر يومية</span></div>
+        <div><b>اسم التذكرة:</b> <span style="color: #cbd5e1;">${escapeHtml(taskTitle)}</span></div>
+        <div><b>رقم التذكرة:</b> <span style="color: #c084fc; font-family: monospace; font-weight: bold; letter-spacing: 0.5px;">${mockTicketNo}</span></div>
+        <div><b>المقعد المخصص:</b> <span style="color: #cbd5e1;">${mockSeat}</span></div>
+        <div><b>أرباح المعالجة الفورية:</b> <span style="color: #10b981; font-weight: bold;">+ ${money(rewardVal)}</span></div>
+      </div>
+      
+      <div id="simulationProgressArea" style="margin-bottom: 24px; display: none; text-align: center;">
+        <div class="loader" style="margin: 0 auto 12px; width: 36px; height: 36px; border: 3px solid rgba(108,77,255,0.2); border-top-color: #6c4dff;"></div>
+        <div id="simulationProgressText" style="font-size: 12px; color: #a1a1aa; font-weight: bold;">جاري الاتصال بنظام الحجوزات المركزي...</div>
+      </div>
+
+      <div id="simulationButtonArea">
+        <button class="btn green full" style="border-radius: 14px; height: 48px; font-weight: 800; width: 100%; background: linear-gradient(135deg, #10b981, #059669); border: none; color: #fff; box-shadow: 0 4px 15px rgba(16,185,129,0.3);" onclick="executeDailyTaskSimulation(${taskNo}, ${rewardVal})">
+          ⚙️ معالجة وحجز التذكرة فوراً
+        </button>
+      </div>
+    </div>
+  `;
+};
+
+window.executeDailyTaskSimulation = function(taskNo, rewardVal) {
+  const btnArea = document.getElementById("simulationButtonArea");
+  const progressArea = document.getElementById("simulationProgressArea");
+  const progressText = document.getElementById("simulationProgressText");
+  
+  if (btnArea) btnArea.style.display = "none";
+  if (progressArea) progressArea.style.display = "block";
+  
+  if (progressText) progressText.innerText = "جاري الاتصال بنظام الحجوزات المركزي وتأكيد التوافر...";
+  
+  setTimeout(() => {
+    if (progressText) progressText.innerText = "جاري تخصيص المقعد وتأكيد الدفع المشفر...";
+    
+    setTimeout(async () => {
+      if (progressText) progressText.innerText = "جاري معالجة وتأكيد الحجز النهائي...";
+      
+      try {
+        const res = await api(`/api/tasks/daily/${taskNo}/complete`, {
+          method: "POST",
+          headers: headers(),
+          body: "{}"
+        });
+        
+        closeAdminModal();
+        
+        const modal = document.getElementById("adminModal");
+        modal.style.display = "block";
+        modal.innerHTML = `
+          <div class="modal task-interactive-modal" style="max-width: 480px; width: 95%; background: rgba(18, 22, 41, 0.96); border: 1px solid rgba(16, 185, 129, 0.25); box-shadow: 0 20px 50px rgba(0,0,0,0.6); backdrop-filter: blur(25px); border-radius: 24px; padding: 30px; color: #fff; direction: rtl; text-align: center; overflow: hidden; position: relative; animation: zoomIn 0.3s ease;">
+            <span style="font-size: 64px; display: block; margin-bottom: 12px; animation: bounce 1s infinite;">🎉</span>
+            <h2 style="color: #10b981; font-weight: 900; margin-top: 10px; font-size: 22px;">تم إكمال المهمة بنجاح!</h2>
+            <p style="color: #a1a1aa; font-size: 13.5px; max-width: 340px; margin: 8px auto 20px;">تمت معالجة التذكرة وحجز المقعد بنجاح. تمت إضافة مكافأة المعالجة مباشرة إلى الرصيد المتاح للسحب!</p>
+            
+            <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.15); padding: 14px 28px; border-radius: 16px; margin-bottom: 24px;">
+              <span style="font-size: 13px; color: #a7f3d0; display: block;">أرباح إضافية في رصيدك:</span>
+              <b style="font-size: 30px; color: #10b981; font-family: 'Rajdhani', sans-serif;">+ ${money(rewardVal)}</b>
+            </div>
+
+            <button class="btn primary" style="width: 100%; border-radius: 14px; height: 42px;" onclick="closeAdminModal(); loadMe(); setDash('tasks');">متابعة الأرباح ⚡</button>
+          </div>
+        `;
+        
+        await loadMe();
+        
+      } catch (e) {
+        closeAdminModal();
+        toast(e.message || "تعذر إكمال المهمة", "error");
+      }
+      
+    }, 1500);
+    
+  }, 1500);
+};
 
 async function buyPackage(id){
   try{
@@ -5247,268 +5495,38 @@ async function buyPackage(id){
   }
 }
 async function completeTask(n){ try{ await api("/api/tasks/daily/"+n+"/complete",{method:"POST",headers:headers(),body:"{}"}); toast("تم إكمال المهمة", "success"); await loadMe(); setDash("tasks"); }catch(e){ toast(e.message, "error"); } }
-
-async function completeTaskInstant(id, link) {
-  if (link && link !== "undefined" && link !== "") {
-    window.open(link, "_blank");
-  }
-  setLoading(true);
-  try {
-    const res = await api(`/api/golden/${id}/complete-instant`, {
-      method: "POST",
-      headers: headers(),
-      body: "{}"
-    });
-    toast("تم إكمال المهمة وصرف الأرباح! 🎉", "success");
-    
-    // Open interactive confetti/profit modal
-    const modal = document.getElementById("adminModal");
-    modal.innerHTML = `
-      <div class="modal task-interactive-modal" style="max-width: 480px; width: 95%; background: rgba(18, 22, 41, 0.96); border: 1px solid rgba(16, 185, 129, 0.25); box-shadow: 0 20px 50px rgba(0,0,0,0.6); backdrop-filter: blur(25px); border-radius: 24px; padding: 30px; color: #fff; direction: rtl; text-align: center; overflow: hidden; position: relative; animation: zoomIn 0.3s ease;">
-        <span style="font-size: 64px; display: block; margin-bottom: 12px; animation: bounce 1s infinite;">🎉</span>
-        <h2 style="color: #10b981; font-weight: 900; margin-top: 10px; font-size: 22px;">تم إكمال المهمة بنجاح!</h2>
-        <p style="color: #a1a1aa; font-size: 13.5px; max-width: 340px; margin: 8px auto 20px;">تم التحقق من إتمام المهمة وإضافتها بنجاح. أرباحك الفورية تم إيداعها مباشرة في محفظتك المتاحة!</p>
-        
-        <div style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.15); padding: 14px 28px; border-radius: 16px; margin-bottom: 24px;">
-          <span style="font-size: 13px; color: #a7f3d0; display: block;">المكافأة التي حصلت عليها:</span>
-          <b style="font-size: 30px; color: #10b981; font-family: 'Rajdhani', sans-serif;">+ ${money(res.reward)}</b>
-        </div>
-
-        ${res.package_completed ? `
-          <div style="background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.15); padding: 12px; border-radius: 16px; margin-bottom: 24px; color: #60a5fa; font-size: 12.5px;">
-            🎁 <b>تهانينا! الباقة اكتملت تماماً!</b><br>تم تحرير رأس مال الباقة وأرباحها ونقلها بالكامل إلى رصيدك المتاح للسحب فوراً!
-          </div>
-        ` : ''}
-        
-        <button onclick="closeAdminModal(); loadMe(); setDash('tasks');" style="background: linear-gradient(135deg, #10b981, #059669); color: #000; border: none; border-radius: 12px; padding: 12px 40px; font-size: 14px; font-weight: 800; cursor: pointer; box-shadow: 0 0 20px rgba(16, 185, 129, 0.3); transition: all 0.3s; width: 100%;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">رائع، عودة للمهام 💰</button>
-      </div>
-    `;
-    modal.classList.add("open");
-    
-    await loadMe();
-    renderTasks();
-  } catch (e) {
-    toast(e.message, "error");
-  } finally {
-    setLoading(false);
-  }
-}
-
-let cryptoPrices = { btc: 0, sol: 0 };
-async function fetchCryptoPrices() {
-  try {
-    const [btcRes, solRes] = await Promise.all([
-      fetch("https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT").then(r => r.json()),
-      fetch("https://api.binance.com/api/v3/ticker/price?symbol=SOLUSDT").then(r => r.json())
-    ]);
-    if (btcRes && btcRes.price) cryptoPrices.btc = Number(btcRes.price);
-    if (solRes && solRes.price) cryptoPrices.sol = Number(solRes.price);
-    updateCryptoCalculation();
-    updateCryptoWdCalculation();
-  } catch (err) {
-    console.error("Error fetching Binance prices:", err);
-  }
-}
-function updateCryptoCalculation() {
-  const coin = document.getElementById("depCoin")?.value;
-  const amount = Number(document.getElementById("depAmount")?.value || 0);
-  const calcBox = document.getElementById("cryptoCalcBox");
-  if (!calcBox) return;
-
-  if (amount <= 0) {
-    calcBox.innerHTML = "أدخل المبلغ بـ USD لحساب القيمة بالعملة الرقمية...";
-    return;
-  }
-
-  const getCoinLabel = (coin) => {
-    if (coin === "usdt_trc20") return "USDT";
-    if (coin === "usdt_erc20") return "USDT";
-    return coin.toUpperCase();
-  };
-
-  let finalAmount = 0;
-  let symbol = "";
-
-  if (coin === "usdt_trc20" || coin === "usdt_erc20" || coin === "usdt") {
-    finalAmount = amount;
-    symbol = "USDT";
-    calcBox.innerHTML = `المبلغ المطلوب إرساله:<br><span style="color: #10b981; font-size: 20px; font-weight: 800;">${finalAmount.toFixed(2)} ${symbol}</span>`;
-  } else if (coin === "btc") {
-    const price = cryptoPrices.btc;
-    if (price > 0) {
-      finalAmount = amount / price;
-      symbol = "BTC";
-      calcBox.innerHTML = `سعر BTC المباشر: $${price.toLocaleString()}<br>المبلغ المطلوب إرساله:<br><span style="color: #10b981; font-size: 20px; font-weight: 800;">${finalAmount.toFixed(8)} ${symbol}</span>`;
-    } else {
-      calcBox.innerHTML = "جاري جلب سعر BTC من Binance...";
-    }
-  } else if (coin === "sol") {
-    const price = cryptoPrices.sol;
-    if (price > 0) {
-      finalAmount = amount / price;
-      symbol = "SOL";
-      calcBox.innerHTML = `سعر SOL المباشر: $${price.toLocaleString()}<br>المبلغ المطلوب إرساله:<br><span style="color: #10b981; font-size: 20px; font-weight: 800;">${finalAmount.toFixed(4)} ${symbol}</span>`;
-    } else {
-      calcBox.innerHTML = "جاري جلب سعر SOL من Binance...";
-    }
-  }
-}
-
-function updateCryptoWdCalculation() {
-  const coin = document.getElementById("wdCoin")?.value;
-  const amount = Number(document.getElementById("wdAmount")?.value || 0);
-  const calcBox = document.getElementById("cryptoWdCalcBox");
-  if (!calcBox) return;
-
-  if (amount <= 0) {
-    calcBox.innerHTML = "أدخل المبلغ بـ USD لحساب القيمة التقريبية بالعملة الرقمية...";
-    return;
-  }
-
-  const getCoinLabel = (coin) => {
-    if (coin === "usdt_trc20") return "USDT";
-    if (coin === "usdt_erc20") return "USDT";
-    return coin.toUpperCase();
-  };
-
-  let finalAmount = 0;
-  let symbol = "";
-
-  if (coin === "usdt_trc20" || coin === "usdt_erc20" || coin === "usdt") {
-    finalAmount = amount;
-    symbol = "USDT";
-    calcBox.innerHTML = `المبلغ التقديري الذي ستستلمه:<br><span style="color: #10b981; font-size: 20px; font-weight: 800;">${finalAmount.toFixed(2)} ${symbol}</span>`;
-  } else if (coin === "btc") {
-    const price = cryptoPrices.btc;
-    if (price > 0) {
-      finalAmount = amount / price;
-      symbol = "BTC";
-      calcBox.innerHTML = `سعر BTC المباشر: $${price.toLocaleString()}<br>المبلغ التقديري الذي ستستلمه:<br><span style="color: #10b981; font-size: 20px; font-weight: 800;">${finalAmount.toFixed(8)} ${symbol}</span>`;
-    } else {
-      calcBox.innerHTML = "جاري جلب سعر BTC من Binance...";
-    }
-  } else if (coin === "sol") {
-    const price = cryptoPrices.sol;
-    if (price > 0) {
-      finalAmount = amount / price;
-      symbol = "SOL";
-      calcBox.innerHTML = `سعر SOL المباشر: $${price.toLocaleString()}<br>المبلغ التقديري الذي ستستلمه:<br><span style="color: #10b981; font-size: 20px; font-weight: 800;">${finalAmount.toFixed(4)} ${symbol}</span>`;
-    } else {
-      calcBox.innerHTML = "جاري جلب سعر SOL من Binance...";
-    }
-  }
-}
-
 async function renderWallet(){
   const w = await api("/api/wallets");
-  const getCoinLabel = (coin) => {
-    if (coin === "usdt_trc20") return "USDT";
-    if (coin === "usdt_erc20") return "USDT";
-    return coin.toUpperCase();
-  };
-  const options = w.wallets.map(x => `<option value="${x.coin}">${getCoinLabel(x.coin)} - ${x.network || ""}</option>`).join("") || `<option value="usdt">USDT</option>`;
+  const options = w.wallets.map(x => `<option value="${x.coin}">${x.coin.toUpperCase()} - ${x.network || ""}</option>`).join("") || `<option value="usdt">USDT</option>`;
   document.getElementById("dashContent").innerHTML = `
     <div class="wallet-layout">
       <div class="card"><h3>طلب إيداع</h3>
-        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 14px; padding: 12px; margin-bottom: 16px; font-size: 13px; color: #a7f3d0; text-align: right; direction: rtl; line-height: 1.5;">
-          💡 <b>تنبيه بخصوص الرسوم:</b> منصة تاسكورا تفرض <b>0% رسوم معاملات</b> على جميع الإيداعات. المبلغ الذي تقوم بإرساله سيصل كاملاً إلى حسابك دون أي نقص (يرجى التأكد من إرسال القيمة الصافية بعد احتساب رسوم التحويل الخاصة بمحفظتك أو منصتك الخارجية).
-        </div>
         <label>العملة</label><select id="depCoin" onchange="showDepositWallet()">${options}</select>
         <div id="depositWalletBox"></div>
-        <label>المبلغ المطلوب تحويله بالعملة الرقمية</label>
-        <div id="cryptoCalcBox" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(108, 77, 255, 0.2); border-radius: 12px; padding: 14px; margin-bottom: 12px; font-weight: 700; color: #fff; text-align: center; font-size: 14px; line-height: 1.6;">
-          أدخل المبلغ بـ USD لحساب القيمة بالعملة الرقمية...
-        </div>
-        <label>المبلغ بـ (USD)</label><input id="depAmount" type="number" min="1" oninput="updateCryptoCalculation()" placeholder="أدخل القيمة بالدولار">
-        <label>رقم المعاملة (TXID)</label><input id="depTxid" placeholder="أدخل رقم الـ hash الخاص بالمعاملة">
-        <label>إثبات الدفع (لقطة شاشة) - إجباري</label><input id="depProof" type="file" accept="image/*,.pdf">
+        <label>المبلغ</label><input id="depAmount" type="number" min="1">
+        <label>TXID</label><input id="depTxid">
+        <label>إثبات - اختياري</label><input id="depProof" type="file" accept="image/*,.pdf">
         <button class="btn green full mt" onclick="deposit()">إرسال للمراجعة</button>
       </div>
       <div class="card"><h3>طلب سحب</h3>
         <label>العملة</label><select id="wdCoin">${options}</select>
-        <label>المبلغ بـ (USD)</label><input id="wdAmount" type="number" min="1" placeholder="أدخل قيمة السحب بالدولار">
-        <div class="withdrawal-balance-label" style="font-size: 13px; color: #10b981; font-weight: 700; margin-top: 6px; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; direction: rtl; justify-content: flex-start;">
-          <span style="display: flex; align-items: center; gap: 4px;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #10b981;"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-            الرصيد المتاح للسحب:
-          </span>
-          <span style="font-size: 14px; color: #ffffff; background: rgba(16, 185, 129, 0.15); padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.3); font-family: 'Rajdhani', sans-serif; text-shadow: 0 0 8px rgba(16, 185, 129, 0.4);">${money(me.balance)}</span>
-        </div>
-        <label>عنوان محفظتك للاستلام</label><input id="wdAddress" placeholder="أدخل عنوان المحفظة بدقة">
-        <label>تأكيد عنوان المحفظة</label><input id="wdConfirmAddress" placeholder="أعد إدخال عنوان المحفظة للتأكيد">
+        <label>المبلغ</label><input id="wdAmount" type="number" min="1">
+        <label>عنوان محفظتك</label><input id="wdAddress"><label>تأكيد عنوان المحفظة</label><input id="wdConfirmAddress">
         <button class="btn primary full mt" onclick="withdraw()">طلب السحب</button>
-        <div class="notice mt">لا يمكن السحب إلا بعد قبول التوثيق (KYC) من الإدارة.</div>
+        <div class="notice mt">لا يمكن السحب إلا بعد قبول التوثيق من الإدارة.</div>
       </div>
     </div>
     ${taskoraAdsenseUnit("walletBottom", taskoraLangText("صفحة المحفظة", "Wallet page"))}`;
   window.__wallets = w.wallets;
   showDepositWallet();
-  fetchCryptoPrices();
-  if (window.__cryptoInterval) clearInterval(window.__cryptoInterval);
-  window.__cryptoInterval = setInterval(fetchCryptoPrices, 60000);
 }
 function showDepositWallet(){
   const coin = document.getElementById("depCoin")?.value;
   const item = (window.__wallets || []).find(x => x.coin === coin);
-  const getCoinLabel = (coin) => {
-    if (coin === "usdt_trc20") return "USDT";
-    if (coin === "usdt_erc20") return "USDT";
-    return coin.toUpperCase();
-  };
-  document.getElementById("depositWalletBox").innerHTML = item ? `<div class="wallet-box" style="padding: 16px; background: rgba(0,0,0,0.15); border-radius:12px; margin-bottom:16px;">
-    <strong>${getCoinLabel(item.coin)} - شبكة (${item.network || ""})</strong><br>
-    <code style="display:block; margin: 10px 0; font-size:12px; color:#c7d2fe; word-break:break-all; background:rgba(0,0,0,0.3); padding:8px; border-radius:6px; user-select:all;">${item.address}</code>
-    <img class="qr-img" src="${item.qr}" alt="QR" style="display:block; margin: 10px auto; max-width:140px; border-radius:8px; background:#fff; padding:6px;">
-  </div>` : "";
-  updateCryptoCalculation();
+  document.getElementById("depositWalletBox").innerHTML = item ? `<div class="wallet-box">${item.coin.toUpperCase()} ${item.network || ""}<br>${item.address}<br><img class="qr-img" src="${item.qr}" alt="QR"></div>` : "";
 }
-async function deposit(){
-  try{
-    if(!depAmount.value || Number(depAmount.value) <= 0) return toast("يرجى إدخال مبلغ إيداع صحيح.", "error");
-    if(!depTxid.value || depTxid.value.trim().length < 4) return toast("يرجى إدخال رقم المعاملة (TXID) بدقة.", "error");
-    if(!depProof.files[0]) return toast("إثبات الدفع (لقطة الشاشة) مطلوب وإجباري لإكمال العملية.", "error");
-
-    const fd=new FormData();
-    fd.append("coin",depCoin.value);
-    fd.append("amount",depAmount.value);
-    fd.append("txid",depTxid.value);
-    fd.append("proof_image",depProof.files[0]);
-
-    await api("/api/deposits",{method:"POST",headers:headers(false),body:fd});
-    
-    // Clear inputs
-    depAmount.value = "";
-    depTxid.value = "";
-    depProof.value = "";
-    updateCryptoCalculation();
-
-    toast("تم إرسال طلب الإيداع بنجاح، وطلبك قيد المراجعة حالياً.", "success");
-  }catch(e){
-    toast(e.message, "error");
-  }
-}
-async function withdraw(){
-  try{
-    await api("/api/withdrawals",{
-      method:"POST",
-      headers:headers(),
-      body:JSON.stringify({
-        coin:wdCoin.value,
-        amount:wdAmount.value,
-        wallet_address:wdAddress.value,
-        confirm_wallet_address:wdConfirmAddress.value
-      })
-    });
-    toast("تم إرسال السحب للمراجعة", "success");
-    await loadMe();
-    if(document.getElementById("wdAmount")) document.getElementById("wdAmount").value = "";
-    if(document.getElementById("wdAddress")) document.getElementById("wdAddress").value = "";
-    if(document.getElementById("wdConfirmAddress")) document.getElementById("wdConfirmAddress").value = "";
-    setDash("overview");
-  }catch(e){
-    toast(e.message, "error");
-  }
-}
+async function deposit(){ try{ const fd=new FormData(); fd.append("coin",depCoin.value); fd.append("amount",depAmount.value); fd.append("txid",depTxid.value); if(depProof.files[0]) fd.append("proof_image",depProof.files[0]); await api("/api/deposits",{method:"POST",headers:headers(false),body:fd}); toast("تم إرسال الإيداع للمراجعة", "success"); }catch(e){ toast(e.message, "error"); } }
+async function withdraw(){ try{ await api("/api/withdrawals",{method:"POST",headers:headers(),body:JSON.stringify({coin:wdCoin.value,amount:wdAmount.value,wallet_address:wdAddress.value,confirm_wallet_address:wdConfirmAddress.value})}); toast("تم إرسال السحب للمراجعة", "success"); await loadMe(); }catch(e){ toast(e.message, "error"); } }
 
 
 function simpleBarChart(rows, labelKey="day", valueKey="total"){
@@ -5528,6 +5546,12 @@ async function renderOverview(){
   const s = await api("/api/user/summary",{headers:headers()});
   document.getElementById("dashContent").innerHTML = `
     <h3>ملخص النشاط</h3>
+    <div class="quick-actions">
+      <button class="quick-action" onclick="setDash('packages')">شراء باقة</button>
+      <button class="quick-action" onclick="setDash('tasks')">المهام</button>
+      <button class="quick-action" onclick="setDash('wallet')">إيداع/سحب</button>
+      <button class="quick-action" onclick="setDash('notifications')">الإشعارات</button>
+    </div>
     <div class="grid-2 mt">
       <div class="chart-card"><h3>نشاط الرصيد خلال 30 يوم</h3>${simpleBarChart(s.tx_daily,"day","total")}</div>
       <div class="chart-card"><h3>حالات الإيداع</h3><div class="donut-wrap"><div class="donut"></div>${legendRows(s.deposits)}</div></div>
@@ -5624,7 +5648,7 @@ async function createTicket(){
 }
 async function adminSupportTickets(){
   const d = await api("/api/admin/support/tickets",{headers:headers()});
-  adminBox.innerHTML = `
+  document.getElementById("adminMain").innerHTML = `
     <div class="admin-panel">
       <h3>تذاكر الدعم الفني</h3>
       <div class="table-wrap">
@@ -5669,66 +5693,6 @@ async function saveTicketReply(id){
     toast("تم إرسال الرد","success");
     adminSupportTickets();
   }catch(e){ toast(e.message,"error"); }
-}
-async function adminSupportEmails(){
-  markAdminNav("support_emails");
-  try {
-    const d = await api("/api/admin/support-emails", {headers:headers()});
-    adminBox.innerHTML = `
-      <div class="admin-panel" style="backdrop-filter: blur(16px); background: rgba(18, 20, 29, 0.65); border: 1px solid rgba(108, 77, 255, 0.1);">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
-          <h3 style="margin:0; color:#fff; display:flex; align-items:center; gap:8px;">📬 صندوق الرسائل الواردة لـ support@taskora.live</h3>
-          <button class="btn primary" onclick="adminSupportEmails()" style="height:34px; padding:0 12px; font-size:12px;">تحديث البريد 🔄</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th style="text-align:right;">المرسل</th>
-                <th style="text-align:right;">الموضوع</th>
-                <th style="text-align:right;">نص الرسالة</th>
-                <th style="text-align:right;">التاريخ</th>
-                <th style="text-align:center;">الإجراء</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${d.emails.length ? d.emails.map(e=>`
-                <tr id="email-row-${e.id}">
-                  <td style="direction:rtl;">
-                    <b>${escapeHtml(e.sender_name || "زائر")}</b><br>
-                    <span class="muted" style="font-size:12px; font-family:monospace;">${escapeHtml(e.sender_email)}</span>
-                  </td>
-                  <td style="font-weight:bold; color:var(--primary); direction:rtl;">${escapeHtml(e.subject)}</td>
-                  <td style="max-width:300px; white-space:normal; font-size:13px; line-height:1.5; color:#cbd5e1; direction:rtl; text-align:right;">
-                    ${escapeHtml(e.message).replace(/\n/g, '<br>')}
-                  </td>
-                  <td>${new Date(e.created_at).toLocaleString("ar")}</td>
-                  <td style="text-align:center;">
-                    <button class="mini-btn red" onclick="deleteSupportEmail(${e.id})">حذف 🗑️</button>
-                  </td>
-                </tr>`).join("") : `<tr><td colspan="5" class="admin-empty" style="text-align:center; padding:40px; color:#94a3b8;">صندوق البريد فارغ حالياً. لا توجد رسائل مستلمة.</td></tr>`}
-            </tbody>
-          </table>
-        </div>
-      </div>`;
-  } catch(e) {
-    toast(e.message, "error");
-  }
-}
-async function deleteSupportEmail(id){
-  if(!confirm("هل أنت متأكد من رغبتك في حذف هذه الرسالة نهائياً؟")) return;
-  try {
-    const res = await api(`/api/admin/support-emails/${id}`, {
-      method: "DELETE",
-      headers: headers()
-    });
-    toast(res.message || "تم حذف الرسالة بنجاح.", "success");
-    const row = document.getElementById(`email-row-${id}`);
-    if(row) row.remove();
-    else adminSupportEmails();
-  } catch(e) {
-    toast(e.message, "error");
-  }
 }
 
 function renderHelp(){
@@ -5790,24 +5754,58 @@ async function renderAccountStatus(){
   }
   document.getElementById("dashContent").innerHTML = `
     <div class="account-status-grid">
-      <div class="level-card">
-        <h3>مستواك الحالي</h3>
-        <div class="level-name">${d.level}</div>
-        <div class="level-score">Score: ${d.score}</div>
-        <div class="progress-shell"><div class="progress-fill" style="width:${Math.min(100, d.score)}%"></div></div>
-        <p>المستوى يتطور حسب المهام المكتملة، الباقات المكتملة، الإيداعات المقبولة، والدعوات الناجحة.</p>
+      <!-- Current Level Card -->
+      <div class="level-card" style="padding: 26px; border-radius: 30px; background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015)); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+        <h3 style="margin: 0 0 16px; font-size: 18px; color: #a1a1aa; font-weight: 700; direction: rtl; text-align: right;">🏆 مستواك الحالي</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; direction: rtl; margin-bottom: 12px;">
+          <div class="level-name" style="margin: 0; font-size: 36px; font-weight: 900; color: #ffffff; text-shadow: 0 0 15px rgba(255, 255, 255, 0.3); font-family: 'Rajdhani', sans-serif;">${d.level}</div>
+          <div style="text-align: left;">
+            <span style="font-size: 11px; color: #8e8e93; display: block; text-transform: uppercase; letter-spacing: 0.5px;">النقاط المتراكمة</span>
+            <b style="font-size: 20px; color: #c084fc; font-family: 'Rajdhani', sans-serif; font-weight: 800;">${d.score} XP</b>
+          </div>
+        </div>
+        <!-- Premium Progress Bar -->
+        <div class="progress-shell" style="height: 14px; border-radius: 99px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.08); overflow: hidden; margin: 14px 0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);">
+          <div class="progress-fill" style="width:${Math.min(100, d.score)}%; height: 100%; background: linear-gradient(90deg, #6c4dff, #c084fc); border-radius: inherit; box-shadow: 0 0 10px #6c4dff; transition: width 0.5s ease;"></div>
+        </div>
+        <p style="margin: 12px 0 0; color: #a1a1aa; font-size: 13px; line-height: 1.6; text-align: right; direction: rtl;">يتطور مستوى حسابك تلقائياً بناءً على إكمال المهام، ترقية الباقات، الإيداعات الناجحة، وتأكيد دعوات الأصدقاء الجدد.</p>
       </div>
-      <div class="card">
-        <h3>حالة الحساب</h3>
+
+      <!-- Account Checklist Card -->
+      <div class="card" style="padding: 26px; border-radius: 30px; background: linear-gradient(145deg, rgba(255,255,255,0.03), rgba(255,255,255,0.005)); border: 1px solid rgba(255,255,255,0.06); box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+        <h3 style="margin: 0 0 20px; font-size: 18px; color: #fff; font-weight: 800; direction: rtl; text-align: right;">🔒 حالة توثيق وأمان الحساب</h3>
         <div class="check-list">
-          ${d.checks.map(c=>`<div class="check-item ${c.ok?"ok":"no"}"><span>${c.ok?"✅":"❌"} ${c.label}</span><b>${c.ok?"مكتمل":"ناقص"}</b></div>`).join("")}
+          ${d.checks.map(c=> {
+            const statusText = c.ok ? "مكتمل" : "غير مكتمل";
+            const badgeBg = c.ok ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)";
+            const badgeColor = c.ok ? "#10b981" : "#ef4444";
+            const badgeBorder = c.ok ? "rgba(16, 185, 129, 0.2)" : "rgba(239, 68, 68, 0.2)";
+            return `
+              <div class="check-item ${c.ok?'ok':'no'}">
+                <span style="font-weight: 700; color: #fff; font-size: 14.5px; display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 16px;">${c.ok ? "🟢" : "🔴"}</span>
+                  ${c.label}
+                </span>
+                <span style="font-size: 12px; padding: 4px 12px; border-radius: 8px; background: ${badgeBg}; color: ${badgeColor}; border: 1px solid ${badgeBorder}; font-weight: bold;">
+                  ${statusText}
+                </span>
+              </div>
+            `;
+          }).join("")}
         </div>
       </div>
     </div>
-    <div class="card mt">
-      <h3>الخطوات الناقصة</h3>
-      ${d.missing.length ? `<ol>${d.missing.map(x=>`<li>${x}</li>`).join("")}</ol>` : `<div class="success">حسابك جاهز بالكامل.</div>`}
-    </div>`;
+    
+    <div class="card mt" style="padding: 26px; border-radius: 30px; background: rgba(255,255,255,0.015); border: 1px solid rgba(255,255,255,0.05); max-width: 680px; margin: 20px auto 0;">
+      <h3 style="margin: 0 0 14px; font-size: 16px; color: #fff; font-weight: 800; direction: rtl; text-align: right;">📋 الإجراءات المطلوبة</h3>
+      <div style="direction: rtl; text-align: right;">
+        ${d.missing.length 
+          ? `<ul style="margin: 0; padding-right: 20px; color: #f87171; font-size: 13.5px; line-height: 1.8;">
+              ${d.missing.map(x=>`<li style="margin-bottom: 6px;">${x}</li>`).join("")}
+             </ul>` 
+          : `<div style="color: #10b981; font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 8px;">✨ جميع إعدادات حسابك مكتملة بنجاح وحالة الأمان ممتازة.</div>`}
+      </div>
+    </div>`
 }
 async function renderReferrals(){
   let d;
@@ -5817,91 +5815,26 @@ async function renderReferrals(){
     d = { referral_code: me.referral_code || "TASKORA", invited: [], total_bonus: 0 };
     toast("تعذر تحميل بيانات الدعوات من السيرفر، تم عرض البيانات الأساسية.", "error");
   }
-  const link = `https://taskora.live/?ref=${d.referral_code}`;
+  const link = `${location.origin}/?ref=${d.referral_code}`;
   document.getElementById("dashContent").innerHTML = `
-    <div style="display: flex; flex-direction: column; gap: 20px;">
-      <div class="card" style="padding: 24px; background: rgba(21, 26, 38, 0.85); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 24px; backdrop-filter: blur(16px); box-shadow: 0 10px 30px rgba(0,0,0,0.25);">
-        <h3 style="margin-bottom: 12px; color: #fff; display: flex; align-items: center; gap: 8px;">🔗 برنامج الإحالة ورابط دعوتك</h3>
-        <p style="color: #94a3b8; font-size: 14px; margin-bottom: 20px; line-height: 1.5; text-align: right;">قم بدعوة أصدقائك للتسجيل في منصة تاسكورا واحصل على مكافآت وعمولات فورية عند تنشيط حساباتهم وباقاتهم.</p>
-        
-        <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; margin-bottom: 24px; direction: rtl; text-align: right;">
-          <div style="flex: 1; min-width: 280px;">
-            <label style="display: block; margin-bottom: 8px; color: #cbd5e1; font-weight: bold; font-size: 13px;">رابط الدعوة الخاص بك</label>
-            <div style="background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(108, 77, 255, 0.2); border-radius: 12px; padding: 12px 16px; font-family: monospace; font-size: 14px; color: #60a5fa; word-break: break-all; direction: ltr; text-align: left;">
-              ${link}
-            </div>
-          </div>
-          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <button class="btn primary" onclick="navigator.clipboard.writeText('${link}'); toast('تم نسخ رابط الدعوة','success')" style="height: 46px; font-weight: bold; border-radius: 12px; padding: 0 24px; display: inline-flex; align-items: center; gap: 6px;">نسخ الرابط 📋</button>
-            <button class="btn" onclick="setDash('profile')" style="height: 46px; border-radius: 12px; padding: 0 20px; background: rgba(255, 255, 255, 0.05); color: #fff; border: 1px solid rgba(255, 255, 255, 0.08); font-weight: bold;">كود الدعوة 🔑</button>
-          </div>
+    <div class="referral-panel">
+      <div class="card">
+        <h3>رابط دعوتك</h3>
+        <div class="referral-link-box" id="referralLink">${link}</div>
+        <div class="admin-actions">
+          <button class="btn primary" onclick="navigator.clipboard.writeText('${link}'); toast('تم نسخ رابط الدعوة','success')">نسخ الرابط</button>
+          <button class="btn" onclick="setDash('profile')">عرض كود الدعوة</button>
         </div>
-        
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-          <div style="border: 1px solid rgba(255, 255, 255, 0.05); background: rgba(255, 255, 255, 0.02); border-radius: 18px; padding: 16px; text-align: center; backdrop-filter: blur(8px);">
-            <span style="color: #94a3b8; font-size: 13px; display: block; margin-bottom: 6px;">عدد المدعوين</span>
-            <b style="color: #fff; font-size: 26px; font-family: Inter, sans-serif; display: block; margin-top: 4px;">${d.invited.length}</b>
-          </div>
-          <div style="border: 1px solid rgba(255, 255, 255, 0.05); background: rgba(255, 255, 255, 0.02); border-radius: 18px; padding: 16px; text-align: center; backdrop-filter: blur(8px);">
-            <span style="color: #94a3b8; font-size: 13px; display: block; margin-bottom: 6px;">بونص الدعوات</span>
-            <b style="color: #10b981; font-size: 26px; font-family: Inter, sans-serif; display: block; margin-top: 4px; direction: ltr;">${money(d.total_bonus)}</b>
-          </div>
-          <div style="border: 1px solid rgba(255, 255, 255, 0.05); background: rgba(255, 255, 255, 0.02); border-radius: 18px; padding: 16px; text-align: center; backdrop-filter: blur(8px);">
-            <span style="color: #94a3b8; font-size: 13px; display: block; margin-bottom: 6px;">إيداعات المدعوين</span>
-            <b style="color: #3b82f6; font-size: 26px; font-family: Inter, sans-serif; display: block; margin-top: 4px; direction: ltr;">${money(d.invited.reduce((a,b)=>a+Number(b.approved_deposits||0),0))}</b>
-          </div>
-          <div style="border: 1px solid rgba(255, 255, 255, 0.05); background: rgba(255, 255, 255, 0.02); border-radius: 18px; padding: 16px; text-align: center; backdrop-filter: blur(8px);">
-            <span style="color: #94a3b8; font-size: 13px; display: block; margin-bottom: 6px;">كود الدعوة</span>
-            <b style="color: #f59e0b; font-size: 26px; font-family: Inter, sans-serif; display: block; margin-top: 4px; letter-spacing: 1px;">${d.referral_code}</b>
-          </div>
+        <div class="detail-metric-grid mt">
+          <div class="detail-metric">عدد المدعوين<b>${d.invited.length}</b></div>
+          <div class="detail-metric">بونص الدعوات<b>${money(d.total_bonus)}</b></div>
+          <div class="detail-metric">إيداعات المدعوين<b>${money(d.invited.reduce((a,b)=>a+Number(b.approved_deposits||0),0))}</b></div>
+          <div class="detail-metric">الكود<b>${d.referral_code}</b></div>
         </div>
       </div>
-      
-      <div class="card" style="padding: 24px; background: rgba(21, 26, 38, 0.85); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 24px; backdrop-filter: blur(16px); box-shadow: 0 10px 30px rgba(0,0,0,0.25);">
-        <h3 style="margin-bottom: 16px; color: #fff; display: flex; align-items: center; gap: 8px;">👥 قائمة الأصدقاء المدعوين</h3>
-        ${d.invited.length ? `
-          <div class="table-wrap">
-            <table style="width: 100%; border-collapse: collapse; text-align: right;">
-              <thead>
-                <tr style="border-bottom: 1px solid rgba(255,255,255,0.08);">
-                  <th style="padding: 12px; color: #94a3b8; font-weight: 600; text-align: right;">المستخدم</th>
-                  <th style="padding: 12px; color: #94a3b8; font-weight: 600; text-align: center;">البريد الإلكتروني</th>
-                  <th style="padding: 12px; color: #94a3b8; font-weight: 600; text-align: left;">إيداعات مقبولة</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${d.invited.map(u => {
-                  const email = u.email || "";
-                  let maskedEmail = "";
-                  const parts = email.split("@");
-                  if (parts.length === 2) {
-                    const local = parts[0];
-                    const domain = parts[1];
-                    if (local.length <= 4) {
-                      maskedEmail = local.slice(0, 1) + "***@" + domain;
-                    } else {
-                      maskedEmail = local.slice(0, 3) + "***@" + domain;
-                    }
-                  } else {
-                    maskedEmail = email.slice(0, 3) + "***";
-                  }
-                  
-                  return `
-                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.2s;">
-                      <td style="padding: 14px 12px; font-weight: bold; color: #fff; text-align: right;">${u.username}</td>
-                      <td style="padding: 14px 12px; color: #cbd5e1; text-align: center; font-family: monospace; font-size: 13px;">${maskedEmail}</td>
-                      <td style="padding: 14px 12px; color: #10b981; font-weight: bold; text-align: left; direction: ltr;">${money(u.approved_deposits)}</td>
-                    </tr>
-                  `;
-                }).join("")}
-              </tbody>
-            </table>
-          </div>
-        ` : `
-          <div class="empty-state" style="padding: 40px; text-align: center; color: #64748b;">
-            لا توجد دعوات مسجلة بعد. شارك رابط دعوتك للبدء في تحقيق الأرباح!
-          </div>
-        `}
+      <div class="card">
+        <h3>المدعوون</h3>
+        ${d.invited.length ? `<div class="table-wrap"><table><thead><tr><th>المستخدم</th><th>البريد</th><th>إيداعات مقبولة</th></tr></thead><tbody>${d.invited.map(u=>`<tr><td>${u.username}</td><td>${u.email}</td><td>${money(u.approved_deposits)}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty-state">لا توجد دعوات بعد.</div>`}
       </div>
     </div>`;
 }
@@ -5912,7 +5845,7 @@ function openPackageDetail(id){
   if(!p){ toast("لم يتم العثور على تفاصيل الباقة", "error"); return; }
   const active = window.__activePackage;
   
-  const isMonthly = false;
+  const isMonthly = p.monthly || ["diamond", "crown_vip", "royal_vip"].includes(p.id);
   
   document.getElementById("adminModal").innerHTML = `<div class="modal package-detail-modal">
     <h2>${p.name}</h2>
@@ -5969,19 +5902,10 @@ async function markNotificationsRead(){
 function renderSettings(){
   document.getElementById("dashContent").innerHTML = `
     <div class="settings-grid">
-      <div class="card" style="backdrop-filter: blur(16px); background: rgba(21, 26, 38, 0.85); border: 1px solid rgba(108, 77, 255, 0.15);">
+      <div class="card">
         <h3>تأكيد البريد الإلكتروني</h3>
-        <p>الحالة: <b class="status ${me.email_verified ? 'verified' : 'pending'}" style="padding: 4px 8px; border-radius: 6px;">${me.email_verified ? "مؤكد" : "غير مؤكد"}</b></p>
-        ${me.email_verified ? `<div class="success mt">بريدك الإلكتروني مؤكد ونشط بالكامل.</div>` : `
-          <div class="notice mt">يرجى طلب كود تحقق (OTP) وإدخاله لتأكيد بريدك الإلكتروني وتفعيل حسابك.</div>
-          <button class="btn primary mt" style="width:100%" onclick="sendVerificationOtp()">إرسال كود التحقق (OTP)</button>
-          <div id="verifyLinkBox"></div>
-          <div class="mt" style="border-top: 1px solid rgba(255,255,255,0.06); padding-top: 20px; display: flex; flex-direction: column; gap: 10px;">
-            <label style="font-weight:600">أدخل كود التحقق (6 أرقام):</label>
-            <input id="otpCode" type="text" maxlength="6" style="text-align: center; font-size: 24px; letter-spacing: 6px; font-weight: bold; background: rgba(0,0,0,0.25); border: 1px solid rgba(108,77,255,0.3); border-radius:10px; height: 48px; outline:none; color:#fff;" placeholder="000000">
-            <button class="btn green full mt" onclick="verifyOtpCode()">تأكيد الكود</button>
-          </div>
-        `}
+        <p>الحالة: <b>${me.email_verified ? "مؤكد" : "غير مؤكد"}</b></p>
+        ${me.email_verified ? `<div class="success">بريدك الإلكتروني مؤكد.</div>` : `<div class="notice">يمكنك إنشاء رابط تأكيد البريد لحماية الحساب.</div><button class="btn primary mt" onclick="resendVerification()">إنشاء رابط تأكيد</button><div id="verifyLinkBox"></div>`}
       </div>
       <div class="card">
         <h3>تغيير كلمة المرور</h3>
@@ -5991,25 +5915,12 @@ function renderSettings(){
       </div>
     </div>`;
 }
-async function sendVerificationOtp(){
-  try{
-    await api("/api/auth/send-otp",{method:"POST",headers:headers(),body:"{}"});
-    document.getElementById("verifyLinkBox").innerHTML = `<div class="success mt">تم إرسال كود التحقق بنجاح إلى بريدك. الكود صالح لمدة 10 دقائق.</div>`;
-    toast("تم إرسال كود التحقق بنجاح","success");
-  }catch(e){ toast(e.message,"error"); }
-}
-async function verifyOtpCode(){
-  try{
-    const code = document.getElementById("otpCode").value.trim();
-    if(!/^\d{6}$/.test(code)) return toast("يرجى إدخال كود التحقق المكون من 6 أرقام.", "error");
-    await api("/api/auth/verify-otp",{method:"POST",headers:headers(),body:JSON.stringify({code})});
-    toast("تم تأكيد البريد الإلكتروني بنجاح!","success");
-    await loadMe();
-    setDash("settings");
-  }catch(e){ toast(e.message,"error"); }
-}
 async function resendVerification(){
-  return sendVerificationOtp();
+  try{
+    const d = await api("/api/auth/resend-verification",{method:"POST",headers:headers(),body:"{}"});
+    document.getElementById("verifyLinkBox").innerHTML = d.verification_url ? `<div class="wallet-box">${location.origin}${d.verification_url}</div>` : `<div class="success">تم إرسال رابط التأكيد بنجاح.</div>`;
+    toast("تم إنشاء رابط تأكيد البريد","success");
+  }catch(e){ toast(e.message,"error"); }
 }
 async function changePassword(){
   try{
@@ -6046,7 +5957,7 @@ async function renderAdmin(){
           <button data-admin-nav="wallets" onclick="adminWallets()">المحافظ <span>🔐</span></button>
           <button data-admin-nav="golden" onclick="adminGolden()">المهام الذهبية <span>⭐</span></button>
           <button data-admin-nav="adjustments" onclick="adminAdjustments()">تعديلات الرصيد <span>🧾</span></button>
-          <button data-admin-nav="transactions" onclick="adminTransactions()">كل المعاملات <span>📚</span></button><button data-admin-nav="audit" onclick="adminAuditLogs()">سجل التدقيق <span>🕵️</span></button><button data-admin-nav="reports" onclick="adminReports()">التقارير <span>📈</span></button><button data-admin-nav="support" onclick="adminSupportTickets()">الدعم <span>💬</span></button><button data-admin-nav="support_emails" onclick="adminSupportEmails()">بريد support@ <span>📬</span></button>
+          <button data-admin-nav="transactions" onclick="adminTransactions()">كل المعاملات <span>📚</span></button><button data-admin-nav="audit" onclick="adminAuditLogs()">سجل التدقيق <span>🕵️</span></button><button data-admin-nav="reports" onclick="adminReports()">التقارير <span>📈</span></button><button data-admin-nav="support" onclick="adminSupportTickets()">الدعم <span>💬</span></button>
         </div>
       </aside>
       <section class="admin-main">
@@ -6083,7 +5994,6 @@ async function renderAdmin(){
   else if(currentAdminScreen==="audit") adminAuditLogs();
   else if(currentAdminScreen==="reports") adminReports();
   else if(currentAdminScreen==="support") adminSupportTickets();
-  else if(currentAdminScreen==="support_emails") adminSupportEmails();
   else adminOverview();
 }
 function markAdminNav(key){
@@ -6137,12 +6047,10 @@ async function adminUsers(){
     <div class="admin-toolbar">
       <div><label>بحث</label><input id="adminUserSearch" class="admin-input" placeholder="username / email / phone" oninput="filterAdminUsers()"></div>
       <div><label>الحالة</label><select id="adminKycFilter" class="admin-input" onchange="filterAdminUsers()"><option value="">الكل</option><option value="verified">verified</option><option value="pending">pending</option><option value="not_verified">not_verified</option><option value="rejected">rejected</option></select></div>
-      <div style="flex: 0 1 auto; min-width: auto; display: flex; align-items: flex-end;"><button class="btn red" onclick="confirmDeleteAllUsers()" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border: none; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); height: 38px; padding: 0 16px; font-weight: bold; border-radius: 8px;">حذف جميع الحسابات 🗑️</button></div>
     </div>
     <div id="adminUsersTable"></div>`;
   filterAdminUsers();
 }
-
 function filterAdminUsers(){
   const q = (document.getElementById("adminUserSearch")?.value || "").toLowerCase();
   const k = document.getElementById("adminKycFilter")?.value || "";
@@ -6153,53 +6061,52 @@ function filterAdminUsers(){
   });
   document.getElementById("adminUsersTable").innerHTML = `<div class="table-wrap"><table><thead><tr><th>المستخدم</th><th>البريد/الهاتف</th><th>الرصيد</th><th>رصيد الباقة</th><th>ربح الباقة</th><th>KYC</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody>${rows.map(u=>`
     <tr>
-      <td><b>${escapeHtml(u.username)}</b><br><span class="muted">ID: ${u.id}</span></td>
-      <td>${escapeHtml(u.email)}<br>${escapeHtml(u.phone)}</td>
+      <td><b>${u.username}</b><br><span class="muted">ID: ${u.id}</span></td>
+      <td>${u.email}<br>${u.phone}</td>
       <td class="money-cell">${money(u.balance)}</td>
       <td class="money-cell">${money(u.package_balance)}</td>
       <td class="money-cell">${money(u.package_profit)}</td>
-      <td><span class="status ${u.kyc_status || 'not_verified'}">${prettyKycStatus(u.kyc_status)}</span></td>
-      <td><span class="status ${u.status || 'active'}">${u.status || 'active'}</span></td>
-      <td>
-        <div class="admin-actions">
-          <button class="mini-btn" onclick="openUserDetail(${u.id})">تفاصيل</button>
-          <button class="mini-btn red" onclick="deleteIndividualUser(${u.id}, '${escapeHtml(u.username)}')">حذف</button>
-        </div>
-      </td>
-    </tr>
-  `).join("")}</tbody></table></div>`;
+      <td>${u.kyc_status}</td>
+      <td>${u.status}</td>
+      <td><div class="admin-actions">
+        <button class="mini-btn" onclick="openUserDetail(${u.id})">تفاصيل</button><button class="mini-btn green" onclick="openBalanceModal(${u.id},'${u.username}')">تعديل الرصيد</button>
+        <button class="mini-btn amber" onclick="setUserStatus(${u.id},'${u.status==='active'?'blocked':'active'}')">${u.status==='active'?'حظر':'تفعيل'}</button>
+      </div></td>
+    </tr>`).join("")}</tbody></table></div>`;
 }
-
-async function deleteIndividualUser(userId, username){
-  if(!confirm(`هل أنت متأكد من رغبتك في حذف حساب المستخدم "${username}" نهائياً من قاعدة البيانات مع كافة بياناته التابعة؟`)) return;
-  try {
-    const res = await api(`/api/admin/users/${userId}`, {
-      method: "DELETE",
-      headers: headers()
-    });
-    toast(res.message || "تم حذف حساب المستخدم بنجاح.", "success");
+function openBalanceModal(userId, username){
+  document.getElementById("adminModal").innerHTML = `<div class="modal">
+    <h3>تعديل أرصدة المستخدم: ${username}</h3>
+    <div class="form-grid">
+      <div><label>نوع الرصيد</label><select id="balField"><option value="balance">الرصيد المتاح</option><option value="package_balance">رصيد الباقة المقفل</option><option value="package_profit">ربح الباقة</option></select></div>
+      <div><label>الإجراء</label><select id="balAction"><option value="add">إضافة</option><option value="subtract">خصم</option><option value="set">تعيين قيمة مباشرة</option></select></div>
+    </div>
+    <label>المبلغ</label><input id="balAmount" type="number" min="0" class="admin-input" placeholder="100">
+    <label>ملاحظة إدارية</label><textarea id="balNote" class="admin-input" placeholder="سبب التعديل"></textarea>
+    <div class="admin-actions mt">
+      <button class="btn green" onclick="saveBalance(${userId})">حفظ التعديل</button>
+      <button class="btn" onclick="closeAdminModal()">إلغاء</button>
+    </div>
+  </div>`;
+  document.getElementById("adminModal").classList.add("open");
+}
+function closeAdminModal(){ document.getElementById("adminModal").classList.remove("open"); }
+function openWelcomeBonusModal(){ document.getElementById("welcomeBonusModal").classList.add("open"); }
+function closeWelcomeBonusModal(){ document.getElementById("welcomeBonusModal").classList.remove("open"); }
+async function saveBalance(userId){
+  try{
+    await api(`/api/admin/users/${userId}/balance`,{method:"POST",headers:headers(),body:JSON.stringify({field:balField.value,action:balAction.value,amount:balAmount.value,note:balNote.value})});
+    closeAdminModal();
     await renderAdmin();
-  } catch(e) {
-    toast(e.message, "error");
-  }
+  }catch(e){ toast(e.message, "error"); }
 }
-
-async function setUserStatus(userId, status){
-  try {
-    await api(`/api/admin/users/${userId}/status`, {
-      method: "POST",
-      headers: headers(),
-      body: JSON.stringify({status})
-    });
+async function setUserStatus(userId,status){
+  try{
+    await api(`/api/admin/users/${userId}/status`,{method:"POST",headers:headers(),body:JSON.stringify({status})});
     await renderAdmin();
-  } catch(e) {
-    toast(e.message, "error");
-  }
+  }catch(e){ toast(e.message, "error"); }
 }
-
-async function adminKyc(){
-  return adminKycPending();
-}
+async function adminKyc(){ return adminKycPending(); }
 
 function renderKycTabs(active){
   return `<div class="admin-subtabs">
@@ -6208,128 +6115,6 @@ function renderKycTabs(active){
     <button class="admin-subtab ${active==="unverified"?"active":""}" onclick="adminKycUnverified()">المستخدمون غير الموثقين</button>
   </div>`;
 }
-
-function confirmDeleteAllUsers(){
-  document.getElementById("adminModal").innerHTML = `<div class="modal" style="border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(18, 11, 15, 0.95); backdrop-filter: blur(20px);">
-    <h3 style="color: #ef4444; display: flex; align-items: center; gap: 8px; font-weight: bold; margin-bottom: 12px;">⚠️ تحذير أمني خطير!</h3>
-    <p style="margin: 14px 0; line-height: 1.6; color: #f3f4f6; text-align: right;">أنت على وشك <b>حذف جميع حسابات المستخدمين نهائيًا</b> من النظام، بما في ذلك بياناتهم الشخصية، سجلات التوثيق (KYC)، الإيداعات، السحوبات، الباقات، والمعاملات المالية.</p>
-    <p style="color: #e5e7eb; font-weight: 600; text-align: right;">سيتم استثناء حسابات الإدارة (الآدمن) فقط.</p>
-    
-    <div style="margin: 16px 0; padding: 12px; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border-right: 4px solid #ef4444; font-size: 13px; color: #fca5a5; text-align: right;">
-      * هذه العملية غير قابلة للتراجع على الإطلاق وسوف يتم مسح كافة البيانات بشكل كامل من قاعدة البيانات.
-    </div>
-
-    <label style="display: block; margin-bottom: 6px; font-weight: bold; color: #d1d5db; text-align: right;">لتأكيد الحذف النهائي، اكتب الكلمة <span style="color: #fca5a5; font-family: monospace; font-size: 15px; background: rgba(239, 68, 68, 0.2); padding: 2px 6px; border-radius: 4px;">حذف</span> في المربع أدناه:</label>
-    <input id="deleteConfirmationWord" type="text" class="admin-input" placeholder="اكتب حذف هنا" style="border-color: rgba(239, 68, 68, 0.4); text-align: center; font-size: 16px; font-weight: bold; letter-spacing: 1px;">
-    
-    <div class="admin-actions mt" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
-      <button class="btn red" id="btnConfirmDeleteAll" onclick="executeDeleteAllUsers()" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); font-weight: bold;">تأكيد الحذف النهائي 🗑️</button>
-      <button class="btn" onclick="closeAdminModal()">إلغاء وإغلاق</button>
-    </div>
-  </div>`;
-  document.getElementById("adminModal").classList.add("open");
-}
-async function executeDeleteAllUsers(){
-  const word = document.getElementById("deleteConfirmationWord").value.trim();
-  if (word !== "حذف") {
-    toast("الكلمة المدخلة غير صحيحة، يرجى كتابة 'حذف' للتأكيد.", "error");
-    return;
-  }
-  
-  const btn = document.getElementById("btnConfirmDeleteAll");
-  btn.disabled = true;
-  btn.innerText = "جاري الحذف النهائي...";
-  
-  try {
-    const res = await api("/api/admin/users/all", {
-      method: "DELETE",
-      headers: headers()
-    });
-    closeAdminModal();
-    toast(res.message || "تم حذف جميع المستخدمين بنجاح عدا الأدمن.", "success");
-    await renderAdmin();
-  } catch(e) {
-    btn.disabled = false;
-    btn.innerText = "تأكيد الحذف النهائي 🗑️";
-    toast(e.message || "حدث خطأ أثناء محاولة حذف المستخدمين.", "error");
-  }
-}
-function openContactSupportModal(){
-  document.getElementById("adminModal").innerHTML = `<div class="modal" style="border: 1px solid rgba(108, 77, 255, 0.2); background: rgba(18, 20, 29, 0.95); backdrop-filter: blur(20px); max-width: 500px; width: 100%; box-shadow: 0 20px 50px rgba(0,0,0,0.5);">
-    <h3 style="color: var(--primary); display: flex; align-items: center; gap: 8px; font-weight: bold; margin-bottom: 12px; justify-content: center; direction: rtl;">📬 مراسلة الدعم الفني</h3>
-    <p style="margin: 10px 0 20px 0; line-height: 1.5; color: #94a3b8; text-align: center; font-size: 13px;">أرسل رسالة مباشرة إلى بريد الدعم الخاص بنا: <b>support@taskora.live</b> وسنقوم بالرد عليك في أقرب وقت.</p>
-    
-    <div style="display: flex; flex-direction: column; gap: 14px; text-align: right; direction: rtl;">
-      <div>
-        <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #d1d5db; font-size: 13px;">البريد الإلكتروني للمرسل</label>
-        <input id="contactEmail" type="email" class="admin-input" placeholder="example@domain.com" style="direction: ltr; text-align: left; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: #fff; width: 100%; height: 38px; padding: 0 12px;">
-      </div>
-      <div>
-        <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #d1d5db; font-size: 13px;">اسم المرسل (كاملًا)</label>
-        <input id="contactName" type="text" class="admin-input" placeholder="الاسم الأول والأخير" style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: #fff; width: 100%; height: 38px; padding: 0 12px;">
-      </div>
-      <div>
-        <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #d1d5db; font-size: 13px;">موضوع الرسالة</label>
-        <input id="contactSubject" type="text" class="admin-input" placeholder="ما هو استفسارك؟" style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: #fff; width: 100%; height: 38px; padding: 0 12px;">
-      </div>
-      <div>
-        <label style="display: block; margin-bottom: 6px; font-weight: 600; color: #d1d5db; font-size: 13px;">نص الرسالة</label>
-        <textarea id="contactMessage" class="admin-input" placeholder="اكتب تفاصيل استفسارك أو مشكلتك هنا..." style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: #fff; width: 100%; min-height: 120px; padding: 10px 12px; resize: vertical; line-height: 1.5;"></textarea>
-      </div>
-    </div>
-    
-    <div style="margin-top: 24px; display: flex; gap: 10px; justify-content: flex-end; direction: rtl;">
-      <button class="btn primary" id="btnSendContactMessage" onclick="executeSendContactMessage()" style="font-weight: bold; background: var(--primary); border: none; padding: 0 20px; height: 38px; border-radius: 8px;">إرسال الرسالة 🚀</button>
-      <button class="btn" onclick="closeAdminModal()" style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.08); padding: 0 16px; height: 38px; border-radius: 8px;">إلغاء وإغلاق</button>
-    </div>
-  </div>`;
-  document.getElementById("adminModal").classList.add("open");
-}
-
-async function executeSendContactMessage(){
-  const email = document.getElementById("contactEmail").value.trim();
-  const name = document.getElementById("contactName").value.trim();
-  const subject = document.getElementById("contactSubject").value.trim();
-  const message = document.getElementById("contactMessage").value.trim();
-  
-  if(!email || !/^\S+@\S+\.\S+$/.test(email)){
-    toast("يرجى إدخال بريد إلكتروني صحيح.", "error");
-    return;
-  }
-  if(!subject){
-    toast("يرجى تحديد موضوع الرسالة.", "error");
-    return;
-  }
-  if(!message){
-    toast("يرجى كتابة نص الرسالة.", "error");
-    return;
-  }
-  
-  const btn = document.getElementById("btnSendContactMessage");
-  btn.disabled = true;
-  btn.innerText = "جاري الإرسال...";
-  
-  try {
-    const res = await api("/api/support/incoming-email", {
-      method: "POST",
-      headers: headers(),
-      body: JSON.stringify({
-        sender_email: email,
-        sender_name: name,
-        subject: subject,
-        message: message
-      })
-    });
-    toast(res.message || "تم إرسال رسالتك بنجاح وسيقوم الدعم الفني بمراجعتها.", "success");
-    closeAdminModal();
-  } catch(e) {
-    toast(e.message || "فشل إرسال الرسالة، يرجى المحاولة لاحقاً.", "error");
-  } finally {
-    btn.disabled = false;
-    btn.innerText = "إرسال الرسالة 🚀";
-  }
-}
-
 async function loadAdminKycData(){
   const [kycRes, usersRes] = await Promise.all([
     api("/api/admin/kyc",{headers:headers()}),
@@ -6383,36 +6168,12 @@ async function adminKycUnverified(){
 async function adminDeposits(){
   markAdminNav("deposits");
   const d=await api("/api/admin/deposits",{headers:headers()});
-  const pending = d.deposits.filter(x => x.status === "pending");
-  const archived = d.deposits.filter(x => x.status !== "pending");
-  const getCoinLabel = (coin) => {
-    if (coin === "usdt_trc20") return "USDT (TRC20)";
-    if (coin === "usdt_erc20") return "USDT (ERC20)";
-    return coin.toUpperCase();
-  };
-  adminBox.innerHTML=`<h3>مراجعة الإيداعات</h3>
-    <div style="margin-bottom: 24px; font-weight: 700; color: #fff; font-size: 15px;">📥 طلبات الإيداع المعلقة (${pending.length})</div>
-    ${pending.length ? `<div class="table-wrap"><table><thead><tr><th>المستخدم</th><th>المبلغ</th><th>العملة</th><th>TXID</th><th>الإثبات</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>${pending.map(x=>`<tr><td><b>${x.username}</b><br><span class="muted">${x.email}</span></td><td class="money-cell" style="font-weight:700;">${money(x.amount)}</td><td><span style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; font-size:11px;">${getCoinLabel(x.coin)}</span></td><td style="direction:ltr;text-align:left; font-family:monospace; font-size:11px;">${x.txid}</td><td>${x.proof_image?`<button class="file-btn" onclick="openSecureFile('${x.proof_image}')">فتح</button>`:"-"}</td><td><span class="status pending">معلق</span></td><td><div class="admin-actions"><button class="mini-btn green" onclick="adminAction('/api/admin/deposits/${x.id}/approve')">قبول</button><button class="mini-btn red" onclick="adminAction('/api/admin/deposits/${x.id}/reject')">رفض</button></div></td></tr>`).join("")}</tbody></table></div>` : `<div class="admin-empty" style="margin-bottom:24px;">لا توجد طلبات إيداع معلقة حاليًا.</div>`}
-    
-    <div style="margin-top: 36px; margin-bottom: 24px; font-weight: 700; color: #a1a1aa; font-size: 15px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 24px;">📚 أرشيف الإيداعات السابقة (${archived.length})</div>
-    ${archived.length ? `<div class="table-wrap"><table style="opacity:0.9;"><thead><tr><th>المستخدم</th><th>المبلغ</th><th>العملة</th><th>TXID</th><th>الإثبات</th><th>الحالة</th><th>ملاحظة الأدمن</th></tr></thead><tbody>${archived.map(x=>`<tr><td><b>${x.username}</b><br><span class="muted">${x.email}</span></td><td class="money-cell" style="color:#ffffff;">${money(x.amount)}</td><td><span style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; font-size:11px;">${getCoinLabel(x.coin)}</span></td><td style="direction:ltr;text-align:left; font-family:monospace; font-size:11px; color:#8e8e93;">${x.txid}</td><td>${x.proof_image?`<button class="file-btn" onclick="openSecureFile('${x.proof_image}')">فتح</button>`:"-"}</td><td><span class="status ${x.status==='approved'?'verified':'rejected'}">${x.status==='approved'?'مقبول':'مرفوض'}</span></td><td style="font-size:12px; color:#8e8e93;">${x.admin_note||"-"}</td></tr>`).join("")}</tbody></table></div>` : `<div class="admin-empty">الأرشيف فارغ حالياً.</div>`}`;
+  adminBox.innerHTML=`<h3>مراجعة الإيداعات</h3><div class="table-wrap"><table><thead><tr><th>المستخدم</th><th>المبلغ</th><th>العملة</th><th>TXID</th><th>الإثبات</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>${d.deposits.map(x=>`<tr><td>${x.username}<br>${x.email}</td><td class="money-cell">${money(x.amount)}</td><td>${x.coin}</td><td style="direction:ltr;text-align:left">${x.txid}</td><td>${x.proof_image?`<button class="file-btn" onclick="openSecureFile('${x.proof_image}')">فتح</button>`:"-"}</td><td>${x.status}</td><td><div class="admin-actions"><button class="mini-btn green" onclick="adminAction('/api/admin/deposits/${x.id}/approve')">قبول</button><button class="mini-btn red" onclick="adminAction('/api/admin/deposits/${x.id}/reject')">رفض</button></div></td></tr>`).join("")}</tbody></table></div>`;
 }
 async function adminWithdrawals(){
   markAdminNav("withdrawals");
   const d=await api("/api/admin/withdrawals",{headers:headers()});
-  const pending = d.withdrawals.filter(x => x.status === "pending");
-  const archived = d.withdrawals.filter(x => x.status !== "pending");
-  const getCoinLabel = (coin) => {
-    if (coin === "usdt_trc20") return "USDT (TRC20)";
-    if (coin === "usdt_erc20") return "USDT (ERC20)";
-    return coin.toUpperCase();
-  };
-  adminBox.innerHTML=`<h3>مراجعة السحوبات</h3>
-    <div style="margin-bottom: 24px; font-weight: 700; color: #fff; font-size: 15px;">📤 طلبات السحب المعلقة (${pending.length})</div>
-    ${pending.length ? `<div class="table-wrap"><table><thead><tr><th>المستخدم</th><th>المبلغ</th><th>العملة</th><th>المحفظة</th><th>KYC</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>${pending.map(x=>`<tr><td><b>${x.username}</b><br><span class="muted">${x.email}</span></td><td class="money-cell" style="font-weight:700;">${money(x.amount)}</td><td><span style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; font-size:11px;">${getCoinLabel(x.coin)}</span></td><td style="direction:ltr;text-align:left; font-family:monospace; font-size:11px;">${x.wallet_address}</td><td><span class="status ${x.kyc_status==='verified'?'verified':'rejected'}">${x.kyc_status}</span></td><td><span class="status pending">معلق</span></td><td><div class="admin-actions"><button class="mini-btn green" onclick="approveWithdrawal(${x.id})">قبول</button><button class="mini-btn red" onclick="adminAction('/api/admin/withdrawals/${x.id}/reject')">رفض</button></div></td></tr>`).join("")}</tbody></table></div>` : `<div class="admin-empty" style="margin-bottom:24px;">لا توجد طلبات سحب معلقة حاليًا.</div>`}
-    
-    <div style="margin-top: 36px; margin-bottom: 24px; font-weight: 700; color: #a1a1aa; font-size: 15px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 24px;">📚 أرشيف السحوبات السابقة (${archived.length})</div>
-    ${archived.length ? `<div class="table-wrap"><table style="opacity:0.9;"><thead><tr><th>المستخدم</th><th>المبلغ</th><th>العملة</th><th>المحفظة</th><th>الحالة</th><th>TXID التحويل</th><th>ملاحظة الأدمن</th></tr></thead><tbody>${archived.map(x=>`<tr><td><b>${x.username}</b><br><span class="muted">${x.email}</span></td><td class="money-cell" style="color:#ffffff;">${money(x.amount)}</td><td><span style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; font-size:11px;">${getCoinLabel(x.coin)}</span></td><td style="direction:ltr;text-align:left; font-family:monospace; font-size:11px; color:#8e8e93;">${x.wallet_address}</td><td><span class="status ${x.status==='approved'?'verified':'rejected'}">${x.status==='approved'?'مقبول':'مرفوض'}</span></td><td style="direction:ltr;text-align:left; font-family:monospace; font-size:11px; color:#8e8e93;">${x.txid||"-"}</td><td style="font-size:12px; color:#8e8e93;">${x.admin_note||"-"}</td></tr>`).join("")}</tbody></table></div>` : `<div class="admin-empty">الأرشيف فارغ حالياً.</div>`}`;
+  adminBox.innerHTML=`<h3>مراجعة السحوبات</h3><div class="table-wrap"><table><thead><tr><th>المستخدم</th><th>المبلغ</th><th>العملة</th><th>المحفظة</th><th>KYC</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>${d.withdrawals.map(x=>`<tr><td>${x.username}<br>${x.email}</td><td class="money-cell">${money(x.amount)}</td><td>${x.coin}</td><td style="direction:ltr;text-align:left">${x.wallet_address}</td><td>${x.kyc_status}</td><td>${x.status}</td><td><div class="admin-actions"><button class="mini-btn green" onclick="approveWithdrawal(${x.id})">قبول</button><button class="mini-btn red" onclick="adminAction('/api/admin/withdrawals/${x.id}/reject')">رفض</button></div></td></tr>`).join("")}</tbody></table></div>`;
 }
 function approveWithdrawal(id){
   document.getElementById("adminModal").innerHTML = `<div class="modal"><h3>قبول السحب</h3><label>TXID عملية التحويل</label><input id="withdrawTxid" class="admin-input" placeholder="اختياري لكن مهم للتوثيق"><label>ملاحظة</label><textarea id="withdrawNote" class="admin-input"></textarea><div class="admin-actions mt"><button class="btn green" onclick="saveApproveWithdrawal(${id})">قبول السحب</button><button class="btn" onclick="closeAdminModal()">إلغاء</button></div></div>`;
@@ -6428,189 +6189,16 @@ async function saveApproveWithdrawal(id){
 async function adminWallets(){
   markAdminNav("wallets");
   const d=await api("/api/admin/wallets",{headers:headers()});
-  const getCoinLabel = (coin) => {
-    if (coin === "usdt_trc20") return "USDT (TRC20)";
-    if (coin === "usdt_erc20") return "USDT (ERC20)";
-    return coin.toUpperCase();
-  };
-  adminBox.innerHTML = `<h3>محافظ الإيداع</h3><div class="card"><div class="form-grid"><div><label>العملة</label><select id="walletCoin"><option value="usdt_trc20">USDT (TRC20)</option><option value="usdt_erc20">USDT (ERC20)</option><option value="btc">BTC</option><option value="sol">SOL</option></select></div><div><label>الشبكة</label><input id="walletNetwork" class="admin-input" placeholder="مثال: TRC20 / ERC20 / Solana"></div></div><label>عنوان المحفظة</label><input id="walletAddress" class="admin-input" placeholder="أدخل العنوان بدقة"><button class="btn green mt" onclick="saveWallet()">حفظ المحفظة</button></div><div class="table-wrap mt"><table><thead><tr><th>العملة</th><th>الشبكة</th><th>العنوان</th><th>آخر تعديل</th><th>الإجراء</th></tr></thead><tbody>${d.wallets.map(w=>`<tr><td><b>${getCoinLabel(w.coin)}</b></td><td>${w.network||""}</td><td style="direction:ltr;text-align:left">${w.address}</td><td>${new Date(w.updated_at).toLocaleString("ar")}</td><td><div class="admin-actions"><button class="mini-btn red" onclick="deleteWallet('${w.coin}')">حذف</button></div></td></tr>`).join("")}</tbody></table></div>`;
+  adminBox.innerHTML = `<h3>محافظ الإيداع</h3><div class="card"><div class="form-grid"><div><label>العملة</label><select id="walletCoin"><option value="usdt">USDT</option><option value="bnb">BNB</option><option value="eth">ETH</option><option value="btc">BTC</option></select></div><div><label>الشبكة</label><input id="walletNetwork" class="admin-input" placeholder="TRC20 / BEP20 / ERC20"></div></div><label>عنوان المحفظة</label><input id="walletAddress" class="admin-input"><button class="btn green mt" onclick="saveWallet()">حفظ المحفظة</button></div><div class="table-wrap mt"><table><thead><tr><th>العملة</th><th>الشبكة</th><th>العنوان</th><th>آخر تعديل</th></tr></thead><tbody>${d.wallets.map(w=>`<tr><td>${w.coin.toUpperCase()}</td><td>${w.network||""}</td><td style="direction:ltr;text-align:left">${w.address}</td><td>${new Date(w.updated_at).toLocaleString("ar")}</td></tr>`).join("")}</tbody></table></div>`;
 }
 async function saveWallet(){ try{ await api("/api/admin/wallets",{method:"POST",headers:headers(),body:JSON.stringify({coin:walletCoin.value,network:walletNetwork.value,address:walletAddress.value})}); await renderAdmin(); }catch(e){ toast(e.message, "error"); } }
-async function deleteWallet(coin){
-  if(!confirm("هل أنت متأكد من حذف هذه المحفظة؟")) return;
-  try {
-    await api(`/api/admin/wallets/${coin}`, { method: "DELETE", headers: headers() });
-    toast("تم حذف المحفظة بنجاح", "success");
-    await renderAdmin();
-  } catch(e) {
-    toast(e.message, "error");
-  }
-}
 async function adminGolden(){
   markAdminNav("golden");
   const users=await api("/api/admin/users",{headers:headers()});
   const list=await api("/api/admin/golden",{headers:headers()});
-  const pending = list.golden_tasks.filter(t => t.status === "pending_review");
-  const others = list.golden_tasks.filter(t => t.status !== "pending_review");
-  
-  let pendingHtml = "";
-  if (pending.length) {
-    pendingHtml = `
-      <div class="card mt" style="border: 1px solid rgba(59, 130, 246, 0.25); background: rgba(18, 20, 29, 0.95); margin-top: 24px; margin-bottom: 24px;">
-        <h4 style="color: #3b82f6; margin-bottom: 12px; font-weight: 700; font-size: 14px;">🔍 إثباتات المهام الخاصة قيد الانتظار (${pending.length})</h4>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>المستخدم</th>
-                <th>المهمة</th>
-                <th>المكافأة</th>
-                <th>حساب العميل (Instagram ID)</th>
-                <th>لقطة الشاشة</th>
-                <th>إجراءات</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${pending.map(p => `
-                <tr>
-                  <td><b>${p.username}</b><br><span class="muted">${p.email}</span></td>
-                  <td><b>${p.title}</b><br><span class="muted">${p.description}</span></td>
-                  <td class="money-cell" style="color: #10b981; font-weight: 700;">${money(p.reward)}</td>
-                  <td style="font-family: monospace; color: #f59e0b;">${escapeHtml(p.user_note || "-")}</td>
-                  <td>
-                    ${p.proof_image ? `<button class="file-btn" onclick="openSecureFile('${p.proof_image}')">عرض الإثبات 🖼️</button>` : "-"}
-                  </td>
-                  <td>
-                    <div class="admin-actions">
-                      <button class="mini-btn green" onclick="approveGoldenProof(${p.id})">قبول</button>
-                      <button class="mini-btn red" onclick="rejectGoldenProof(${p.id})">رفض</button>
-                    </div>
-                  </td>
-                </tr>
-              `).join("")}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    `;
-  }
-
-  adminBox.innerHTML = `
-    <h3>المهام الخاصة والترويجية</h3>
-    <div class="card">
-      <h4 style="margin-bottom: 12px; font-weight: 700; font-size: 14px; color: #fff;">إرسال مهمة ترويجية للمستخدمين</h4>
-      <label>المستهدف (يمكنك اختيار عدة مستخدمين بالضغط المستمر على Ctrl أو Shift)</label>
-      <select id="goldUser" multiple style="height: 140px; padding: 10px; border-radius: 12px; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08); color: #fff; width: 100%; outline: none; margin-bottom: 14px;">
-        <option value="all" selected>📢 جميع المستخدمين (All Users)</option>
-        ${users.users.filter(u=>u.role!=="admin").map(u=>`<option value="${u.id}">${u.username} - ${u.email}</option>`).join("")}
-      </select>
-      
-      <label>عنوان المهمة (نص واضح، مثال: متابعة صفحة انستقرام)</label>
-      <input id="goldTitle" value="متابعة الحساب الرسمي على Instagram">
-      
-      <label>رابط الانتقال (رابط الصفحة، الفيديو أو الريلز - اختياري)</label>
-      <input id="goldLink" placeholder="https://instagram.com/your_page">
-      
-      <label>الشروط والتفاصيل المطلوبة (نص يظهر للعميل)</label>
-      <textarea id="goldDesc">يرجى الانتقال للرابط المرفق ومتابعة الصفحة ومشاركة لقطة الشاشة كإثبات للحصول على المكافأة فورًا.</textarea>
-      
-      <label>المكافأة (USD)</label>
-      <input id="goldReward" type="number" value="1.50" step="0.01">
-      
-      <button class="btn amber mt" onclick="sendGolden()">إرسال المهمة للعميل 🚀</button>
-    </div>
-
-    ${pendingHtml}
-
-    <h4 style="margin-top: 24px; margin-bottom: 12px; font-weight: 700; font-size: 14px; color: #a1a1aa;">📋 قائمة المهام المرسلة سابقاً (${others.length})</h4>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>المستخدم</th>
-            <th>العنوان</th>
-            <th>الرابط</th>
-            <th>الربح</th>
-            <th>الحالة</th>
-            <th>التاريخ</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${others.map(g=>`
-            <tr>
-              <td><b>${g.username}</b><br><span class="muted">${g.email}</span></td>
-              <td><b>${g.title}</b></td>
-              <td>${g.task_link ? `<a href="${g.task_link}" target="_blank" style="color: #6c4dff; text-decoration: underline;">رابط المهمة 🔗</a>` : "-"}</td>
-              <td class="money-cell">${money(g.reward)}</td>
-              <td>
-                <span class="status ${g.status === 'completed' ? 'verified' : (g.status === 'rejected' ? 'rejected' : 'pending')}">
-                  ${g.status === 'completed' ? 'مقبول' : (g.status === 'rejected' ? 'مرفوض' : 'نشط')}
-                </span>
-              </td>
-              <td>${new Date(g.sent_at).toLocaleString("ar")}</td>
-            </tr>
-          `).join("")}
-        </tbody>
-      </table>
-    </div>
-  `;
+  adminBox.innerHTML = `<h3>المهام الذهبية</h3><div class="card"><label>المستخدم</label><select id="goldUser">${users.users.filter(u=>u.role!=="admin").map(u=>`<option value="${u.id}">${u.username} - ${u.email}</option>`).join("")}</select><label>العنوان</label><input id="goldTitle" value="المهمة الذهبية الأسبوعية"><label>الوصف</label><textarea id="goldDesc">مهمة ذهبية خاصة مرسلة من الإدارة.</textarea><label>الربح</label><input id="goldReward" type="number" value="10"><button class="btn amber mt" onclick="sendGolden()">إرسال</button></div><div class="table-wrap mt"><table><thead><tr><th>المستخدم</th><th>العنوان</th><th>الربح</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody>${list.golden_tasks.map(g=>`<tr><td>${g.username}</td><td>${g.title}</td><td class="money-cell">${money(g.reward)}</td><td>${g.status}</td><td>${new Date(g.sent_at).toLocaleString("ar")}</td></tr>`).join("")}</tbody></table></div>`;
 }
-
-async function sendGolden(){ 
-  try{ 
-    const select = document.getElementById("goldUser");
-    const selectedValues = Array.from(select.selectedOptions).map(o => o.value);
-    
-    let userIdValue;
-    if (selectedValues.includes("all")) {
-      userIdValue = "all";
-    } else {
-      userIdValue = selectedValues.map(Number);
-    }
-
-    const res = await api("/api/admin/golden",{
-      method:"POST",
-      headers:headers(),
-      body:JSON.stringify({
-        user_id:userIdValue,
-        title:goldTitle.value,
-        task_link:goldLink.value,
-        description:goldDesc.value,
-        reward:goldReward.value
-      })
-    }); 
-    toast(res.message || "تم إرسال المهمة بنجاح", "success");
-    await adminGolden(); 
-  }catch(e){ 
-    toast(e.message, "error"); 
-  } 
-}
-
-async function approveGoldenProof(id) {
-  try {
-    await api(`/api/admin/golden/${id}/approve`, {method: "POST", headers: headers(), body: "{}"});
-    toast("تم قبول الإثبات بنجاح وصرف المكافأة للعميل! 🎉", "success");
-    await adminGolden();
-  } catch(e) {
-    toast(e.message, "error");
-  }
-}
-
-async function rejectGoldenProof(id) {
-  const reason = prompt("يرجى كتابة سبب الرفض (سيظهر للمستخدم):", "لم يتم التحقق من المتابعة بشكل صحيح.");
-  if (reason === null) return; // User cancelled
-  try {
-    await api(`/api/admin/golden/${id}/reject`, {
-      method: "POST",
-      headers: headers(),
-      body: JSON.stringify({note: reason})
-    });
-    toast("تم رفض إثبات المهمة وإعلام المستخدم.", "success");
-    await adminGolden();
-  } catch(e) {
-    toast(e.message, "error");
-  }
-}
+async function sendGolden(){ try{ await api("/api/admin/golden",{method:"POST",headers:headers(),body:JSON.stringify({user_id:goldUser.value,title:goldTitle.value,description:goldDesc.value,reward:goldReward.value})}); await renderAdmin(); }catch(e){ toast(e.message, "error"); } }
 async function adminAdjustments(){
   markAdminNav("adjustments");
   const d=await api("/api/admin/balance-adjustments",{headers:headers()});
@@ -6733,17 +6321,6 @@ async function adminAction(path){ try{ await api(path,{method:"POST",headers:hea
 
 
 renderNav();
-// Capture referral code if present in the URL query string
-try {
-  const urlParams = new URLSearchParams(location.search);
-  const refParam = urlParams.get("ref");
-  if (refParam) {
-    localStorage.setItem("taskora_referred_by", refParam.trim());
-  }
-} catch (e) {
-  console.error("Error parsing referral code from URL:", e);
-}
-
 if (location.pathname === "/reset-password" || new URLSearchParams(location.search).get("token")) {
   showView("reset");
 } else if(token) loadMe();
@@ -7203,15 +6780,32 @@ function taskoraCompleteTaskAfterAd(taskNumber){
   console.warn("No task completion function found.");
 }
 
-function taskoraRewardedTaskButtons(taskNumber, done){
-  if (done) {
-    return `<button class="btn" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: #a1a1aa; cursor: not-allowed; width: 100%; border-radius: 12px; height: 42px; font-weight: 700;" disabled>✅ المهمة مكتملة</button>`;
-  }
-  return `<button class="btn green full" style="border-radius: 12px; height: 42px; font-weight: 700; width: 100%;" onclick="openInteractiveTask(${taskNumber})">📦 تتبع وبدء المهمة</button>`;
+function taskoraRewardedTaskButtons(taskNumber){
+  const isEn = document.documentElement.lang === "en";
+  return `
+    <div class="task-ad-actions">
+      <div class="task-ad-status" data-ad-status="${taskNumber}">
+        ${isEn ? "Watch the rewarded ad to unlock this task." : "شاهد إعلان المكافأة لفتح إكمال المهمة."}
+      </div>
+      <button class="btn primary task-ad-watch-btn" data-watch-task="${taskNumber}" onclick="taskoraWatchRewardedAd(${taskNumber})">
+        ${isEn ? "Watch ad" : "شاهد الإعلان"}
+      </button>
+      <button class="btn green task-ad-complete-btn" data-complete-task="${taskNumber}" onclick="taskoraCompleteTaskAfterAd(${taskNumber})" disabled>
+        ${isEn ? "Complete after ad" : "أكمل بعد مشاهدة الإعلان"}
+      </button>
+    </div>`;
 }
 
 function taskoraConvertExistingTaskButtons(){
-  // Bypassed: task buttons do not require ads to complete
+  document.querySelectorAll("button").forEach(btn=>{
+    const onclick = btn.getAttribute("onclick") || "";
+    const m = onclick.match(/completeTask(?:WithRobot)?\((\d+)\)/);
+    if(!m || btn.closest(".task-ad-actions")) return;
+    const taskNumber = m[1];
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = taskoraRewardedTaskButtons(taskNumber);
+    btn.replaceWith(wrapper.firstElementChild);
+  });
 }
 
 const taskoraOriginalSetDash = window.setDash;
@@ -7254,575 +6848,5 @@ window.taskoraApiHealthV7 = async function(){
 };
 window.addEventListener("load", () => setTimeout(window.taskoraApiHealthV7, 700));
 </script>
-
-<script>
-// Mock data and simulated offline environment
-const MOCK_SHIPPING_ORDERS = {
-  1: { name: "📦 تجهيز وشحن أجهزة إلكترونية ذكية", from: "الرياض (السعودية)", to: "دبي (الإمارات)", weight: "120 kg", carrier: "Aramex Cargo" },
-  2: { name: "📦 فحص وتغليف شحنة مستحضرات عناية شخصية", from: "المنامة (البحرين)", to: "مسقط (عمان)", weight: "45 kg", carrier: "DHL Express" },
-  3: { name: "📦 مطابقة وتجهيز فواتير ملابس ومستلزمات عامة", from: "الدوحة (قطر)", to: "البصرة (العراق)", weight: "210 kg", carrier: "FedEx International" },
-  4: { name: "📦 تأكيد ومطابقة شحن أجهزة كهربائية منزلية", from: "القاهرة (مصر)", to: "جدة (السعودية)", weight: "430 kg", carrier: "Taskora Logistics" },
-  5: { name: "📦 فحص وتوزيع شحنة ملابس رياضية وإكسسوارات", from: "الكويت (الكويت)", to: "عمان (الأردن)", weight: "85 kg", carrier: "SMSA Express" },
-  6: { name: "📦 تدقيق ومطابقة أوراق أجهزة ومستلزمات طبية", from: "أربيل (العراق)", to: "بغداد (العراق)", weight: "60 kg", carrier: "Iraqi Global Cargo" },
-  7: { name: "📦 فحص وتفريغ حاوية شحن بحري للمواد غذائية", from: "ميناء دبي (الإمارات)", to: "ميناء الدمام (السعودية)", weight: "18,000 kg", carrier: "Maersk Cargo" },
-  8: { name: "📦 تجهيز شحنة مستلزمات وقطع غيار مركبات وسيارات", from: "جدة (السعودية)", to: "الموصل (العراق)", weight: "320 kg", carrier: "Naqel Express" },
-  9: { name: "📦 مطابقة شحنة أثاث وتصميم منزلي ومكتبي راقٍ", from: "الرياض (السعودية)", to: "المنامة (البحرين)", weight: "850 kg", carrier: "DHL Global Forwarding" },
-  10: { name: "📦 تأكيد فرز وتوزيع بضائع شحن بحري عابرة للقارات", from: "ميناء البصرة (العراق)", to: "ميناء دبي (الإمارات)", weight: "1,200 kg", carrier: "DB Schenker" },
-  11: { name: "📦 فحص جودة وتغليف شحنة ساعات وهواتف ذكية", from: "الدوحة (قطر)", to: "مسقط (عمان)", weight: "28 kg", carrier: "UPS Express" },
-  12: { name: "📦 إتمام شحنة بضائع عامة وتدقيق بوليصة الحدود", from: "أربيل (العراق)", to: "عمان (الأردن)", weight: "1,500 kg", carrier: "Taskora Global Express" }
-};
-
-function startOfflineDemoMode() {
-  window.offlineMode = true;
-  localStorage.setItem("taskora_offline", "true");
-  token = "offline-mock-token";
-  
-  if (!localStorage.getItem("taskora_mock_user")) {
-    const mockUser = {
-      id: 99999,
-      username: "مستثمر تجريبي",
-      email: "demo@taskora.live",
-      phone: "+966500000000",
-      role: "user",
-      balance: 250.00,
-      package_balance: 0,
-      package_profit: 0,
-      referral_code: "DEMO123",
-      kyc_status: "verified",
-      bonus_claimed: false,
-      status: "active",
-      created_at: new Date().toISOString()
-    };
-    localStorage.setItem("taskora_mock_user", JSON.stringify(mockUser));
-    localStorage.setItem("taskora_mock_packages", JSON.stringify([]));
-    localStorage.setItem("taskora_mock_transactions", JSON.stringify([
-      { id: 1, type: "deposit", amount: 250.00, description: "رصيد تجريبي ترحيبي مجاني", balance_before: 0, balance_after: 250.00, created_at: new Date().toISOString() }
-    ]));
-    localStorage.setItem("taskora_mock_deposits", JSON.stringify([]));
-    localStorage.setItem("taskora_mock_withdrawals", JSON.stringify([]));
-    localStorage.setItem("taskora_mock_notifications", JSON.stringify([
-      { id: 1, title: "مرحباً بك في الوضع التجريبي 🚀", message: "يمكنك الآن تجربة المنصة بالكامل وشراء الباقات وإتمام مهام الشحن والطلبات بدون الحاجة للاتصال بالسيرفر!", type: "info", read: false, created_at: new Date().toISOString() }
-    ]));
-  }
-  
-  toast("تم تفعيل الوضع التجريبي بنجاح! 🚀", "success");
-  loadMe();
-}
-
-async function simulateOfflineApi(path, opts = {}) {
-  await new Promise(resolve => setTimeout(resolve, 350));
-  
-  const getMockUser = () => JSON.parse(localStorage.getItem("taskora_mock_user"));
-  const saveMockUser = (u) => localStorage.setItem("taskora_mock_user", JSON.stringify(u));
-  const getMockTransactions = () => JSON.parse(localStorage.getItem("taskora_mock_transactions") || "[]");
-  const saveMockTransactions = (t) => localStorage.setItem("taskora_mock_transactions", JSON.stringify(t));
-  const getMockNotifications = () => JSON.parse(localStorage.getItem("taskora_mock_notifications") || "[]");
-  const saveMockNotifications = (n) => localStorage.setItem("taskora_mock_notifications", JSON.stringify(n));
-  
-  if (path === "/api/me") {
-    return { user: getMockUser() };
-  }
-  
-  if (path === "/api/dashboard") {
-    const user = getMockUser();
-    const mockPackages = JSON.parse(localStorage.getItem("taskora_mock_packages") || "[]");
-    const activePkg = mockPackages.find(p => p.status === "active") || null;
-    const transactions = getMockTransactions();
-    const approvedDepositsCount = transactions.filter(t => t.type === "deposit").length;
-    
-    return {
-      user: user,
-      package: activePkg,
-      daily_tasks: [
-        "📦 تجهيز وشحن بضائع إلكترونية من الرياض إلى دبي",
-        "📦 فحص وتغليف شحنة مستحضرات تجميل من المنامة إلى مسقط",
-        "📦 مطابقة فواتير بضائع استهلاكية من الدوحة إلى البصرة",
-        "📦 تأكيد حجز شحن أجهزة منزلية من القاهرة إلى جدة",
-        "📦 مراجعة طلبات شحن ملابس رياضية من الكويت إلى عمان",
-        "📦 تأكيد بوليصة شحن مستلزمات طبية من أربيل إلى بغداد",
-        "📦 فحص حاوية بضائع غذائية من ميناء دبي إلى ميناء الدمام",
-        "📦 تجهيز شحنة مستلزمات سيارات من جدة إلى الموصل",
-        "📦 مطابقة أوزان وتدقيق شحنة أثاث من الرياض إلى المنامة",
-        "📦 تأكيد تفريغ بضائع شحن بحري في ميناء البصرة",
-        "📦 فحص جودة وتغليف شحنة ساعات ذكية من الدوحة إلى مسقط",
-        "📦 إتمام بوليصة شحن نهائية لبضائع مختلفة عبر الحدود"
-      ],
-      stats: {
-        completed_tasks: activePkg ? activePkg.completed_count : 0,
-        completed_packages: mockPackages.filter(p => p.status === "completed").length,
-        approved_deposits: approvedDepositsCount,
-        referral_count: 3
-      }
-    };
-  }
-  
-  if (path === "/api/packages") {
-    return {
-      packages: [
-        { id: "bronze", name: "البرونزية (Bronze)", price: 100, profit: 10, per_task: 0.83 },
-        { id: "silver", name: "الفضية (Silver)", price: 300, profit: 30, per_task: 2.50 },
-        { id: "gold", name: "الذهبية (Gold)", price: 800, profit: 80, per_task: 6.67 },
-        { id: "platinum", name: "البلاتينية (Platinum)", price: 1500, profit: 150, per_task: 12.50 },
-        { id: "vip", name: "كبار الشخصيات (VIP)", price: 3000, profit: 300, per_task: 25.00 }
-      ]
-    };
-  }
-  
-  if (path.startsWith("/api/packages/") && path.endsWith("/buy")) {
-    const pkgId = path.split("/")[3];
-    const user = getMockUser();
-    const prices = { bronze: 100, silver: 300, gold: 800, platinum: 1500, vip: 3000 };
-    const names = { bronze: "البرونزية (Bronze)", silver: "الفضية (Silver)", gold: "الذهبية (Gold)", platinum: "البلاتينية (Platinum)", vip: "كبار الشخصيات (VIP)" };
-    const price = prices[pkgId] || 100;
-    
-    if (user.balance < price) {
-      throw new Error("رصيدك التجريبي غير كافٍ! يرجى تقديم طلب إيداع تجريبي من المحفظة أولاً.");
-    }
-    
-    const before = user.balance;
-    user.balance = Number((user.balance - price).toFixed(2));
-    saveMockUser(user);
-    
-    const txs = getMockTransactions();
-    txs.unshift({
-      id: Date.now(),
-      type: "package_purchase",
-      amount: -price,
-      description: `شراء باقة ${names[pkgId]}`,
-      balance_before: before,
-      balance_after: user.balance,
-      created_at: new Date().toISOString()
-    });
-    saveMockTransactions(txs);
-    
-    const mockPackages = JSON.parse(localStorage.getItem("taskora_mock_packages") || "[]");
-    mockPackages.unshift({
-      package_id: pkgId,
-      package_name: names[pkgId],
-      price: price,
-      completed_count: 0,
-      completed_tasks: [],
-      status: "active",
-      started_at: new Date().toISOString(),
-      profit_target: price * 0.10
-    });
-    localStorage.setItem("taskora_mock_packages", JSON.stringify(mockPackages));
-    
-    const notifs = getMockNotifications();
-    notifs.unshift({
-      id: Date.now(),
-      title: "تهانينا على شراء الباقة! 🎉",
-      message: `لقد قمت بتفعيل باقة ${names[pkgId]} بنجاح بقيمة $${price}. ابدأ الآن في إنجاز مهام الشحن اليومية وجني الأرباح!`,
-      type: "success",
-      read: false,
-      created_at: new Date().toISOString()
-    });
-    saveMockNotifications(notifs);
-    
-    return { success: true };
-  }
-  
-  if (path.startsWith("/api/tasks/daily/") && path.endsWith("/complete")) {
-    const taskNum = Number(path.split("/")[4]);
-    const user = getMockUser();
-    const mockPackages = JSON.parse(localStorage.getItem("taskora_mock_packages") || "[]");
-    const activePkg = mockPackages.find(p => p.status === "active");
-    
-    if (!activePkg) {
-      throw new Error("لا توجد باقة نشطة لإكمال المهام.");
-    }
-    
-    const price = activePkg.price;
-    const taskProfit = Number(((price * 0.10) / 12).toFixed(2));
-    
-    if (!activePkg.completed_tasks.includes(taskNum)) {
-      activePkg.completed_tasks.push(taskNum);
-      activePkg.completed_count = activePkg.completed_tasks.length;
-      
-      const before = user.balance;
-      user.balance = Number((user.balance + taskProfit).toFixed(2));
-      saveMockUser(user);
-      
-      const txs = getMockTransactions();
-      txs.unshift({
-        id: Date.now(),
-        type: "task_profit",
-        amount: taskProfit,
-        description: `أرباح إتمام مهمة شحن رقم ${taskNum} لباقة ${activePkg.package_name}`,
-        balance_before: before,
-        balance_after: user.balance,
-        created_at: new Date().toISOString()
-      });
-      saveMockTransactions(txs);
-      
-      if (activePkg.completed_count >= 12) {
-        activePkg.status = "completed";
-      }
-      localStorage.setItem("taskora_mock_packages", JSON.stringify(mockPackages));
-    }
-    
-    return { success: true };
-  }
-  
-  if (path === "/api/referrals") {
-    return {
-      referral_code: getMockUser().referral_code,
-      invited: [
-        { username: "Ahmed_TRD", email: "ahm***@gmail.com", created_at: new Date().toISOString(), kyc_status: "verified", approved_deposits: 100 },
-        { username: "Sarah_Cargo", email: "sar***@yahoo.com", created_at: new Date().toISOString(), kyc_status: "verified", approved_deposits: 300 },
-        { username: "Youssef_Line", email: "you***@outlook.com", created_at: new Date().toISOString(), kyc_status: "pending", approved_deposits: 0 }
-      ],
-      total_bonus: 20.00
-    };
-  }
-  
-  if (path === "/api/deposits" && opts.method === "POST") {
-    const amount = Number(opts.body.get("amount"));
-    const coin = opts.body.get("coin");
-    const txid = opts.body.get("txid");
-    
-    const mockDeposits = JSON.parse(localStorage.getItem("taskora_mock_deposits") || "[]");
-    mockDeposits.unshift({
-      id: Date.now(),
-      amount,
-      coin,
-      txid,
-      status: "pending",
-      created_at: new Date().toISOString()
-    });
-    localStorage.setItem("taskora_mock_deposits", JSON.stringify(mockDeposits));
-    
-    setTimeout(() => {
-      try {
-        const user = getMockUser();
-        const deps = JSON.parse(localStorage.getItem("taskora_mock_deposits") || "[]");
-        const dep = deps.find(d => d.txid === txid && d.status === "pending");
-        if (dep) {
-          dep.status = "approved";
-          localStorage.setItem("taskora_mock_deposits", JSON.stringify(deps));
-          
-          const before = user.balance;
-          user.balance = Number((user.balance + amount).toFixed(2));
-          saveMockUser(user);
-          
-          const txs = getMockTransactions();
-          txs.unshift({
-            id: Date.now(),
-            type: "deposit",
-            amount,
-            description: `إيداع مقبول ${coin.toUpperCase()}`,
-            balance_before: before,
-            balance_after: user.balance,
-            created_at: new Date().toISOString()
-          });
-          saveMockTransactions(txs);
-          
-          const notifs = getMockNotifications();
-          notifs.unshift({
-            id: Date.now(),
-            title: "تم قبول الإيداع التجريبي! 📥",
-            message: `لقد تم إيداع بقيمة $${amount} بنجاح في حسابك التجريبي عبر ${coin.toUpperCase()}.`,
-            type: "success",
-            read: false,
-            created_at: new Date().toISOString()
-          });
-          saveMockNotifications(notifs);
-        }
-      } catch (err) {}
-    }, 5000);
-    
-    return { deposit: { amount, coin, txid, status: "pending" } };
-  }
-  
-  if (path === "/api/deposits") {
-    return { deposits: JSON.parse(localStorage.getItem("taskora_mock_deposits") || "[]") };
-  }
-  
-  if (path === "/api/withdrawals" && opts.method === "POST") {
-    const body = JSON.parse(opts.body);
-    const amount = Number(body.amount);
-    const coin = body.coin;
-    const wallet = body.wallet_address;
-    
-    const user = getMockUser();
-    if (user.balance < amount) {
-      throw new Error("رصيدك غير كافٍ للسحب.");
-    }
-    
-    const before = user.balance;
-    user.balance = Number((user.balance - amount).toFixed(2));
-    saveMockUser(user);
-    
-    const txs = getMockTransactions();
-    txs.unshift({
-      id: Date.now(),
-      type: "withdrawal_hold",
-      amount: -amount,
-      description: "حجز مبلغ السحب بانتظار مراجعة الأدمن",
-      balance_before: before,
-      balance_after: user.balance,
-      created_at: new Date().toISOString()
-    });
-    saveMockTransactions(txs);
-    
-    const mockWithdrawals = JSON.parse(localStorage.getItem("taskora_mock_withdrawals") || "[]");
-    mockWithdrawals.unshift({
-      id: Date.now(),
-      amount,
-      coin,
-      wallet_address: wallet,
-      status: "pending",
-      created_at: new Date().toISOString()
-    });
-    localStorage.setItem("taskora_mock_withdrawals", JSON.stringify(mockWithdrawals));
-    
-    setTimeout(() => {
-      try {
-        const wds = JSON.parse(localStorage.getItem("taskora_mock_withdrawals") || "[]");
-        const wd = wds.find(w => w.wallet_address === wallet && w.status === "pending");
-        if (wd) {
-          wd.status = "approved";
-          wd.txid = "0x" + Math.random().toString(16).slice(2, 10) + "..." + Math.random().toString(16).slice(2, 6);
-          localStorage.setItem("taskora_mock_withdrawals", JSON.stringify(wds));
-          
-          const notifs = getMockNotifications();
-          notifs.unshift({
-            id: Date.now(),
-            title: "تمت الموافقة على السحب التجريبي! 📤",
-            message: `لقد وافقت الإدارة على طلب السحب الخاص بك بقيمة $${amount} إلى محفظتك بنجاح.`,
-            type: "success",
-            read: false,
-            created_at: new Date().toISOString()
-          });
-          saveMockNotifications(notifs);
-        }
-      } catch (err) {}
-    }, 7000);
-    
-    return { success: true };
-  }
-  
-  if (path === "/api/transactions") {
-    return { transactions: getMockTransactions() };
-  }
-  
-  if (path === "/api/notifications") {
-    return { notifications: getMockNotifications() };
-  }
-  
-  if (path === "/api/wallets") {
-    return {
-      wallets: [
-        { coin: "usdt_trc20", address: "TXYZ1234567890DEMOADDRESSUSDTTRC20", network: "TRC20" },
-        { coin: "usdt_erc20", address: "0x1234567890demoaddressusdterc20", network: "ERC20" },
-        { coin: "btc", address: "1demoBTCAddress1234567890BitcoinNet", network: "Bitcoin" },
-        { coin: "sol", address: "Solana1111111demoaddresssolananetwork", network: "Solana" }
-      ]
-    };
-  }
-  
-  return {};
-}
-
-function openInteractiveTask(taskNumber) {
-  const order = MOCK_SHIPPING_ORDERS[taskNumber] || MOCK_SHIPPING_ORDERS[1];
-  
-  let profitText = "$0.83";
-  if (window.offlineMode) {
-    const mockPackages = JSON.parse(localStorage.getItem("taskora_mock_packages") || "[]");
-    const activePkg = mockPackages.find(p => p.status === "active");
-    if (activePkg) {
-      const price = activePkg.price;
-      const profit = Number(((price * 0.10) / 12).toFixed(2));
-      profitText = `$${profit.toFixed(2)}`;
-    }
-  } else if (me && me.package_balance) {
-    const price = Number(me.package_balance);
-    const profit = Number(((price * 0.10) / 12).toFixed(2));
-    profitText = `$${profit.toFixed(2)}`;
-  }
-
-  const modal = document.getElementById("adminModal");
-  modal.innerHTML = `
-    <div class="modal task-interactive-modal" style="max-width: 580px; width: 95%; background: rgba(18, 22, 41, 0.96); border: 1px solid rgba(16, 185, 129, 0.2); box-shadow: 0 20px 50px rgba(0,0,0,0.6); backdrop-filter: blur(25px); border-radius: 24px; padding: 26px; color: #fff; direction: rtl; text-align: right; overflow: hidden; position: relative;">
-      
-      <!-- Confetti Overlay -->
-      <div id="taskConfettiOverlay" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(10, 12, 26, 0.95); z-index: 100; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; animation: fadeIn 0.4s ease;">
-        <span style="font-size: 60px; animation: bounce 1s infinite;">🎉</span>
-        <h2 style="color: #10b981; font-weight: 900; margin-top: 16px; font-size: 24px;">تم إكمال المهمة بنجاح!</h2>
-        <p style="color: #a1a1aa; font-size: 14px; max-width: 320px; margin: 8px auto 20px;">لقد قمت بفحص وتجهيز بوليصة شحن الطلب بالكامل وتم تسليم الحاوية إلى الناقل اللوجستي بنجاح.</p>
-        
-        <div style="background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.15); padding: 14px 28px; border-radius: 16px; margin-bottom: 24px;">
-          <span style="font-size: 13px; color: #a7f3d0; display: block;">أرباح المهمة المضافة لحسابك:</span>
-          <b style="font-size: 32px; color: #10b981; font-family: 'Rajdhani', sans-serif;">${profitText}</b>
-        </div>
-        
-        <button onclick="finishTaskAction(${taskNumber})" style="background: linear-gradient(135deg, #10b981, #059669); color: #000; border: none; border-radius: 12px; padding: 12px 32px; font-size: 14px; font-weight: 800; cursor: pointer; box-shadow: 0 0 20px rgba(16, 185, 129, 0.35); transition: all 0.3s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">حفظ الأرباح وإغلاق المهمة 💰</button>
-      </div>
-
-      <!-- Modal Header -->
-      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 16px; margin-bottom: 20px;">
-        <h3 style="margin: 0; font-size: 17px; color: #10b981; display: flex; align-items: center; gap: 8px; font-weight: 700;">
-          <span>📦</span> معالجة شحنة الطلب رقم ${taskNumber}
-        </h3>
-        <button onclick="closeAdminModal()" style="background: none; border: none; color: #a1a1aa; font-size: 24px; cursor: pointer; line-height: 1; transition: color 0.2s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#a1a1aa'">&times;</button>
-      </div>
-      
-      <!-- Cargo Info Card -->
-      <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 16px; padding: 16px; margin-bottom: 20px;">
-        <div style="font-weight: 700; font-size: 14px; color: #fff; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
-          <span style="color:#10b981;">●</span> ${order.name}
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: #a1a1aa; padding-right: 12px; border-right: 2px solid rgba(16, 185, 129, 0.3);">
-          <div>📍 <b>مسار الرحلة:</b> من <span style="color:#fff; font-weight: 600;">${order.from}</span> إلى <span style="color:#fff; font-weight: 600;">${order.to}</span></div>
-          <div>⚖️ <b>الوزن الصافي:</b> <span style="color:#fff;">${order.weight}</span></div>
-          <div>🚢 <b>الناقل اللوجستي:</b> <span style="color:#fff;">${order.carrier}</span></div>
-        </div>
-      </div>
-
-      <!-- Real-time Progress Bar -->
-      <div style="margin-bottom: 24px;">
-        <div style="display: flex; justify-content: space-between; font-size: 12px; color: #a1a1aa; margin-bottom: 6px;">
-          <span>نسبة تجهيز الطلب والشحن</span>
-          <span id="taskProgressPercent" style="font-weight: 700; color: #10b981; font-family: 'Rajdhani', sans-serif;">0%</span>
-        </div>
-        <div style="height: 8px; background: rgba(255,255,255,0.04); border-radius: 4px; overflow: hidden; border: 1px solid rgba(255,255,255,0.02);">
-          <div id="taskProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #10b981, #059669); transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);"></div>
-        </div>
-      </div>
-
-      <!-- Stepper Interface -->
-      <div style="display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px;">
-        
-        <!-- Step 1 -->
-        <div id="taskStep1Box" style="display: flex; align-items: center; justify-content: space-between; background: rgba(16, 185, 129, 0.04); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 16px; padding: 12px 16px; transition: all 0.3s;">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <span id="taskStep1Icon" style="background: rgba(16, 185, 129, 0.15); color: #10b981; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; transition: all 0.3s;">١</span>
-            <div>
-              <b style="font-size: 13px; color: #fff; display: block;">الخطوة الأولى: فحص جودة المحتويات</b>
-              <span id="taskStep1Text" style="font-size: 11px; color: #a1a1aa; display: block; margin-top: 2px;">بانتظار التحقق من المنتجات وتعبئتها الآمنة...</span>
-            </div>
-          </div>
-          <button id="taskStep1Btn" onclick="runTaskStep(1, ${taskNumber})" style="background: #10b981; color: #000; border: none; border-radius: 8px; padding: 8px 16px; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s; outline: none;">فحص المنتجات</button>
-        </div>
-
-        <!-- Step 2 -->
-        <div id="taskStep2Box" style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: 16px; padding: 12px 16px; transition: all 0.3s; opacity: 0.4;">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <span id="taskStep2Icon" style="background: rgba(255, 255, 255, 0.03); color: #a1a1aa; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; transition: all 0.3s;">٢</span>
-            <div>
-              <b style="font-size: 13px; color: #fff; display: block;">الخطوة الثانية: مطابقة أوراق الشحنة</b>
-              <span id="taskStep2Text" style="font-size: 11px; color: #a1a1aa; display: block; margin-top: 2px;">فحص بوليصة الشحن والفواتير الجمركية...</span>
-            </div>
-          </div>
-          <button id="taskStep2Btn" onclick="runTaskStep(2, ${taskNumber})" style="background: rgba(255,255,255,0.05); color: #8e8e93; border: none; border-radius: 8px; padding: 8px 16px; font-size: 12px; font-weight: 800; cursor: not-allowed; transition: all 0.2s; outline: none;" disabled>مغلق</button>
-        </div>
-
-        <!-- Step 3 -->
-        <div id="taskStep3Box" style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: 16px; padding: 12px 16px; transition: all 0.3s; opacity: 0.4;">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <span id="taskStep3Icon" style="background: rgba(255, 255, 255, 0.03); color: #a1a1aa; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; transition: all 0.3s;">٣</span>
-            <div>
-              <b style="font-size: 13px; color: #fff; display: block;">الخطوة الثالثة: تفعيل وإطلاق الشحنة</b>
-              <span id="taskStep3Text" style="font-size: 11px; color: #a1a1aa; display: block; margin-top: 2px;">تأكيد التسليم لشركة النقل وإرسال التتبع...</span>
-            </div>
-          </div>
-          <button id="taskStep3Btn" onclick="runTaskStep(3, ${taskNumber})" style="background: rgba(255,255,255,0.05); color: #8e8e93; border: none; border-radius: 8px; padding: 8px 16px; font-size: 12px; font-weight: 800; cursor: not-allowed; transition: all 0.2s; outline: none;" disabled>مغلق</button>
-        </div>
-      </div>
-    </div>
-  `;
-  modal.classList.add("open");
-}
-
-function runTaskStep(step, taskNumber) {
-  const btn = document.getElementById(`taskStep${step}Btn`);
-  const box = document.getElementById(`taskStep${step}Box`);
-  const icon = document.getElementById(`taskStep${step}Icon`);
-  const text = document.getElementById(`taskStep${step}Text`);
-  
-  btn.disabled = true;
-  btn.style.cursor = "not-allowed";
-  btn.innerHTML = `<span class="spinner" style="display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; margin-left: 6px;"></span> جاري المعالجة...`;
-  
-  setTimeout(() => {
-    btn.style.display = "none";
-    box.style.background = "rgba(16, 185, 129, 0.08)";
-    box.style.borderColor = "#10b981";
-    icon.style.background = "#10b981";
-    icon.style.color = "#000";
-    icon.innerHTML = "✓";
-    
-    if (step === 1) {
-      text.innerText = "✓ تم التحقق وتعبئة المنتجات بأعلى معايير الجودة والتغليف.";
-      text.style.color = "#a7f3d0";
-      
-      document.getElementById("taskProgressBar").style.width = "33%";
-      document.getElementById("taskProgressPercent").innerText = "33%";
-      
-      const step2Box = document.getElementById("taskStep2Box");
-      const step2Icon = document.getElementById("taskStep2Icon");
-      const step2Btn = document.getElementById("taskStep2Btn");
-      
-      step2Box.style.opacity = "1";
-      step2Box.style.background = "rgba(108, 77, 255, 0.04)";
-      step2Box.style.borderColor = "rgba(108, 77, 255, 0.25)";
-      
-      step2Icon.style.background = "rgba(108, 77, 255, 0.15)";
-      step2Icon.style.color = "#6c4dff";
-      
-      step2Btn.disabled = false;
-      step2Btn.style.cursor = "pointer";
-      step2Btn.style.background = "#6c4dff";
-      step2Btn.style.color = "#fff";
-      step2Btn.innerText = "مطابقة بوليصة الشحن";
-    }
-    
-    if (step === 2) {
-      text.innerText = "✓ تم فحص ومطابقة بوليصة الشحن مع الفاتورة الضريبية وتأشيرة الجمارك.";
-      text.style.color = "#a7f3d0";
-      
-      document.getElementById("taskProgressBar").style.width = "66%";
-      document.getElementById("taskProgressPercent").innerText = "66%";
-      
-      const step3Box = document.getElementById("taskStep3Box");
-      const step3Icon = document.getElementById("taskStep3Icon");
-      const step3Btn = document.getElementById("taskStep3Btn");
-      
-      step3Box.style.opacity = "1";
-      step3Box.style.background = "rgba(245, 158, 11, 0.04)";
-      step3Box.style.borderColor = "rgba(245, 158, 11, 0.25)";
-      
-      step3Icon.style.background = "rgba(245, 158, 11, 0.15)";
-      step3Icon.style.color = "#f59e0b";
-      
-      step3Btn.disabled = false;
-      step3Btn.style.cursor = "pointer";
-      step3Btn.style.background = "#f59e0b";
-      step3Btn.style.color = "#000";
-      step3Btn.innerText = "تفعيل الشحن وإطلاق الحاوية";
-    }
-    
-    if (step === 3) {
-      text.innerText = "✓ تم إرسال الشحنة لشركة النقل وإرسال كود التتبع واللوجستيات بنجاح.";
-      text.style.color = "#a7f3d0";
-      
-      document.getElementById("taskProgressBar").style.width = "100%";
-      document.getElementById("taskProgressPercent").innerText = "100%";
-      
-      setTimeout(() => {
-        document.getElementById("taskConfettiOverlay").style.display = "flex";
-      }, 600);
-    }
-    
-  }, 1200);
-}
-
-async function finishTaskAction(taskNumber) {
-  closeAdminModal();
-  await completeTask(taskNumber);
-}
-</script>
 </body>
 </html>
-
