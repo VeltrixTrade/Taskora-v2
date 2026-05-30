@@ -13,11 +13,9 @@ const rateLimit = require("express-rate-limit");
 const compression = require("compression");
 const { Pool } = require("pg");
 const QRCode = require("qrcode");
-const emailService = require("./emailService");
 
 const app = express();
 const APP_VERSION = "remove-native-res-json-v7";
-
 
 // ABSOLUTE_API_JSON_FIX_ROUTES
 
@@ -82,7 +80,7 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false
 });
 
-const uploadDir = path.resolve(process.env.UPLOAD_DIR || path.join(__dirname, "uploads"));
+const uploadDir = process.env.UPLOAD_DIR || path.join(__dirname, "uploads");
 fs.mkdirSync(uploadDir, { recursive: true });
 
 const storage = multer.diskStorage({
@@ -171,9 +169,28 @@ function makeToken() {
 }
 
 async function sendMail(to, subject, html) {
-  return emailService.sendEmail(to, subject, html);
-}
+  if (!process.env.RESEND_API_KEY) {
+    console.log(`MAIL DEV MODE -> ${to} | ${subject} | ${html}`);
+    return { dev: true };
+  }
 
+  const from = process.env.MAIL_FROM || "Taskora <noreply@taskora.app>";
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ from, to, subject, html })
+  });
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    console.error("Email send failed:", text);
+    throw new Error("Email provider failed.");
+  }
+  return response.json().catch(() => ({}));
+}
 
 
 
@@ -195,18 +212,6 @@ async function migrate() {
       bonus_claimed BOOLEAN NOT NULL DEFAULT FALSE,
       status VARCHAR(30) NOT NULL DEFAULT 'active',
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    );
-  `);
-
-  await query(`
-    CREATE TABLE IF NOT EXISTS otps (
-      id BIGSERIAL PRIMARY KEY,
-      email VARCHAR(255) NOT NULL,
-      code VARCHAR(6) NOT NULL,
-      type VARCHAR(50) NOT NULL,
-      attempts INTEGER DEFAULT 0,
-      expires_at TIMESTAMPTZ NOT NULL,
-      created_at TIMESTAMPTZ DEFAULT NOW()
     );
   `);
 
@@ -324,19 +329,13 @@ async function migrate() {
   `);
 
   await query(`
-    INSERT INTO wallet_addresses (coin, address, network, is_active)
+    INSERT INTO wallet_addresses (coin, address, network)
     VALUES
-      ('usdt_trc20', 'TRiN4r8FkteWnAKwdgQ6UJXh3VPSL1hbSQ', 'TRC20', true),
-      ('usdt_erc20', '0xab3f219c2132edee0203d2d1a365e281a3508021', 'ERC20', true),
-      ('btc', 'bc1q245hjxk4836qg0qg5r2w4k0szp66l3r2xp6end44gdh3d4nxft7swh7jwg', 'Bitcoin', true),
-      ('sol', 'HpJDweX8pfW2a25rbcExW7b3mhk9FLu4SsThJxzHMJYN', 'Solana', true)
-    ON CONFLICT (coin) 
-    DO UPDATE SET address = EXCLUDED.address, network = EXCLUDED.network, is_active = true;
-  `);
-
-  await query(`
-    DELETE FROM wallet_addresses 
-    WHERE coin NOT IN ('usdt_trc20', 'usdt_erc20', 'btc', 'sol');
+      ('usdt', 'USDT_TRC20_WALLET_ADDRESS_HERE', 'TRC20'),
+      ('bnb', 'BNB_BEP20_WALLET_ADDRESS_HERE', 'BEP20'),
+      ('eth', 'ETH_ERC20_WALLET_ADDRESS_HERE', 'ERC20'),
+      ('btc', 'BTC_WALLET_ADDRESS_HERE', 'BTC')
+    ON CONFLICT (coin) DO NOTHING;
   `);
 
   await query(`
@@ -369,13 +368,8 @@ async function migrate() {
       sent_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
       sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       completed_at TIMESTAMPTZ
-    )
+    );
   `);
-
-  await query(`ALTER TABLE golden_tasks ADD COLUMN IF NOT EXISTS proof_image VARCHAR(255);`);
-  await query(`ALTER TABLE golden_tasks ADD COLUMN IF NOT EXISTS user_note TEXT;`);
-  await query(`ALTER TABLE golden_tasks ADD COLUMN IF NOT EXISTS admin_note TEXT;`);
-  await query(`ALTER TABLE golden_tasks ADD COLUMN IF NOT EXISTS task_link VARCHAR(500);`);
 
 
 
@@ -430,18 +424,6 @@ async function migrate() {
 
   await query(`CREATE INDEX IF NOT EXISTS support_tickets_user_idx ON support_tickets (user_id, created_at DESC);`);
   await query(`CREATE INDEX IF NOT EXISTS support_tickets_status_idx ON support_tickets (status);`);
-
-  await query(`
-    CREATE TABLE IF NOT EXISTS support_emails (
-      id BIGSERIAL PRIMARY KEY,
-      sender_email VARCHAR(255) NOT NULL,
-      sender_name VARCHAR(255),
-      subject VARCHAR(255) NOT NULL,
-      message TEXT NOT NULL,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    );
-  `);
-  await query(`CREATE INDEX IF NOT EXISTS support_emails_created_idx ON support_emails (created_at DESC);`);
 
 
 
@@ -555,9 +537,9 @@ const PACKAGES = [
   { id: "gold", name: "الذهبية", price: 50, tasks: 12 },
   { id: "platinum", name: "البلاتينيوم", price: 100, tasks: 12 },
   { id: "vip", name: "VIP", price: 500, tasks: 12 },
-  { id: "diamond", name: "VIP النخبة", price: 1000, tasks: 12 },
-  { id: "crown_vip", name: "VIP التاج", price: 2000, tasks: 12 },
-  { id: "royal_vip", name: "VIP الملكية", price: 5000, tasks: 12 }
+  { id: "diamond", name: "VIP النخبة", price: 1000, tasks: 12, monthly: true },
+  { id: "crown_vip", name: "VIP التاج", price: 2000, tasks: 12, monthly: true },
+  { id: "royal_vip", name: "VIP الملكية", price: 5000, tasks: 12, monthly: true }
 ];
 
 const DAILY_TASKS = [
@@ -635,7 +617,7 @@ app.post("/api/auth/register", async (req, res) => {
 
     let referredBy = null;
     if (referral) {
-      const refRes = await query("SELECT id FROM users WHERE UPPER(TRIM(referral_code)) = UPPER(TRIM($1))", [referral]);
+      const refRes = await query("SELECT id FROM users WHERE referral_code=$1", [referral]);
       if (refRes.rowCount > 0) referredBy = refRes.rows[0].id;
     }
 
@@ -656,17 +638,7 @@ app.post("/api/auth/register", async (req, res) => {
 
     const user = result.rows[0];
     await createNotification(pool, user.id, "مرحبًا بك في Taskora", "أكمل توثيق البريد والهوية لتفعيل كامل المزايا.", "welcome");
-
-    // Generate 6-digit OTP for email verification
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-    await query(`
-      INSERT INTO otps (email, code, type, expires_at)
-      VALUES ($1, $2, 'email_verification', NOW() + interval '10 minutes')
-    `, [email, otpCode]);
-
-    // Send styled welcome and verification email using Resend
-    await emailService.sendOTPEmail(email, username, otpCode, "email_verification");
-
+    await sendMail(email, "تأكيد بريد Taskora", `<p>مرحبًا ${username}</p><p>اضغط الرابط لتأكيد بريدك:</p><p><a href="${APP_URL}/api/auth/verify-email/${verificationToken}">تأكيد البريد</a></p>`);
     res.status(201).json({ token: signToken(user), user: publicUser(user), verification_url: `/api/auth/verify-email/${verificationToken}` });
   } catch (err) {
     console.error(err);
@@ -728,63 +700,22 @@ app.post("/api/auth/change-password", auth, async (req, res) => {
 
 
 app.post("/api/auth/request-password-reset", async (req, res) => {
-  try {
-    const email = lower(req.body.email);
-    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
-      return res.status(422).json({ error: "Valid email is required." });
-    }
-
-    const result = await query("SELECT id,email,username FROM users WHERE lower(email)=lower($1) LIMIT 1", [email]);
-    // Do not reveal whether the email exists.
-    if (result.rowCount === 0) return res.json({ success: true });
-
-    const user = result.rows[0];
-
-    // Anti-spam Cooldown check: 60 seconds
-    const lastOtp = await query(`
-      SELECT created_at FROM otps 
-      WHERE lower(email) = lower($1) AND type = 'password_reset'
-      ORDER BY id DESC LIMIT 1
-    `, [user.email]);
-
-    if (lastOtp.rowCount > 0) {
-      const diffMs = Date.now() - new Date(lastOtp.rows[0].created_at).getTime();
-      if (diffMs < 60000) {
-        const waitSec = Math.ceil((60000 - diffMs) / 1000);
-        return res.status(429).json({ error: `الرجاء الانتظار ${waitSec} ثانية قبل طلب كود جديد.` });
-      }
-    }
-
-    // Daily limit check: 5 codes per 24 hours
-    const dailyCount = await query(`
-      SELECT COUNT(*)::int AS count FROM otps 
-      WHERE lower(email) = lower($1) AND type = 'password_reset' AND created_at > NOW() - interval '24 hours'
-    `, [user.email]);
-
-    if (dailyCount.rows[0].count >= 5) {
-      return res.status(429).json({ error: "لقد تجاوزت الحد الأقصى لإرسال الأكواد اليوم (5 أكواد). يرجى المحاولة غداً." });
-    }
-
-    // Generate 6-digit OTP code for password reset
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-    await query(`
-      INSERT INTO otps (email, code, type, expires_at)
-      VALUES ($1, $2, 'password_reset', NOW() + interval '10 minutes')
-    `, [user.email, otpCode]);
-
-    // Send styled password reset email using Resend
-    await emailService.sendOTPEmail(user.email, user.username, otpCode, "password_reset");
-
-    const token = makeToken();
-    await query("UPDATE users SET password_reset_token=$1, password_reset_expires=NOW() + interval '30 minutes' WHERE id=$2", [token, user.id]);
-    const url = `${APP_URL}/reset-password?token=${token}`;
-    await createNotification(pool, user.id, "طلب استعادة كلمة المرور", "تم إنشاء رابط استعادة كلمة مرور لحسابك.", "info");
-
-    res.json({ success: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to request password reset." });
+  const email = lower(req.body.email);
+  if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+    return res.status(422).json({ error: "Valid email is required." });
   }
+
+  const result = await query("SELECT id,email,username FROM users WHERE lower(email)=lower($1) LIMIT 1", [email]);
+  // Do not reveal whether the email exists.
+  if (result.rowCount === 0) return res.json({ success: true });
+
+  const user = result.rows[0];
+  const token = makeToken();
+  await query("UPDATE users SET password_reset_token=$1, password_reset_expires=NOW() + interval '30 minutes' WHERE id=$2", [token, user.id]);
+  const url = `${APP_URL}/reset-password?token=${token}`;
+  await sendMail(user.email, "استعادة كلمة مرور Taskora", `<p>مرحبًا ${user.username}</p><p>اضغط الرابط لتعيين كلمة مرور جديدة. الرابط صالح لمدة 30 دقيقة:</p><p><a href="${url}">استعادة كلمة المرور</a></p>`);
+  await createNotification(pool, user.id, "طلب استعادة كلمة المرور", "تم إنشاء رابط استعادة كلمة مرور لحسابك.", "info");
+  res.json({ success: true, reset_url: `/reset-password?token=${token}` });
 });
 
 app.post("/api/auth/reset-password", async (req, res) => {
@@ -803,179 +734,6 @@ app.post("/api/auth/reset-password", async (req, res) => {
   await createNotification(pool, result.rows[0].id, "تمت استعادة كلمة المرور", "تم تعيين كلمة مرور جديدة لحسابك.", "success");
   res.json({ success: true });
 });
-
-
-// ==========================================
-// NEW OTP & EMAIL SERVICE SYSTEM ENDPOINTS
-// ==========================================
-
-// 1. Send OTP for Email Verification (Authenticated)
-app.post("/api/auth/send-otp", auth, async (req, res) => {
-  try {
-    const email = req.user.email;
-    const username = req.user.username;
-
-    if (req.user.email_verified) {
-      return res.status(400).json({ error: "البريد الإلكتروني مؤكد بالفعل." });
-    }
-
-    // Cooldown check: 60 seconds
-    const lastOtp = await query(`
-      SELECT created_at FROM otps 
-      WHERE lower(email) = lower($1) AND type = 'email_verification'
-      ORDER BY id DESC LIMIT 1
-    `, [email]);
-
-    if (lastOtp.rowCount > 0) {
-      const diffMs = Date.now() - new Date(lastOtp.rows[0].created_at).getTime();
-      if (diffMs < 60000) {
-        const waitSec = Math.ceil((60000 - diffMs) / 1000);
-        return res.status(429).json({ error: `الرجاء الانتظار ${waitSec} ثانية قبل طلب كود جديد.` });
-      }
-    }
-
-    // Daily limit check: 5 codes per 24 hours
-    const dailyCount = await query(`
-      SELECT COUNT(*)::int AS count FROM otps 
-      WHERE lower(email) = lower($1) AND type = 'email_verification' AND created_at > NOW() - interval '24 hours'
-    `, [email]);
-
-    if (dailyCount.rows[0].count >= 5) {
-      return res.status(429).json({ error: "لقد تجاوزت الحد الأقصى لإرسال الأكواد اليوم (5 أكواد). يرجى المحاولة غداً." });
-    }
-
-    // Generate 6-digit OTP code
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    await query(`
-      INSERT INTO otps (email, code, type, expires_at)
-      VALUES ($1, $2, 'email_verification', NOW() + interval '10 minutes')
-    `, [email, code]);
-
-    // Send styled welcome and verification email using Resend
-    await emailService.sendOTPEmail(email, username, code, "email_verification");
-    await createNotification(pool, req.user.id, "إرسال كود التحقق", "تم إرسال كود تحقق جديد إلى بريدك الإلكتروني.", "info");
-
-    res.json({ success: true, message: "تم إرسال كود تحقق جديد بنجاح." });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "فشل إرسال كود التحقق." });
-  }
-});
-
-// 2. Verify OTP for Email Verification (Authenticated)
-app.post("/api/auth/verify-otp", auth, async (req, res) => {
-  try {
-    const email = req.user.email.toLowerCase().trim();
-    const code = String(req.body.code || "").trim();
-
-    if (!/^\d{6}$/.test(code)) {
-      return res.status(422).json({ error: "كود التحقق يجب أن يتكون من 6 أرقام." });
-    }
-
-    // Check for matching active OTP
-    const otpRes = await query(`
-      SELECT * FROM otps 
-      WHERE lower(email) = lower($1) AND type = 'email_verification' AND expires_at > NOW()
-      ORDER BY id DESC LIMIT 1
-    `, [email]);
-
-    if (otpRes.rowCount === 0) {
-      return res.status(404).json({ error: "كود التحقق غير صالح أو منتهي الصلاحية. يرجى طلب كود جديد." });
-    }
-
-    const otp = otpRes.rows[0];
-
-    if (otp.attempts >= 3) {
-      await query("DELETE FROM otps WHERE id = $1", [otp.id]);
-      return res.status(422).json({ error: "لقد تجاوزت الحد الأقصى للمحاولات الخاطئة (3 محاولات). يرجى طلب كود جديد." });
-    }
-
-    if (otp.code !== code) {
-      await query("UPDATE otps SET attempts = attempts + 1 WHERE id = $1", [otp.id]);
-      const remaining = 3 - (otp.attempts + 1);
-      return res.status(400).json({ error: `كود التحقق غير صحيح. المحاولات المتبقية: ${remaining}.` });
-    }
-
-    // Valid code! Mark user as verified
-    await query("UPDATE users SET email_verified = true, email_verification_token = NULL WHERE id = $1", [req.user.id]);
-    await query("DELETE FROM otps WHERE email = $1 AND type = 'email_verification'", [email]);
-    await createNotification(pool, req.user.id, "تم تأكيد البريد الإلكتروني", "تم تأكيد بريدك الإلكتروني بنجاح باستخدام كود التحقق.", "success");
-
-    res.json({ success: true, message: "تم تأكيد البريد الإلكتروني بنجاح." });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "فشل التحقق من الكود." });
-  }
-});
-
-// 3. Reset Password using OTP (Public)
-app.post("/api/auth/reset-password-otp", async (req, res) => {
-  try {
-    const email = String(req.body.email || "").toLowerCase().trim();
-    const code = String(req.body.code || "").trim();
-    const newPassword = String(req.body.new_password || "").trim();
-
-    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
-      return res.status(422).json({ error: "يرجى إدخال بريد إلكتروني صالح." });
-    }
-    if (!/^\d{6}$/.test(code)) {
-      return res.status(422).json({ error: "كود التحقق يجب أن يتكون من 6 أرقام." });
-    }
-    if (!/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(newPassword)) {
-      return res.status(422).json({ error: "كلمة المرور يجب أن تكون من 8 خانات على الأقل وتحتوي على حروف وأرقام." });
-    }
-
-    // Find matching user
-    const userRes = await query("SELECT id, username FROM users WHERE lower(email) = lower($1) LIMIT 1", [email]);
-    if (userRes.rowCount === 0) {
-      return res.status(404).json({ error: "كود التحقق غير صالح أو منتهي الصلاحية." });
-    }
-    const user = userRes.rows[0];
-
-    // Find matching active OTP
-    const otpRes = await query(`
-      SELECT * FROM otps 
-      WHERE lower(email) = lower($1) AND type = 'password_reset' AND expires_at > NOW()
-      ORDER BY id DESC LIMIT 1
-    `, [email]);
-
-    if (otpRes.rowCount === 0) {
-      return res.status(404).json({ error: "كود التحقق غير صالح أو منتهي الصلاحية. يرجى طلب كود جديد." });
-    }
-
-    const otp = otpRes.rows[0];
-
-    if (otp.attempts >= 3) {
-      await query("DELETE FROM otps WHERE id = $1", [otp.id]);
-      return res.status(422).json({ error: "لقد تجاوزت الحد الأقصى للمحاولات الخاطئة (3 محاولات). يرجى طلب كود جديد." });
-    }
-
-    if (otp.code !== code) {
-      await query("UPDATE otps SET attempts = attempts + 1 WHERE id = $1", [otp.id]);
-      const remaining = 3 - (otp.attempts + 1);
-      return res.status(400).json({ error: `كود التحقق غير صحيح. المحاولات المتبقية: ${remaining}.` });
-    }
-
-    // Valid reset! Update password
-    const passwordHash = await bcrypt.hash(newPassword, 12);
-    await query(`
-      UPDATE users 
-      SET password_hash = $1, password_reset_token = NULL, password_reset_expires = NULL, failed_login_attempts = 0, locked_until = NULL, withdrawal_locked_until = NOW() + interval '24 hours'
-      WHERE id = $2
-    `, [passwordHash, user.id]);
-
-    await query("DELETE FROM otps WHERE email = $1 AND type = 'password_reset'", [email]);
-    await createNotification(pool, user.id, "تمت استعادة كلمة المرور", "تم إعادة تعيين كلمة المرور بنجاح باستخدام كود التحقق.", "success");
-
-    res.json({ success: true, message: "تم إعادة تعيين كلمة المرور بنجاح." });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "فشل إعادة تعيين كلمة المرور." });
-  }
-});
-
-
-
 
 
 app.get("/api/me", auth, async (req, res) => {
@@ -1098,7 +856,6 @@ app.post("/api/packages/:id/buy", auth, async (req, res) => {
       VALUES ($1,'package_purchase',$2,$3,$4,$5)
     `, [req.user.id, -pkg.price, `شراء باقة ${pkg.name}`, balance, balance - pkg.price]);
     await client.query("COMMIT");
-
     res.json({ success: true });
   } catch (err) {
     await client.query("ROLLBACK");
@@ -1135,19 +892,13 @@ app.post("/api/tasks/daily/:number/complete", auth, async (req, res) => {
       return res.status(404).json({ error: "No active package." });
     }
     const pkg = pkgRes.rows[0];
-    const getMidnightGMT3 = (dateObj) => {
-      const timeWithOffset = dateObj.getTime() + (3 * 60 * 60 * 1000);
-      const shifted = new Date(timeWithOffset);
-      return Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate());
-    };
-    const startedMidnight = getMidnightGMT3(new Date(pkg.started_at));
-    const currentMidnight = getMidnightGMT3(new Date());
-    const daysElapsed = Math.max(1, Math.floor((currentMidnight - startedMidnight) / (24 * 60 * 60 * 1000)) + 1);
+    const started = new Date(pkg.started_at).getTime();
+    const daysElapsed = Math.max(1, Math.floor((Date.now() - started) / (24 * 60 * 60 * 1000)) + 1);
     const allowedMax = Math.min(12, daysElapsed * 3);
 
     if (taskNumber > allowedMax) {
       await client.query("ROLLBACK");
-      return res.status(403).json({ error: `هذه المهمة غير متاحة اليوم. يرجى الانتظار حتى الساعة 12:00 ليلاً بتوقيت العراق وسوريا (GMT+3) (متاح اليوم حتى المهمة رقم ${allowedMax}).` });
+      return res.status(403).json({ error: `This task is not available yet. You can complete up to task ${allowedMax} today.` });
     }
 
     const completed = Array.isArray(pkg.completed_tasks) ? pkg.completed_tasks : [];
@@ -1160,7 +911,7 @@ app.post("/api/tasks/daily/:number/complete", auth, async (req, res) => {
     const newCompleted = [...completed, taskNumber].sort((a,b) => a-b);
     const newCount = newCompleted.length;
 
-    const isMonthly = false;
+    const isMonthly = ["diamond", "crown_vip", "royal_vip"].includes(pkg.package_id);
     const originalStart = pkg.original_started_at ? new Date(pkg.original_started_at).getTime() : new Date(pkg.started_at).getTime();
     const thirtyDays = 30 * 24 * 60 * 60 * 1000;
     const monthlyExpired = isMonthly && (Date.now() - originalStart >= thirtyDays);
@@ -1238,56 +989,6 @@ app.post("/api/golden/:id/complete", auth, async (req, res) => {
   }
 });
 
-app.post("/api/golden/:id/complete-instant", auth, async (req, res) => {
-  const taskId = req.params.id;
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-    
-    // 1. Fetch and lock the custom task
-    const gtRes = await client.query(
-      "SELECT * FROM golden_tasks WHERE id=$1 AND user_id=$2 AND status IN ('active', 'rejected') FOR UPDATE",
-      [taskId, req.user.id]
-    );
-    if (gtRes.rowCount === 0) {
-      await client.query("ROLLBACK");
-      return res.status(404).json({ error: "المهمة غير موجودة أو تم إكمالها بالفعل." });
-    }
-    const gt = gtRes.rows[0];
-    const taskReward = Number(gt.reward || 0);
-
-    // 2. Mark the task as completed
-    await client.query(
-      "UPDATE golden_tasks SET status='completed', completed_at=NOW() WHERE id=$1",
-      [taskId]
-    );
-
-    // 3. Credit the custom task reward to available balance
-    if (taskReward > 0) {
-      await addTransaction(client, req.user.id, "golden_task_instant", taskReward, `أرباح إكمال مهمة: ${gt.title}`);
-    }
-
-    // 4. Excluded from package progression (only regular daily tasks advance the active package)
-    let packageCompleted = false;
-    let newCount = 0;
-
-    await client.query("COMMIT");
-    res.json({
-      success: true,
-      reward: taskReward,
-      package_completed: packageCompleted,
-      new_completed_count: newCount,
-      message: "تم إكمال المهمة بنجاح وصرف الأرباح فوراً!"
-    });
-  } catch (err) {
-    await client.query("ROLLBACK");
-    console.error(err);
-    res.status(500).json({ error: "فشل إكمال المهمة فورياً." });
-  } finally {
-    client.release();
-  }
-});
-
 app.post("/api/deposits", auth, upload.single("proof_image"), async (req, res) => {
   try {
     const amount = Number(req.body.amount);
@@ -1295,7 +996,7 @@ app.post("/api/deposits", auth, upload.single("proof_image"), async (req, res) =
     const txid = normalize(req.body.txid);
     if (!amount || amount <= 0) return res.status(422).json({ error: "Invalid amount." });
   if (amount < MIN_WITHDRAWAL_AMOUNT) return res.status(422).json({ error: `Minimum withdrawal amount is ${MIN_WITHDRAWAL_AMOUNT}.` });
-    if (!["usdt_trc20", "usdt_erc20", "btc", "sol"].includes(coin)) return res.status(422).json({ error: "Invalid coin." });
+    if (!["usdt", "bnb", "eth", "btc"].includes(coin)) return res.status(422).json({ error: "Invalid coin." });
     if (!txid || txid.length < 4) return res.status(422).json({ error: "TXID is required." });
 
     const duplicateTx = await query("SELECT id FROM deposits WHERE lower(txid)=lower($1) LIMIT 1", [txid]);
@@ -1303,10 +1004,7 @@ app.post("/api/deposits", auth, upload.single("proof_image"), async (req, res) =
       return res.status(409).json({ error: "This TXID has already been submitted." });
     }
 
-    if (!req.file) {
-      return res.status(422).json({ error: "إثبات الدفع (لقطة الشاشة) مطلوب وإجباري لإتمام الإيداع." });
-    }
-    const proof = `/api/files/${req.file.filename}`;
+    const proof = req.file ? `/api/files/${req.file.filename}` : null;
     const result = await query(`
       INSERT INTO deposits (user_id, amount, coin, txid, proof_image)
       VALUES ($1,$2,$3,$4,$5) RETURNING *
@@ -1326,7 +1024,7 @@ app.post("/api/withdrawals", auth, async (req, res) => {
 
   if (req.user.kyc_status !== "verified") return res.status(403).json({ error: "KYC verification is required before withdrawals." });
   if (!amount || amount <= 0) return res.status(422).json({ error: "Invalid amount." });
-  if (!["usdt_trc20", "usdt_erc20", "btc", "sol"].includes(coin)) return res.status(422).json({ error: "Invalid coin." });
+  if (!["usdt", "bnb", "eth", "btc"].includes(coin)) return res.status(422).json({ error: "Invalid coin." });
   if (!wallet || wallet.length < 10) return res.status(422).json({ error: "Wallet address is required." });
   if (wallet !== confirmWallet) return res.status(422).json({ error: "Wallet confirmation does not match." });
 
@@ -1342,66 +1040,21 @@ app.post("/api/withdrawals", auth, async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    const userRes = await client.query("SELECT balance, bonus_claimed FROM users WHERE id=$1 FOR UPDATE", [req.user.id]);
+    const userRes = await client.query("SELECT balance FROM users WHERE id=$1 FOR UPDATE", [req.user.id]);
     const balance = Number(userRes.rows[0].balance);
-    const bonusClaimed = !!userRes.rows[0].bonus_claimed;
-
     if (balance < amount) {
       await client.query("ROLLBACK");
       return res.status(422).json({ error: "Insufficient balance." });
     }
-
-    let withdrawableBalance = balance;
-    let isBonusWithdrawal = false;
-
-    if (bonusClaimed) {
-      isBonusWithdrawal = true;
-      // 50% of the welcome bonus ($5.00) is permanently locked/deleted.
-      // The withdrawable balance is their total balance minus $5.00.
-      withdrawableBalance = balance - 5.00;
-    }
-
-    if (amount > withdrawableBalance) {
-      await client.query("ROLLBACK");
-      return res.status(422).json({ error: "رصيدك غير متاح للسحب" });
-    }
-
-    if (isBonusWithdrawal) {
-      // 1. Create withdrawal request for the requested amount
-      await client.query(`
-        INSERT INTO withdrawals (user_id, amount, coin, wallet_address)
-        VALUES ($1,$2,$3,$4)
-      `, [req.user.id, amount, coin, wallet]);
-
-      // 2. Deduct both the withdrawal amount AND the $5 locked bonus portion, and clear the bonus_claimed flag (one-time only)
-      const newBalance = balance - 5.00 - amount;
-      await client.query("UPDATE users SET balance=$1, bonus_claimed=false WHERE id=$2", [newBalance, req.user.id]);
-
-      // 3. Record transaction for the withdrawal hold
-      await client.query(`
-        INSERT INTO transactions (user_id, type, amount, description, balance_before, balance_after)
-        VALUES ($1,'withdrawal_hold',$2,'حجز مبلغ السحب بانتظار مراجعة الأدمن',$3,$4)
-      `, [req.user.id, -amount, balance, balance - amount]);
-
-      // 4. Record transaction for the permanent deletion of the $5 locked bonus portion
-      await client.query(`
-        INSERT INTO transactions (user_id, type, amount, description, balance_before, balance_after)
-        VALUES ($1,'bonus_settlement',-5.00,'إلغاء 50% من البونص الترحيبي عند أول عملية سحب',$2,$3)
-      `, [req.user.id, balance - amount, newBalance]);
-
-    } else {
-      // Normal withdrawal flow
-      await client.query("UPDATE users SET balance=balance-$1 WHERE id=$2", [amount, req.user.id]);
-      await client.query(`
-        INSERT INTO withdrawals (user_id, amount, coin, wallet_address)
-        VALUES ($1,$2,$3,$4)
-      `, [req.user.id, amount, coin, wallet]);
-      await client.query(`
-        INSERT INTO transactions (user_id, type, amount, description, balance_before, balance_after)
-        VALUES ($1,'withdrawal_hold',$2,'حجز مبلغ السحب بانتظار مراجعة الأدمن',$3,$4)
-      `, [req.user.id, -amount, balance, balance - amount]);
-    }
-
+    await client.query("UPDATE users SET balance=balance-$1 WHERE id=$2", [amount, req.user.id]);
+    await client.query(`
+      INSERT INTO withdrawals (user_id, amount, coin, wallet_address)
+      VALUES ($1,$2,$3,$4)
+    `, [req.user.id, amount, coin, wallet]);
+    await client.query(`
+      INSERT INTO transactions (user_id, type, amount, description, balance_before, balance_after)
+      VALUES ($1,'withdrawal_hold',$2,'حجز مبلغ السحب بانتظار مراجعة الأدمن',$3,$4)
+    `, [req.user.id, -amount, balance, balance - amount]);
     await client.query("COMMIT");
     res.status(201).json({ success: true });
   } catch (err) {
@@ -1501,14 +1154,6 @@ app.post("/api/support/tickets", auth, async (req, res) => {
   `, [req.user.id, subject, category, message]);
 
   await createNotification(pool, req.user.id, "تم إنشاء تذكرة دعم", "تم إرسال تذكرتك إلى فريق الدعم.", "info");
-
-  // Send support email notification safely
-  try {
-    await emailService.sendSupportTicketNotificationEmail(req.user.username, req.user.email, subject, category, message);
-  } catch (emailErr) {
-    console.error("[Support Ticket Email Notification Error]:", emailErr);
-  }
-
   res.status(201).json({ ticket: result.rows[0] });
 });
 
@@ -1613,66 +1258,6 @@ app.get("/api/wallets", async (_req, res) => {
 
 /* Admin */
 
-app.get("/api/admin/diagnose-files", auth, adminOnly, async (req, res) => {
-  try {
-    const kyc = await query("SELECT id, user_id, front_image, back_image, selfie_image FROM user_kyc");
-    const deposits = await query("SELECT id, user_id, proof_image FROM deposits");
-    const results = [];
-    
-    for (const row of kyc.rows) {
-      if (row.front_image) {
-        const frontName = path.basename(row.front_image);
-        const frontPath = path.join(uploadDir, frontName);
-        results.push({
-          type: 'kyc_front',
-          id: row.id,
-          user_id: row.user_id,
-          db_value: row.front_image,
-          resolved_path: frontPath,
-          exists: fs.existsSync(frontPath)
-        });
-      }
-      if (row.back_image) {
-        const backName = path.basename(row.back_image);
-        const backPath = path.join(uploadDir, backName);
-        results.push({
-          type: 'kyc_back',
-          id: row.id,
-          user_id: row.user_id,
-          db_value: row.back_image,
-          resolved_path: backPath,
-          exists: fs.existsSync(backPath)
-        });
-      }
-    }
-
-    for (const row of deposits.rows) {
-      if (row.proof_image) {
-        const proofName = path.basename(row.proof_image);
-        const proofPath = path.join(uploadDir, proofName);
-        results.push({
-          type: 'deposit_proof',
-          id: row.id,
-          user_id: row.user_id,
-          db_value: row.proof_image,
-          resolved_path: proofPath,
-          exists: fs.existsSync(proofPath)
-        });
-      }
-    }
-
-    res.json({
-      upload_dir: uploadDir,
-      upload_dir_exists: fs.existsSync(uploadDir),
-      total_checked: results.length,
-      files: results
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
 app.get("/api/admin/stats", auth, adminOnly, async (_req, res) => {
   const [users, pendingKyc, pendingDeposits, pendingWithdrawals, balances, deposits, withdrawals] = await Promise.all([
     query("SELECT COUNT(*)::int AS count FROM users WHERE role='user'"),
@@ -1703,7 +1288,7 @@ app.post("/api/admin/wallets", auth, adminOnly, async (req, res) => {
   const coin = lower(req.body.coin);
   const address = normalize(req.body.address);
   const network = normalize(req.body.network);
-  if (!["usdt_trc20","usdt_erc20","btc","sol"].includes(coin)) return res.status(422).json({ error: "Invalid coin." });
+  if (!["usdt","bnb","eth","btc"].includes(coin)) return res.status(422).json({ error: "Invalid coin." });
   if (!address || address.length < 6) return res.status(422).json({ error: "Wallet address is required." });
   const result = await query(`
     INSERT INTO wallet_addresses (coin, address, network, updated_at)
@@ -1713,17 +1298,6 @@ app.post("/api/admin/wallets", auth, adminOnly, async (req, res) => {
     RETURNING *
   `, [coin, address, network]);
   res.json({ wallet: result.rows[0] });
-});
-
-app.delete("/api/admin/wallets/:coin", auth, adminOnly, async (req, res) => {
-  try {
-    const coin = lower(req.params.coin);
-    await query("DELETE FROM wallet_addresses WHERE coin=$1", [coin]);
-    res.json({ success: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to delete wallet." });
-  }
 });
 
 
@@ -1965,116 +1539,6 @@ app.get("/api/admin/users", auth, adminOnly, async (_req, res) => {
   res.json({ users: result.rows });
 });
 
-app.delete("/api/admin/users/all", auth, adminOnly, async (req, res) => {
-  try {
-    // 1. Clear referral references for non-admins to prevent foreign key issues
-    await query("UPDATE users SET referred_by = NULL WHERE role != 'admin'");
-
-    // 2. Safely delete all non-admin users (all child rows will cascade delete)
-    const deleteRes = await query("DELETE FROM users WHERE role != 'admin'");
-
-    // 3. Log this major administrative action
-    await logAdminAction(pool, req.user.id, "delete_all_users", "users", null, {
-      deleted_count: deleteRes.rowCount,
-      deleted_by_username: req.user.username
-    });
-
-    res.json({ 
-      success: true, 
-      message: `تم حذف ${deleteRes.rowCount} مستخدم بنجاح (باستثناء حسابات الأدمن).` 
-    });
-  } catch (err) {
-    console.error("Error deleting all users:", err);
-    res.status(500).json({ error: "فشل حذف المستخدمين من قاعدة البيانات." });
-  }
-});
-
-app.delete("/api/admin/users/:id", auth, adminOnly, async (req, res) => {
-  try {
-    const userId = req.params.id;
-    
-    // Check if the user is an admin to prevent deleting administrators
-    const checkRes = await query("SELECT role, username FROM users WHERE id=$1", [userId]);
-    if (checkRes.rowCount === 0) {
-      return res.status(404).json({ error: "المستخدم غير موجود." });
-    }
-    if (checkRes.rows[0].role === "admin") {
-      return res.status(403).json({ error: "لا يمكن حذف حسابات المسؤولين (الأدمن)." });
-    }
-
-    // 1. Clear referral references where this user is the referrer to prevent FK issues
-    await query("UPDATE users SET referred_by = NULL WHERE referred_by = $1", [userId]);
-
-    // 2. Perform cascading deletion of the user
-    await query("DELETE FROM users WHERE id=$1", [userId]);
-
-    // 3. Log the administrative action
-    await logAdminAction(pool, req.user.id, "delete_user", "users", userId, {
-      deleted_username: checkRes.rows[0].username,
-      deleted_by_username: req.user.username
-    });
-
-    res.json({ success: true, message: `تم حذف حساب المستخدم ${checkRes.rows[0].username} بنجاح.` });
-  } catch (err) {
-    console.error("Error deleting individual user:", err);
-    res.status(500).json({ error: "فشل حذف حساب المستخدم من قاعدة البيانات." });
-  }
-});
-
-app.get("/api/admin/support-emails", auth, adminOnly, async (_req, res) => {
-  try {
-    const result = await query("SELECT * FROM support_emails ORDER BY id DESC LIMIT 500");
-    res.json({ emails: result.rows });
-  } catch (err) {
-    console.error("Error fetching support emails:", err);
-    res.status(500).json({ error: "فشل تحميل الرسائل الواردة." });
-  }
-});
-
-app.delete("/api/admin/support-emails/:id", auth, adminOnly, async (req, res) => {
-  try {
-    await query("DELETE FROM support_emails WHERE id=$1", [req.params.id]);
-    res.json({ success: true, message: "تم حذف الرسالة بنجاح." });
-  } catch (err) {
-    console.error("Error deleting support email:", err);
-    res.status(500).json({ error: "فشل حذف الرسالة." });
-  }
-});
-
-app.post("/api/support/incoming-email", async (req, res) => {
-  try {
-    const fromVal = req.body.from || req.body.sender_email || req.body.sender || "";
-    const nameVal = req.body.name || req.body.sender_name || "";
-    const subjectVal = req.body.subject || "بدون عنوان";
-    const messageVal = req.body.message || req.body.text || req.body.html || "";
-
-    let email = String(fromVal).trim();
-    let name = String(nameVal).trim();
-    const emailMatch = email.match(/([^<]+)<([^>]+)>/);
-    if (emailMatch) {
-      name = name || emailMatch[1].trim();
-      email = emailMatch[2].trim();
-    }
-
-    if (!email) {
-      return res.status(422).json({ error: "البريد الإلكتروني للمرسل مطلوب." });
-    }
-    if (!messageVal) {
-      return res.status(422).json({ error: "نص الرسالة مطلوب." });
-    }
-
-    await query(`
-      INSERT INTO support_emails (sender_email, sender_name, subject, message)
-      VALUES ($1, $2, $3, $4)
-    `, [email, name || null, subjectVal, messageVal]);
-
-    res.json({ success: true, message: "تم استقبال الرسالة وحفظها بنجاح." });
-  } catch (err) {
-    console.error("Error receiving incoming email:", err);
-    res.status(500).json({ error: "فشل حفظ الرسالة الواردة." });
-  }
-});
-
 app.get("/api/admin/kyc", auth, adminOnly, async (_req, res) => {
   const result = await query(`
     SELECT k.*, u.username, u.email, u.phone
@@ -2088,13 +1552,7 @@ app.post("/api/admin/kyc/:id/approve", auth, adminOnly, async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    const kycRes = await client.query(`
-      SELECT k.*, u.username, u.email
-      FROM user_kyc k
-      JOIN users u ON u.id = k.user_id
-      WHERE k.id = $1 FOR UPDATE
-    `, [req.params.id]);
-
+    const kycRes = await client.query("SELECT * FROM user_kyc WHERE id=$1 FOR UPDATE", [req.params.id]);
     if (kycRes.rowCount === 0) {
       await client.query("ROLLBACK");
       return res.status(404).json({ error: "KYC not found." });
@@ -2107,7 +1565,7 @@ app.post("/api/admin/kyc/:id/approve", auth, adminOnly, async (req, res) => {
     await client.query("UPDATE users SET kyc_status='verified' WHERE id=$1", [kyc.user_id]);
 
     const bonusExists = await client.query("SELECT id FROM welcome_bonuses WHERE document_hash=$1 LIMIT 1", [kyc.document_hash]);
-    const userRes = await client.query("SELECT username, email, bonus_claimed FROM users WHERE id=$1 FOR UPDATE", [kyc.user_id]);
+    const userRes = await client.query("SELECT bonus_claimed FROM users WHERE id=$1 FOR UPDATE", [kyc.user_id]);
     if (bonusExists.rowCount === 0 && !userRes.rows[0].bonus_claimed) {
       await client.query("INSERT INTO welcome_bonuses (user_id, document_hash, amount, status) VALUES ($1,$2,10,'active')", [kyc.user_id, kyc.document_hash]);
       await addTransaction(client, kyc.user_id, "welcome_bonus", 10, "بونص ترحيبي بعد قبول التوثيق");
@@ -2115,14 +1573,6 @@ app.post("/api/admin/kyc/:id/approve", auth, adminOnly, async (req, res) => {
     }
 
     await client.query("COMMIT");
-
-    // Send KYC Approved Email via Resend safely
-    try {
-      await emailService.sendKYCStatusEmail(kyc.email, kyc.username, true);
-    } catch (emailErr) {
-      console.error("[KYC Approval Email Error]:", emailErr);
-    }
-
     res.json({ success: true });
   } catch (err) {
     await client.query("ROLLBACK");
@@ -2134,30 +1584,12 @@ app.post("/api/admin/kyc/:id/approve", auth, adminOnly, async (req, res) => {
 });
 
 app.post("/api/admin/kyc/:id/reject", auth, adminOnly, async (req, res) => {
-  const kycRes = await query(`
-    SELECT k.*, u.username, u.email
-    FROM user_kyc k
-    JOIN users u ON u.id = k.user_id
-    WHERE k.id = $1
-  `, [req.params.id]);
-
+  const kycRes = await query("SELECT user_id FROM user_kyc WHERE id=$1", [req.params.id]);
   if (kycRes.rowCount === 0) return res.status(404).json({ error: "KYC not found." });
-  const kyc = kycRes.rows[0];
-
-  const note = normalize(req.body.note);
-
-  await createNotification(pool, kyc.user_id, "تم رفض التوثيق", note || "تم رفض التوثيق. يمكنك إعادة المحاولة بملفات أوضح.", "error");
-  await logAdminAction(pool, req.user.id, "reject_kyc", "kyc", Number(req.params.id), { note });
-  await query("UPDATE user_kyc SET status='rejected', reviewed_by=$1, reviewed_at=NOW(), admin_note=$2 WHERE id=$3", [req.user.id, note, req.params.id]);
-  await query("UPDATE users SET kyc_status='rejected' WHERE id=$1", [kyc.user_id]);
-
-  // Send KYC Rejected Email via Resend safely
-  try {
-    await emailService.sendKYCStatusEmail(kyc.email, kyc.username, false, note);
-  } catch (emailErr) {
-    console.error("[KYC Rejection Email Error]:", emailErr);
-  }
-
+  await createNotification(pool, kycRes.rows[0].user_id, "تم رفض التوثيق", normalize(req.body.note) || "تم رفض التوثيق. يمكنك إعادة المحاولة بملفات أوضح.", "error");
+  await logAdminAction(pool, req.user.id, "reject_kyc", "kyc", Number(req.params.id), { note: normalize(req.body.note) });
+  await query("UPDATE user_kyc SET status='rejected', reviewed_by=$1, reviewed_at=NOW(), admin_note=$2 WHERE id=$3", [req.user.id, normalize(req.body.note), req.params.id]);
+  await query("UPDATE users SET kyc_status='rejected' WHERE id=$1", [kycRes.rows[0].user_id]);
   res.json({ success: true });
 });
 
@@ -2188,21 +1620,6 @@ app.post("/api/admin/deposits/:id/approve", auth, adminOnly, async (req, res) =>
     await logAdminAction(client, req.user.id, "approve_deposit", "deposit", dep.id, { amount: dep.amount, coin: dep.coin });
     await client.query("UPDATE deposits SET status='approved', reviewed_by=$1, reviewed_at=NOW(), admin_note=$2 WHERE id=$3", [req.user.id, normalize(req.body.note), dep.id]);
     await addTransaction(client, dep.user_id, "deposit", Number(dep.amount), `إيداع مقبول ${String(dep.coin).toUpperCase()}`);
-
-    // Referral 5% Commission logic
-    const userRes = await client.query("SELECT username, referred_by FROM users WHERE id=$1", [dep.user_id]);
-    if (userRes.rowCount > 0 && userRes.rows[0].referred_by) {
-      const referrerId = userRes.rows[0].referred_by;
-      const commission = Number((Number(dep.amount) * 0.05).toFixed(2));
-      if (commission > 0) {
-        // Credit the referrer with 5% commission of this deposit
-        await addTransaction(client, referrerId, "referral_bonus", commission, `عمولة إحالة 5% من إيداع ${userRes.rows[0].username} بقيمة ${dep.amount}`);
-        
-        // Notify the referrer
-        await createNotification(client, referrerId, "عمولة إحالة جديدة 🎁", `لقد حصلت على عمولة إحالة بقيمة $${commission.toFixed(2)} (5%) من إيداع صديقك ${userRes.rows[0].username}.`, "success");
-      }
-    }
-
     await client.query("COMMIT");
     res.json({ success: true });
   } catch (err) {
@@ -2232,30 +1649,10 @@ app.get("/api/admin/withdrawals", auth, adminOnly, async (_req, res) => {
 });
 
 app.post("/api/admin/withdrawals/:id/approve", auth, adminOnly, async (req, res) => {
-  const wdApprove = await query(`
-    SELECT w.user_id, w.amount, w.coin, w.wallet_address, u.username, u.email
-    FROM withdrawals w
-    JOIN users u ON u.id = w.user_id
-    WHERE w.id = $1
-  `, [req.params.id]);
-
-  if (wdApprove.rowCount === 0) return res.status(404).json({ error: "Withdrawal not found." });
-  const w = wdApprove.rows[0];
-
-  const txid = normalize(req.body.txid);
-  const note = normalize(req.body.note);
-
-  await createNotification(pool, w.user_id, "تم قبول السحب", `تم قبول طلب السحب بقيمة ${w.amount} ${String(w.coin).toUpperCase()}.`, "success");
-  await logAdminAction(pool, req.user.id, "approve_withdrawal", "withdrawal", Number(req.params.id), { txid, note });
-  await query("UPDATE withdrawals SET status='approved', txid=$1, reviewed_by=$2, reviewed_at=NOW(), admin_note=$3 WHERE id=$4 AND status='pending'", [txid, req.user.id, note, req.params.id]);
-
-  // Send Withdrawal Approved Email via Resend safely
-  try {
-    await emailService.sendWithdrawalStatusEmail(w.email, w.username, true, w.amount, w.coin, w.wallet_address, { txid });
-  } catch (emailErr) {
-    console.error("[Withdrawal Approval Email Error]:", emailErr);
-  }
-
+  const wdApprove = await query("SELECT user_id, amount, coin FROM withdrawals WHERE id=$1", [req.params.id]);
+  if (wdApprove.rowCount) await createNotification(pool, wdApprove.rows[0].user_id, "تم قبول السحب", `تم قبول طلب السحب بقيمة ${wdApprove.rows[0].amount} ${String(wdApprove.rows[0].coin).toUpperCase()}.`, "success");
+  await logAdminAction(pool, req.user.id, "approve_withdrawal", "withdrawal", Number(req.params.id), { txid: normalize(req.body.txid), note: normalize(req.body.note) });
+  await query("UPDATE withdrawals SET status='approved', txid=$1, reviewed_by=$2, reviewed_at=NOW(), admin_note=$3 WHERE id=$4 AND status='pending'", [normalize(req.body.txid), req.user.id, normalize(req.body.note), req.params.id]);
   res.json({ success: true });
 });
 
@@ -2263,33 +1660,17 @@ app.post("/api/admin/withdrawals/:id/reject", auth, adminOnly, async (req, res) 
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    const wRes = await client.query(`
-      SELECT w.*, u.username, u.email
-      FROM withdrawals w
-      JOIN users u ON u.id = w.user_id
-      WHERE w.id = $1 AND w.status = 'pending' FOR UPDATE
-    `, [req.params.id]);
-
+    const wRes = await client.query("SELECT * FROM withdrawals WHERE id=$1 AND status='pending' FOR UPDATE", [req.params.id]);
     if (wRes.rowCount === 0) {
       await client.query("ROLLBACK");
       return res.status(404).json({ error: "Pending withdrawal not found." });
     }
     const w = wRes.rows[0];
-    const note = normalize(req.body.note);
-
-    await createNotification(client, w.user_id, "تم رفض السحب", note || "تم رفض طلب السحب وتم إرجاع المبلغ إلى رصيدك.", "error");
-    await logAdminAction(client, req.user.id, "reject_withdrawal", "withdrawal", w.id, { amount: w.amount, note });
-    await client.query("UPDATE withdrawals SET status='rejected', reviewed_by=$1, reviewed_at=NOW(), admin_note=$2 WHERE id=$3", [req.user.id, note, w.id]);
+    await createNotification(client, w.user_id, "تم رفض السحب", normalize(req.body.note) || "تم رفض طلب السحب وتم إرجاع المبلغ إلى رصيدك.", "error");
+    await logAdminAction(client, req.user.id, "reject_withdrawal", "withdrawal", w.id, { amount: w.amount, note: normalize(req.body.note) });
+    await client.query("UPDATE withdrawals SET status='rejected', reviewed_by=$1, reviewed_at=NOW(), admin_note=$2 WHERE id=$3", [req.user.id, normalize(req.body.note), w.id]);
     await addTransaction(client, w.user_id, "withdrawal_refund", Number(w.amount), "إرجاع مبلغ سحب مرفوض");
     await client.query("COMMIT");
-
-    // Send Withdrawal Rejected Email via Resend safely
-    try {
-      await emailService.sendWithdrawalStatusEmail(w.email, w.username, false, w.amount, w.coin, w.wallet_address, { reason: note });
-    } catch (emailErr) {
-      console.error("[Withdrawal Rejection Email Error]:", emailErr);
-    }
-
     res.json({ success: true });
   } catch (err) {
     await client.query("ROLLBACK");
@@ -2311,134 +1692,18 @@ app.get("/api/admin/golden", auth, adminOnly, async (_req, res) => {
 });
 
 app.post("/api/admin/golden", auth, adminOnly, async (req, res) => {
-  const userId = req.body.user_id; // Can be a number, a string "all", or an array of numbers
+  const userId = Number(req.body.user_id);
   const title = normalize(req.body.title || "المهمة الذهبية الأسبوعية");
   const description = normalize(req.body.description || "مهمة ذهبية خاصة مرسلة من الأدمن.");
   const reward = Number(req.body.reward || 10);
-  const taskLink = normalize(req.body.task_link || "");
-  
   if (!userId || reward <= 0) return res.status(422).json({ error: "Invalid request." });
-  
-  let targetUserIds = [];
-  
-  if (userId === "all") {
-    // Send to all users except admins!
-    const usersRes = await query("SELECT id FROM users WHERE role != 'admin'");
-    targetUserIds = usersRes.rows.map(r => r.id);
-  } else if (Array.isArray(userId)) {
-    targetUserIds = userId.map(Number).filter(id => !isNaN(id));
-  } else {
-    const singleId = Number(userId);
-    if (!isNaN(singleId)) {
-      targetUserIds = [singleId];
-    }
-  }
-
-  if (targetUserIds.length === 0) {
-    return res.status(422).json({ error: "No target users found." });
-  }
-
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-    for (const uid of targetUserIds) {
-      await createNotification(client, uid, "مهمة خاصة جديدة 🌟", title, "golden");
-      await client.query(`
-        INSERT INTO golden_tasks (user_id, title, description, reward, sent_by, task_link)
-        VALUES ($1,$2,$3,$4,$5,$6)
-      `, [uid, title, description, reward, req.user.id, taskLink]);
-    }
-    await logAdminAction(client, req.user.id, "send_golden_task_multiple", "users", null, { title, reward, task_link: taskLink, count: targetUserIds.length });
-    await client.query("COMMIT");
-    res.status(201).json({ success: true, message: `تم إرسال المهمة لـ ${targetUserIds.length} مستخدم بنجاح.` });
-  } catch (err) {
-    await client.query("ROLLBACK");
-    console.error(err);
-    res.status(500).json({ error: "فشل إرسال المهمة الجماعية." });
-  } finally {
-    client.release();
-  }
-});
-
-app.post("/api/golden/:id/submit-proof", auth, upload.single("proof_image"), async (req, res) => {
-  try {
-    const userNote = normalize(req.body.user_note || "");
-    const taskId = Number(req.params.id);
-    if (!req.file) {
-      return res.status(422).json({ error: "صورة الإثبات (لقطة الشاشة) مطلوبة ومهمة للتأكيد." });
-    }
-    const proofUrl = `/api/files/${req.file.filename}`;
-    const result = await query(`
-      UPDATE golden_tasks 
-      SET status='pending_review', proof_image=$1, user_note=$2, completed_at=NULL
-      WHERE id=$3 AND user_id=$4 AND status IN ('active', 'rejected')
-      RETURNING *
-    `, [proofUrl, userNote, taskId, req.user.id]);
-    
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: "المهمة غير صالحة أو تم إرسالها بالفعل." });
-    }
-    
-    res.json({ success: true, golden_task: result.rows[0] });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "فشل إرسال إثبات المهمة." });
-  }
-});
-
-app.post("/api/admin/golden/:id/approve", auth, adminOnly, async (req, res) => {
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-    const gtRes = await client.query("SELECT * FROM golden_tasks WHERE id=$1 FOR UPDATE", [req.params.id]);
-    if (gtRes.rowCount === 0) {
-      await client.query("ROLLBACK");
-      return res.status(404).json({ error: "المهمة الخاصة غير موجودة." });
-    }
-    const gt = gtRes.rows[0];
-    if (gt.status !== "pending_review") {
-      await client.query("ROLLBACK");
-      return res.status(409).json({ error: "المهمة ليست قيد المراجعة حاليًا." });
-    }
-    
-    const reward = Number(gt.reward);
-    await addTransaction(client, gt.user_id, "golden_task", reward, `أرباح المهمة الخاصة: ${gt.title}`);
-    await client.query("UPDATE golden_tasks SET status='completed', completed_at=NOW() WHERE id=$1", [gt.id]);
-    await createNotification(client, gt.user_id, "تم قبول إثبات المهمة 🎉", `تم اعتماد إثبات مهمة "${gt.title}" وحصلت على $${reward} كأرباح!`, "success");
-    await logAdminAction(client, req.user.id, "approve_golden_task", "golden_task", gt.id, { user_id: gt.user_id, reward });
-    
-    await client.query("COMMIT");
-    res.json({ success: true });
-  } catch (err) {
-    await client.query("ROLLBACK");
-    console.error(err);
-    res.status(500).json({ error: "فشل قبول المهمة." });
-  } finally {
-    client.release();
-  }
-});
-
-app.post("/api/admin/golden/:id/reject", auth, adminOnly, async (req, res) => {
-  try {
-    const adminNote = normalize(req.body.note || "لم يتم استيفاء شروط المهمة بشكل صحيح.");
-    const gtRes = await query("SELECT * FROM golden_tasks WHERE id=$1", [req.params.id]);
-    if (gtRes.rowCount === 0) {
-      return res.status(404).json({ error: "المهمة غير موجودة." });
-    }
-    const gt = gtRes.rows[0];
-    if (gt.status !== "pending_review") {
-      return res.status(409).json({ error: "المهمة ليست قيد المراجعة." });
-    }
-    
-    await query("UPDATE golden_tasks SET status='rejected', admin_note=$1 WHERE id=$2", [adminNote, gt.id]);
-    await createNotification(pool, gt.user_id, "تم رفض إثبات المهمة ❌", `تم رفض إثبات مهمة "${gt.title}". السبب: ${adminNote}`, "error");
-    await logAdminAction(pool, req.user.id, "reject_golden_task", "golden_task", gt.id, { user_id: gt.user_id, note: adminNote });
-    
-    res.json({ success: true });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "فشل رفض المهمة." });
-  }
+  await createNotification(pool, userId, "مهمة ذهبية جديدة", title, "golden");
+  await logAdminAction(pool, req.user.id, "send_golden_task", "user", userId, { title, reward });
+  const result = await query(`
+    INSERT INTO golden_tasks (user_id, title, description, reward, sent_by)
+    VALUES ($1,$2,$3,$4,$5) RETURNING *
+  `, [userId, title, description, reward, req.user.id]);
+  res.status(201).json({ golden_task: result.rows[0] });
 });
 
 app.use((err, _req, res, _next) => {
