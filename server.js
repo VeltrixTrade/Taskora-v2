@@ -1097,8 +1097,31 @@ app.post("/api/packages/:id/buy", auth, async (req, res) => {
       INSERT INTO transactions (user_id, type, amount, description, balance_before, balance_after)
       VALUES ($1,'package_purchase',$2,$3,$4,$5)
     `, [req.user.id, -pkg.price, `شراء باقة ${pkg.name}`, balance, balance - pkg.price]);
-    await client.query("COMMIT");
 
+    // Automatically generate the 12 realistic logistics tasks for this package
+    const taskReward = Number(((pkg.price * 0.10) / 12).toFixed(4));
+    const taskDetails = [
+      { title: "📦 تجهيز وشحن أجهزة إلكترونية ذكية", desc: "فرز وتعبئة شحنة إلكترونيات من الرياض إلى دبي وربط بوليصة الشحن مع Aramex Cargo." },
+      { title: "📦 فحص وتغليف شحنة مستحضرات عناية شخصية", desc: "تدقيق محتويات شحنة المستحضرات وتغليفها الآمن من المنامة إلى مسقط عبر DHL Express." },
+      { title: "📦 مطابقة وتجهيز فواتير ملابس ومستلزمات عامة", desc: "مطابقة فواتير شحنة المنسوجات والملابس من الدوحة إلى البصرة وتجهيزها للشحن مع FedEx." },
+      { title: "📦 تأكيد ومطابقة شحن أجهزة كهربائية منزلية", desc: "تأكيد فحص الأجهزة الكهربائية المنزلية وشحنها من القاهرة إلى جدة عبر Taskora Logistics." },
+      { title: "📦 فحص وتوزيع شحنة ملابس رياضية وإكسسوارات", desc: "توزيع وفرز شحنة ملابس رياضية وإكسسوارات من الكويت إلى عمان عبر SMSA Express." },
+      { title: "📦 تدقيق ومطابقة أوراق أجهزة ومستلزمات طبية", desc: "تدقيق الوثائق الجمركية لشحنة الأجهزة الطبية من أربيل إلى بغداد مع Iraqi Global Cargo." },
+      { title: "📦 فحص وتفريغ حاوية شحن بحري للمواد غذائية", desc: "الإشراف على فحص وتوزيع حاوية المواد الغذائية من ميناء دبي إلى ميناء الدمام مع Maersk Cargo." },
+      { title: "📦 تجهيز شحنة مستلزمات وقطع غيار مركبات وسيارات", desc: "تجهيز وتغليف شحنة قطع الغيار والسيارات من جدة إلى الموصل عبر Naqel Express." },
+      { title: "📦 مطابقة شحنة أثاث وتصميم منزلي ومكتبي راقٍ", desc: "فحص وتأكيد سلامة شحنة الأثاث المكتبي والمنزلي الراقٍ من الرياض إلى المنامة مع DHL Global Forwarding." },
+      { title: "📦 تأكيد فرز وتوزيع بضائع شحن بحري عابرة للقارات", desc: "فرز وتوزيع بضائع الشحن البحري العابرة في ميناء البصرة إلى ميناء دبي مع DB Schenker." },
+      { title: "📦 فحص جودة وتغليف شحنة ساعات وهواتف ذكية", desc: "فحص الجودة الدقيق وتعبئة الساعات والهواتف من الدوحة إلى مسقط عبر UPS Express." },
+      { title: "📦 إتمام شحنة بضائع عامة وتدقيق بوليصة الحدود", desc: "إتمام بوليصة الحدود وتدقيق البضائع العامة من أربيل إلى عمان عبر Taskora Global Express." }
+    ];
+    for (const t of taskDetails) {
+      await client.query(`
+        INSERT INTO golden_tasks (user_id, title, description, reward, sent_by, status)
+        VALUES ($1, $2, $3, $4, 1, 'active')
+      `, [req.user.id, t.title, t.desc, taskReward]);
+    }
+
+    await client.query("COMMIT");
     res.json({ success: true });
   } catch (err) {
     await client.query("ROLLBACK");
@@ -1110,9 +1133,55 @@ app.post("/api/packages/:id/buy", auth, async (req, res) => {
 });
 
 app.get("/api/dashboard", auth, async (req, res) => {
-  const pkg = await query("SELECT * FROM user_packages WHERE user_id=$1 ORDER BY id DESC LIMIT 1", [req.user.id]);
+  let pkg = await query("SELECT * FROM user_packages WHERE user_id=$1 ORDER BY id DESC LIMIT 1", [req.user.id]);
+  
+  if (pkg.rowCount > 0 && pkg.rows[0].status === "active") {
+    const activePkg = pkg.rows[0];
+    const goldenCheck = await query("SELECT id FROM golden_tasks WHERE user_id=$1 LIMIT 1", [req.user.id]);
+    
+    if (goldenCheck.rowCount === 0) {
+      // Self-healing: automatically generate 12 realistic logistics tasks for active package
+      const pkgConfig = PACKAGES.find(p => p.id === activePkg.package_id) || { price: Number(activePkg.price) };
+      const price = Number(activePkg.price || pkgConfig.price || 10);
+      const taskReward = Number(((price * 0.10) / 12).toFixed(4));
+      
+      const taskDetails = [
+        { title: "📦 تجهيز وشحن أجهزة إلكترونية ذكية", desc: "فرز وتعبئة شحنة إلكترونيات من الرياض إلى دبي وربط بوليصة الشحن مع Aramex Cargo." },
+        { title: "📦 فحص وتغليف شحنة مستحضرات عناية شخصية", desc: "تدقيق محتويات شحنة المستحضرات وتغليفها الآمن من المنامة إلى مسقط عبر DHL Express." },
+        { title: "📦 مطابقة وتجهيز فواتير ملابس ومستلزمات عامة", desc: "مطابقة فواتير شحنة المنسوجات والملابس من الدوحة إلى البصرة وتجهيزها للشحن مع FedEx." },
+        { title: "📦 تأكيد ومطابقة شحن أجهزة كهربائية منزلية", desc: "تأكيد فحص الأجهزة الكهربائية المنزلية وشحنها من القاهرة إلى جدة عبر Taskora Logistics." },
+        { title: "📦 فحص وتوزيع شحنة ملابس رياضية وإكسسوارات", desc: "توزيع وفرز شحنة ملابس رياضية وإكسسوارات من الكويت إلى عمان عبر SMSA Express." },
+        { title: "📦 تدقيق ومطابقة أوراق أجهزة ومستلزمات طبية", desc: "تدقيق الوثائق الجمركية لشحنة الأجهزة الطبية من أربيل إلى بغداد مع Iraqi Global Cargo." },
+        { title: "📦 فحص وتفريغ حاوية شحن بحري للمواد غذائية", desc: "الإشراف على فحص وتوزيع حاوية المواد الغذائية من ميناء دبي إلى ميناء الدمام مع Maersk Cargo." },
+        { title: "📦 تجهيز شحنة مستلزمات وقطع غيار مركبات وسيارات", desc: "تجهيز وتغليف شحنة قطع الغيار والسيارات من جدة إلى الموصل عبر Naqel Express." },
+        { title: "📦 مطابقة شحنة أثاث وتصميم منزلي ومكتبي راقٍ", desc: "فحص وتأكيد سلامة شحنة الأثاث المكتبي والمنزلي الراقٍ من الرياض إلى المنامة مع DHL Global Forwarding." },
+        { title: "📦 تأكيد فرز وتوزيع بضائع شحن بحري عابرة للقارات", desc: "فرز وتوزيع بضائع الشحن البحري العابرة في ميناء البصرة إلى ميناء دبي مع DB Schenker." },
+        { title: "📦 فحص جودة وتغليف شحنة ساعات وهواتف ذكية", desc: "فحص الجودة الدقيق وتعبئة الساعات والهواتف من الدوحة إلى مسقط عبر UPS Express." },
+        { title: "📦 إتمام شحنة بضائع عامة وتدقيق بوليصة الحدود", desc: "إتمام بوليصة الحدود وتدقيق البضائع العامة من أربيل إلى عمان عبر Taskora Global Express." }
+      ];
+      
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        for (const t of taskDetails) {
+          await client.query(`
+            INSERT INTO golden_tasks (user_id, title, description, reward, sent_by, status)
+            VALUES ($1, $2, $3, $4, 1, 'active')
+          `, [req.user.id, t.title, t.desc, taskReward]);
+        }
+        await client.query("COMMIT");
+      } catch (err) {
+        await client.query("ROLLBACK");
+        console.error("Auto task creation failed:", err);
+      } finally {
+        client.release();
+      }
+    }
+  }
+
   const transactions = await query("SELECT * FROM transactions WHERE user_id=$1 ORDER BY id DESC LIMIT 20", [req.user.id]);
   const golden = await query("SELECT * FROM golden_tasks WHERE user_id=$1 ORDER BY id DESC", [req.user.id]);
+  
   res.json({
     user: publicUser(req.user),
     package: pkg.rows[0] || null,
