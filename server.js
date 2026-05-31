@@ -376,6 +376,7 @@ async function migrate() {
   await query(`ALTER TABLE golden_tasks ADD COLUMN IF NOT EXISTS user_note TEXT;`);
   await query(`ALTER TABLE golden_tasks ADD COLUMN IF NOT EXISTS admin_note TEXT;`);
   await query(`ALTER TABLE golden_tasks ADD COLUMN IF NOT EXISTS task_link VARCHAR(500);`);
+  await query(`ALTER TABLE golden_tasks ADD COLUMN IF NOT EXISTS is_bonus BOOLEAN DEFAULT FALSE;`);
 
 
 
@@ -1349,7 +1350,7 @@ app.post("/api/golden/:id/complete-instant", auth, async (req, res) => {
       "SELECT * FROM user_packages WHERE user_id=$1 AND status='active' ORDER BY id DESC LIMIT 1 FOR UPDATE",
       [req.user.id]
     );
-    if (pkgRes.rowCount > 0) {
+    if (pkgRes.rowCount > 0 && !gt.is_bonus) {
       const pkg = pkgRes.rows[0];
       
       // Enforce Daily Limit (3 tasks per day) in GMT+3 timezone (Iraq & Syria)
@@ -2327,7 +2328,7 @@ app.post("/api/admin/deposits/:id/approve", auth, adminOnly, async (req, res) =>
     // Referral 5% Commission logic
     const userRes = await client.query("SELECT username, referred_by FROM users WHERE id=$1", [dep.user_id]);
     if (userRes.rowCount > 0 && userRes.rows[0].referred_by) {
-      const referrerId = userRes.rows[0].referred_by;
+      const referrerId = Number(userRes.rows[0].referred_by);
       const commission = Number((Number(dep.amount) * 0.05).toFixed(2));
       if (commission > 0) {
         // Credit the referrer with 5% commission of this deposit
@@ -2479,8 +2480,8 @@ app.post("/api/admin/golden", auth, adminOnly, async (req, res) => {
     for (const uid of targetUserIds) {
       await createNotification(client, uid, "مهمة خاصة جديدة 🌟", title, "golden");
       await client.query(`
-        INSERT INTO golden_tasks (user_id, title, description, reward, sent_by, task_link)
-        VALUES ($1,$2,$3,$4,$5,$6)
+        INSERT INTO golden_tasks (user_id, title, description, reward, sent_by, task_link, is_bonus)
+        VALUES ($1,$2,$3,$4,$5,$6, TRUE)
       `, [uid, title, description, reward, req.user.id, taskLink]);
     }
     await logAdminAction(client, req.user.id, "send_golden_task_multiple", "users", null, { title, reward, task_link: taskLink, count: targetUserIds.length });
