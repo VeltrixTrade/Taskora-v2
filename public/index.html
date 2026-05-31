@@ -1156,6 +1156,125 @@
     .admin-note-box{border:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02);border-radius:16px;padding:12px;margin-bottom:10px}
     .notification-item.sticky{border-color:rgba(255,255,255,0.25);background:rgba(255,255,255,0.04)}
 
+    /* Premium Horizontal Days navigation for Tasks */
+    .tasks-days-tabs {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      overflow-x: auto;
+      padding: 4px 4px 10px;
+      scrollbar-width: none; /* Hide scrollbar Firefox */
+      direction: rtl;
+    }
+    .tasks-days-tabs::-webkit-scrollbar {
+      display: none; /* Hide scrollbar Chrome/Safari */
+    }
+    .task-day-tab {
+      flex: 1;
+      min-width: 100px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 20px;
+      padding: 12px 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      user-select: none;
+    }
+    .task-day-tab:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+    }
+    .task-day-tab.active {
+      background: linear-gradient(135deg, rgba(108, 77, 255, 0.2), rgba(108, 77, 255, 0.05));
+      border-color: #6c4dff;
+      box-shadow: 0 0 20px rgba(108, 77, 255, 0.2);
+    }
+    .task-day-tab.locked {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+    .task-day-tab .tab-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+    .task-day-tab .tab-subtitle {
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .task-day-tab.active .tab-subtitle {
+      color: #a78bfa;
+    }
+    
+    /* Countdown premium card */
+    .task-countdown-card {
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: linear-gradient(145deg, rgba(21, 26, 46, 0.9), rgba(13, 17, 30, 0.95));
+      border-radius: 24px;
+      padding: 20px;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      direction: rtl;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .countdown-text-side {
+      text-align: right;
+      flex: 1;
+      min-width: 200px;
+    }
+    .countdown-text-side h4 {
+      margin: 0 0 6px 0;
+      font-size: 17px;
+      color: #ffffff;
+      font-weight: 900;
+    }
+    .countdown-text-side p {
+      margin: 0;
+      font-size: 12.5px;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+    .countdown-timer-side {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 10px 18px;
+      border-radius: 16px;
+    }
+    .countdown-timer-side span {
+      font-family: 'Rajdhani', Inter, monospace;
+      font-size: 26px;
+      font-weight: 900;
+      color: #f59e0b;
+      letter-spacing: 1px;
+    }
+    .secure-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      background: rgba(16, 185, 129, 0.08);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.15);
+      padding: 4px 10px;
+      border-radius: 99px;
+      font-weight: bold;
+      margin-top: 8px;
+    }
+
     /* Dynamic dollar styles */
     .dynamic-dollar-container {
       display: inline-flex;
@@ -2655,6 +2774,36 @@
         border-radius: 18px !important;
       }
       .mini-task-dots {
+        justify-content: center !important;
+      }
+      .account-status-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+      }
+      .tasks-days-tabs {
+        gap: 8px !important;
+      }
+      .task-day-tab {
+        min-width: 75px !important;
+        padding: 10px 6px !important;
+        border-radius: 16px !important;
+      }
+      .task-day-tab .tab-title {
+        font-size: 13.5px !important;
+      }
+      .task-day-tab .tab-subtitle {
+        font-size: 10px !important;
+      }
+      .task-countdown-card {
+        padding: 16px !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        text-align: center !important;
+      }
+      .countdown-text-side {
+        text-align: center !important;
+      }
+      .countdown-timer-side {
         justify-content: center !important;
       }
     }
@@ -4495,6 +4644,23 @@ async function openSecureFile(filePath){
 }
 
 
+function getSecureCurrentTime() {
+  if (!window.__serverTimeBase) return new Date();
+  const elapsed = performance.now() - window.__localPerformanceBase;
+  return new Date(window.__serverTimeBase + elapsed);
+}
+
+function getNextMidnightGMT3(nowDate) {
+  const shifted = new Date(nowDate.getTime() + (3 * 60 * 60 * 1000));
+  const nextDayShifted = Date.UTC(
+    shifted.getUTCFullYear(),
+    shifted.getUTCMonth(),
+    shifted.getUTCDate() + 1,
+    0, 0, 0, 0
+  );
+  return nextDayShifted - (3 * 60 * 60 * 1000);
+}
+
 function money(v){ return "$" + Number(v || 0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function headers(json=true){
   const latestToken = localStorage.getItem("taskora_token") || token || "";
@@ -4799,6 +4965,10 @@ function logout(){ token=""; me=null; localStorage.removeItem("taskora_token"); 
 async function loadMe(){
   try{
     const data = await api("/api/me",{headers:headers()});
+    if (data && data.server_time) {
+      window.__serverTimeBase = new Date(data.server_time).getTime();
+      window.__localPerformanceBase = performance.now();
+    }
     me = data.user;
     showView("dashboard");
     renderDashboard(data);
@@ -4847,7 +5017,7 @@ async function renderDashboard(dataFromMe){
     <!-- Card 2: Locked Package Balance -->
     <div class="crypto-wallet-card locked">
       <div class="crypto-card-header">
-        <span class="crypto-card-title">رصيد الباقة المقيد</span>
+        <span class="crypto-card-title">رصيد الباقة</span>
         <div class="crypto-icon-wrapper">
           <svg class="crypto-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
@@ -4915,7 +5085,7 @@ function setDash(t){
   document.getElementById("dashMsg").classList.toggle("hidden", t !== "wallet");
   
   // Hide the stats banner (dashStats) on specific pages: profile, transactions, referrals, notifications
-  const hiddenStatsPages = ["profile", "transactions", "referrals", "notifications"];
+  const hiddenStatsPages = ["profile", "transactions", "referrals", "notifications", "support", "help", "settings"];
   const dashStatsEl = document.getElementById("dashStats");
   if (dashStatsEl) {
     dashStatsEl.style.display = hiddenStatsPages.includes(t) ? "none" : "";
@@ -5096,9 +5266,17 @@ async function renderPackages(){
 }
 
 async function renderTasks(){
+  if (window.__tasksCountdownInterval) {
+    clearInterval(window.__tasksCountdownInterval);
+  }
+
   let data;
   try{
     data = await api("/api/dashboard",{headers:headers()});
+    if (data.server_time) {
+      window.__serverTimeBase = new Date(data.server_time).getTime();
+      window.__localPerformanceBase = performance.now();
+    }
   }catch(e){
     document.getElementById("dashContent").innerHTML = `<div class="card">
       <h3>تعذر تحميل بيانات المهام</h3>
@@ -5131,95 +5309,165 @@ async function renderTasks(){
     return Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate());
   };
 
+  const secureNow = getSecureCurrentTime();
   const startedMidnight = getMidnightGMT3(new Date(pkg.started_at));
-  const currentMidnight = getMidnightGMT3(new Date());
+  const currentMidnight = getMidnightGMT3(secureNow);
   const daysElapsed = Math.max(1, Math.floor((currentMidnight - startedMidnight) / (24 * 60 * 60 * 1000)) + 1);
   const maxAllowedTask = Math.min(12, daysElapsed * 3);
   const unlockedDay = daysElapsed;
 
   const isMonthly = false;
-
   const userTasks = data.golden_tasks || [];
   
-  let tasksBoardHtml = "";
-  if (userTasks.length === 0) {
-    tasksBoardHtml = `
-      <div class="card" style="text-align: center; padding: 40px 20px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 20px; margin-top: 24px;">
-        <span style="font-size: 48px; display: block; margin-bottom: 12px; animation: pulse 2s infinite;">🌟</span>
-        <h3 style="font-weight: 700; color: #fff; margin: 0 0 8px;">لا توجد مهام نشطة حالياً</h3>
-        <p style="color: #a1a1aa; font-size: 13.5px; max-width: 440px; margin: 0 auto;">يرجى الانتظار حتى تقوم الإدارة بإسناد مهام يومية أو ترويجية جديدة إلى حسابك للبدء في إنجازها وجني الأرباح فوراً!</p>
+  // Set default selected day to the current unlocked day (up to day 4)
+  if (typeof window.__selectedTasksDay === "undefined") {
+    window.__selectedTasksDay = Math.min(4, unlockedDay);
+  }
+
+  // Render Horizontal Tabs for Days
+  const daysTabsHtml = `
+    <div class="tasks-days-tabs">
+      ${[1, 2, 3, 4].map(day => {
+        const isActive = day === window.__selectedTasksDay;
+        const isDayUnlocked = day <= unlockedDay;
+        const classList = `task-day-tab ${isActive ? 'active' : ''} ${!isDayUnlocked ? 'locked' : ''}`;
+        return `
+          <div class="${classList}" onclick="window.__selectedTasksDay = ${day}; renderTasks();">
+            <span class="tab-title">اليوم ${day}</span>
+            <span class="tab-subtitle">${isDayUnlocked ? 'مفتوح ✓' : '🔒 مغلق'}</span>
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `;
+
+  // Render Secure Countdown Timer Card
+  let countdownCardHtml = "";
+  if (unlockedDay < 4) {
+    countdownCardHtml = `
+      <div class="task-countdown-card">
+        <div class="countdown-text-side">
+          <h4>⏳ مهام اليوم التالي قادمة</h4>
+          <p>كل يوم يتم فتح 3 مهام جديدة تلقائياً في تمام الساعة 12:00 ليلاً بتوقيت العراق وسوريا (GMT+3).</p>
+          <span class="secure-badge">🛡️ العداد متزامن بشكل آمن مع الخادم</span>
+        </div>
+        <div class="countdown-timer-side">
+          <span id="tasksCountdownTimer">00:00:00</span>
+        </div>
       </div>
     `;
+    
+    // Set ticking interval
+    window.__tasksCountdownInterval = setInterval(() => {
+      const timerEl = document.getElementById("tasksCountdownTimer");
+      if (!timerEl) {
+        clearInterval(window.__tasksCountdownInterval);
+        return;
+      }
+      const tickNow = getSecureCurrentTime();
+      const nextMidnight = getNextMidnightGMT3(tickNow);
+      const msRemaining = Math.max(0, nextMidnight - tickNow.getTime());
+      
+      if (msRemaining <= 0) {
+        clearInterval(window.__tasksCountdownInterval);
+        renderTasks();
+        return;
+      }
+      
+      const totalSecs = Math.floor(msRemaining / 1000);
+      const secs = totalSecs % 60;
+      const mins = Math.floor(totalSecs / 60) % 60;
+      const hours = Math.floor(totalSecs / 3600);
+      
+      const pad = (n) => String(n).padStart(2, "0");
+      timerEl.textContent = `${pad(hours)}:${pad(mins)}:${pad(secs)}`;
+    }, 1000);
   } else {
-    tasksBoardHtml = `
-      <div class="task-board mt">
-        ${userTasks.map((t, index) => {
-          const isDone = t.status === "completed";
-          let statusBadge = "";
-          let buttonHtml = "";
-          
-          if (t.status === "completed") {
-            statusBadge = `<span class="status verified" style="font-size: 11px; padding: 4px 10px; border-radius: 8px; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2);">✅ مكتملة</span>`;
-            buttonHtml = `<button class="btn" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); color: #8e8e93; cursor: not-allowed; border-radius: 12px; font-weight: 700; height: 42px; width: 100%;" disabled>تم استلام الأرباح 💰</button>`;
-          } else if (t.status === "pending_review") {
-            statusBadge = `<span class="status pending" style="font-size: 11px; padding: 4px 10px; border-radius: 8px; background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2);">⏳ قيد المراجعة</span>`;
-            buttonHtml = `<button class="btn" style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.15); color: #f59e0b; cursor: not-allowed; border-radius: 12px; font-weight: 700; height: 42px; width: 100%;" disabled>بانتظار الموافقة</button>`;
-          } else if (t.status === "rejected") {
-            statusBadge = `<span class="status rejected" style="font-size: 11px; padding: 4px 10px; border-radius: 8px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2);">❌ مرفوضة</span>`;
-            buttonHtml = `<button class="btn red full" style="border-radius: 12px; height: 42px; font-weight: 700; width: 100%;" onclick="completeTaskInstant(${t.id}, '${escapeHtml(t.task_link)}')">🔄 إعادة الإنجاز السريع</button>`;
-          } else {
-            statusBadge = `<span class="status active" style="font-size: 11px; padding: 4px 10px; border-radius: 8px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2);">✨ مهمة نشطة</span>`;
-            buttonHtml = `<button class="btn green full" style="border-radius: 12px; height: 42px; font-weight: 700; width: 100%;" onclick="completeTaskInstant(${t.id}, '${escapeHtml(t.task_link)}')">📦 إنجاز المهمة وصرف الربح</button>`;
-          }
-
-          return `
-            <div class="card task-card-pro" style="position: relative; overflow: hidden; border-left: 4px solid ${isDone ? '#10b981' : '#6c4dff'};">
-              <div style="margin-bottom: 14px; display: flex; justify-content: space-between; align-items: start; gap: 8px;">
-                <div>
-                  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
-                    <div class="task-number" style="width: 24px; height: 24px; font-size: 12px; background: ${isDone ? '#10b981' : '#6c4dff'}; color: #fff;">${index + 1}</div>
-                    <h3 style="margin: 0; font-size: 15px; color: #fff; font-weight: 700;">${escapeHtml(t.title)}</h3>
-                  </div>
-                  <p style="color: #a1a1aa; font-size: 12.5px; margin: 4px 0 0; line-height: 1.5;">${escapeHtml(t.description)}</p>
-                  ${t.task_link ? `<div style="margin-top: 8px;"><a href="${escapeHtml(t.task_link)}" target="_blank" style="color: #6c4dff; font-size: 12px; text-decoration: underline; display: inline-flex; align-items: center; gap: 4px;">🔗 فتح الرابط المرفق للمهمة</a></div>` : ''}
-                  ${t.admin_note && t.status === 'rejected' ? `<div style="margin-top: 8px; color: #ef4444; font-size: 11px; background: rgba(239, 68, 68, 0.05); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.1);"><b>سبب الرفض السابق:</b> ${escapeHtml(t.admin_note)}</div>` : ''}
-                </div>
-                <div>
-                  ${statusBadge}
-                </div>
-              </div>
-              <div style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: 12px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 13px;">
-                <span style="color: #a1a1aa;">المكافأة المالية الفورية:</span>
-                <b style="color: #10b981; font-size: 15px; font-family: 'Rajdhani', sans-serif;">${money(t.reward)}</b>
-              </div>
-              ${buttonHtml}
-            </div>
-          `;
-        }).join("")}
+    countdownCardHtml = `
+      <div class="task-countdown-card" style="border-color: rgba(16, 185, 129, 0.25); background: linear-gradient(145deg, rgba(16, 185, 129, 0.05), rgba(13, 17, 30, 0.95));">
+        <div class="countdown-text-side">
+          <h4>🌟 جميع مهام الباقة مفتوحة الآن بالكامل</h4>
+          <p>لقد مر أكثر من 4 أيام على بدء الباقة. جميع المهام الـ 12 متاحة للبدء الفوري وجني الأرباح!</p>
+          <span class="secure-badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border-color: rgba(16, 185, 129, 0.25);">✓ الحساب مؤمن بالكامل بنجاح</span>
+        </div>
       </div>
     `;
   }
 
+  // Filter tasks for the selected day (3 tasks per day)
+  const baseIndex = (window.__selectedTasksDay - 1) * 3;
+  const isSelectedDayLocked = window.__selectedTasksDay > unlockedDay;
+  
+  let tasksBoardHtml = `<div class="task-board mt">`;
+  
+  for (let i = 0; i < 3; i++) {
+    const taskNumber = baseIndex + i + 1;
+    const t = userTasks[baseIndex + i];
+    
+    if (!t) {
+      // Empty task slot placeholder
+      tasksBoardHtml += `
+        <div class="card task-card-pro" style="opacity: 0.55; border-left: 4px dashed rgba(255, 255, 255, 0.15); display: flex; flex-direction: column; justify-content: center; min-height: 120px;">
+          <h3 style="margin: 0; font-size: 15px; color: #a1a1aa; font-weight: 700;">المهمة رقم ${taskNumber}</h3>
+          <p style="color: #64748b; font-size: 12.5px; margin: 4px 0 0;">لم يتم إسناد هذه المهمة بعد من قبل الإدارة لهذه الباقة.</p>
+        </div>
+      `;
+    } else {
+      const isDone = t.status === "completed";
+      let statusBadge = "";
+      let buttonHtml = "";
+      
+      if (isDone) {
+        statusBadge = `<span class="status verified" style="font-size: 11px; padding: 4px 10px; border-radius: 8px; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2);">✅ مكتملة</span>`;
+        buttonHtml = `<button class="btn" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); color: #8e8e93; cursor: not-allowed; border-radius: 12px; font-weight: 700; height: 42px; width: 100%;" disabled>تم استلام الأرباح 💰</button>`;
+      } else if (t.status === "pending_review") {
+        statusBadge = `<span class="status pending" style="font-size: 11px; padding: 4px 10px; border-radius: 8px; background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2);">⏳ قيد المراجعة</span>`;
+        buttonHtml = `<button class="btn" style="background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.15); color: #f59e0b; cursor: not-allowed; border-radius: 12px; font-weight: 700; height: 42px; width: 100%;" disabled>بانتظار الموافقة</button>`;
+      } else if (isSelectedDayLocked) {
+        statusBadge = `<span class="status active" style="font-size: 11px; padding: 4px 10px; border-radius: 8px; background: rgba(255, 255, 255, 0.05); color: #8e8e93; border: 1px solid rgba(255, 255, 255, 0.08);">🔒 مغلقة</span>`;
+        buttonHtml = `<button class="btn" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); color: #8e8e93; cursor: not-allowed; border-radius: 12px; font-weight: 700; height: 42px; width: 100%;" disabled>🔒 مغلقة حتى اليوم ${window.__selectedTasksDay}</button>`;
+      } else if (t.status === "rejected") {
+        statusBadge = `<span class="status rejected" style="font-size: 11px; padding: 4px 10px; border-radius: 8px; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2);">❌ مرفوضة</span>`;
+        buttonHtml = `<button class="btn red full" style="border-radius: 12px; height: 42px; font-weight: 700; width: 100%;" onclick="completeTaskInstant(${t.id}, '${escapeHtml(t.task_link)}')">🔄 إعادة الإنجاز السريع</button>`;
+      } else {
+        statusBadge = `<span class="status active" style="font-size: 11px; padding: 4px 10px; border-radius: 8px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2);">✨ مهمة نشطة</span>`;
+        buttonHtml = `<button class="btn green full" style="border-radius: 12px; height: 42px; font-weight: 700; width: 100%;" onclick="completeTaskInstant(${t.id}, '${escapeHtml(t.task_link)}')">📦 إنجاز المهمة وصرف الربح</button>`;
+      }
+
+      tasksBoardHtml += `
+        <div class="card task-card-pro" style="position: relative; overflow: hidden; border-left: 4px solid ${isDone ? '#10b981' : isSelectedDayLocked ? '#3f3f46' : '#6c4dff'};">
+          <div style="margin-bottom: 14px; display: flex; justify-content: space-between; align-items: start; gap: 8px;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                <div class="task-number" style="width: 24px; height: 24px; font-size: 12px; background: ${isDone ? '#10b981' : isSelectedDayLocked ? '#3f3f46' : '#6c4dff'}; color: #fff;">${taskNumber}</div>
+                <h3 style="margin: 0; font-size: 15px; color: #fff; font-weight: 700;">${escapeHtml(t.title)}</h3>
+              </div>
+              <p style="color: #a1a1aa; font-size: 12.5px; margin: 4px 0 0; line-height: 1.5;">${escapeHtml(t.description)}</p>
+              ${t.task_link && !isSelectedDayLocked ? `<div style="margin-top: 8px;"><a href="${escapeHtml(t.task_link)}" target="_blank" style="color: #6c4dff; font-size: 12px; text-decoration: underline; display: inline-flex; align-items: center; gap: 4px;">🔗 فتح الرابط المرفق للمهمة</a></div>` : ''}
+              ${t.admin_note && t.status === 'rejected' ? `<div style="margin-top: 8px; color: #ef4444; font-size: 11px; background: rgba(239, 68, 68, 0.05); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.1);"><b>سبب الرفض السابق:</b> ${escapeHtml(t.admin_note)}</div>` : ''}
+            </div>
+            <div>
+              ${statusBadge}
+            </div>
+          </div>
+          <div style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); border-radius: 12px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 13px;">
+            <span style="color: #a1a1aa;">المكافأة المالية الفورية:</span>
+            <b style="color: #10b981; font-size: 15px; font-family: 'Rajdhani', sans-serif;">${money(t.reward)}</b>
+          </div>
+          ${buttonHtml}
+        </div>
+      `;
+    }
+  }
+  tasksBoardHtml += `</div>`;
+
   document.getElementById("dashContent").innerHTML = `
-    <div class="card">
-      <h3>${pkg.package_name}</h3>
-      <p>التقدم: ${completedCount}/12 — الحالة: ${pkg.status}${isMonthly ? ' (باقة شهرية)' : ''}</p>
-      <div class="timeline">
-        ${[1,2,3,4].map(day=>{
-          const base=(day-1)*3;
-          const isDayUnlocked = day <= unlockedDay;
-          return `<div class="timeline-day" style="${!isDayUnlocked ? 'opacity: 0.55; filter: grayscale(0.8);' : ''}">
-            <div class="day-num">اليوم ${day} ${!isDayUnlocked ? '🔒' : ''}</div>
-            <div><b>3 مهام</b><p>${isDayUnlocked ? 'تقدم اليوم داخل الباقة.' : 'مغلق حتى يحين اليوم المخصص لها.'}</p><div class="mini-task-dots">${[1,2,3].map(n=>{
-              const taskNo = base+n;
-              const done = completedTasks.includes(taskNo) || completedCount >= taskNo;
-              return `<span class="${done ? "done" : ""}">${taskNo}</span>`;
-            }).join("")}</div></div>
-            <b>${Math.min(Math.max(completedCount-base,0),3)}/3</b>
-          </div>`;
-        }).join("")}
-      </div>
+    <div class="card" style="padding: 20px; background: rgba(21, 26, 38, 0.8); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 24px; margin-bottom: 20px;">
+      <h3 style="margin-top: 0; font-size: 18px; color: #fff; font-weight: 800;">باقة الحساب النشطة: ${pkg.package_name}</h3>
+      <p style="color: #94a3b8; font-size: 13.5px; margin: 4px 0 16px;">التقدم الإجمالي للباقة: ${completedCount}/12 مهمة مكتملة.</p>
+      ${daysTabsHtml}
     </div>
+    ${countdownCardHtml}
     ${tasksBoardHtml}
     ${taskoraAdsenseUnit("tasksBottom", taskoraLangText("أسفل صفحة المهام", "Tasks page bottom"))}`;
 }

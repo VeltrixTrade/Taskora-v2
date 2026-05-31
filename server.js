@@ -982,7 +982,7 @@ app.get("/api/me", auth, async (req, res) => {
   const pkg = await query("SELECT * FROM user_packages WHERE user_id=$1 ORDER BY id DESC LIMIT 1", [req.user.id]);
   const kyc = await query("SELECT id, document_type, full_name, document_number, status, admin_note, created_at, reviewed_at FROM user_kyc WHERE user_id=$1 ORDER BY id DESC LIMIT 1", [req.user.id]);
   const unread = await query("SELECT COUNT(*)::int AS count FROM notifications WHERE user_id=$1 AND is_read=false", [req.user.id]);
-  res.json({ user: publicUser(req.user), package: pkg.rows[0] || null, kyc: kyc.rows[0] || null, unread_notifications: unread.rows[0].count });
+  res.json({ user: publicUser(req.user), package: pkg.rows[0] || null, kyc: kyc.rows[0] || null, unread_notifications: unread.rows[0].count, server_time: new Date().toISOString() });
 });
 
 
@@ -1118,8 +1118,13 @@ app.get("/api/dashboard", auth, async (req, res) => {
     package: pkg.rows[0] || null,
     daily_tasks: DAILY_TASKS.map((title, index) => ({ number: index + 1, title })),
     transactions: transactions.rows,
-    golden_tasks: golden.rows
+    golden_tasks: golden.rows,
+    server_time: new Date().toISOString()
   });
+});
+
+app.get("/api/time", (req, res) => {
+  res.json({ server_time: new Date().toISOString() });
 });
 
 app.post("/api/tasks/daily/:number/complete", auth, async (req, res) => {
@@ -1277,8 +1282,25 @@ app.post("/api/golden/:id/complete-instant", auth, async (req, res) => {
     );
     if (pkgRes.rowCount > 0) {
       const pkg = pkgRes.rows[0];
+      
+      // Enforce Daily Limit (3 tasks per day) in GMT+3 timezone (Iraq & Syria)
+      const getMidnightGMT3 = (dateObj) => {
+        const timeWithOffset = dateObj.getTime() + (3 * 60 * 60 * 1000);
+        const shifted = new Date(timeWithOffset);
+        return Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate());
+      };
+      const startedMidnight = getMidnightGMT3(new Date(pkg.started_at));
+      const currentMidnight = getMidnightGMT3(new Date());
+      const daysElapsed = Math.max(1, Math.floor((currentMidnight - startedMidnight) / (24 * 60 * 60 * 1000)) + 1);
+      const allowedMax = Math.min(12, daysElapsed * 3);
+
       const completed = Array.isArray(pkg.completed_tasks) ? pkg.completed_tasks : [];
       const nextTaskNumber = completed.length + 1;
+
+      if (nextTaskNumber > allowedMax) {
+        await client.query("ROLLBACK");
+        return res.status(403).json({ error: `عذراً، تجاوزت الحد المسموح به لليوم. متاح لك إكمال حتى المهمة رقم ${allowedMax} فقط اليوم. يرجى الانتظار حتى منتصف الليل بتوقيت العراق وسوريا (GMT+3) لفتح مهام اليوم التالي.` });
+      }
       
       if (nextTaskNumber <= 12) {
         const newCompleted = [...completed, nextTaskNumber].sort((a,b) => a-b);
