@@ -1617,7 +1617,7 @@ app.get("/api/admin/export/users", auth, adminOnly, async (req, res) => {
       sql += " WHERE created_at >= $1 AND created_at <= $2";
       params.push(new Date(startDate + " 00:00:00"), new Date(endDate + " 23:59:59"));
     }
-    sql += " ORDER BY id DESC";
+    sql += " ORDER BY username ASC, created_at ASC";
     
     const result = await query(sql, params);
     
@@ -1666,7 +1666,7 @@ app.get("/api/admin/export/deposits", auth, adminOnly, async (req, res) => {
       sql += " WHERE d.created_at >= $1 AND d.created_at <= $2";
       params.push(new Date(startDate + " 00:00:00"), new Date(endDate + " 23:59:59"));
     }
-    sql += " ORDER BY d.id DESC";
+    sql += " ORDER BY u.username ASC, d.created_at ASC";
     
     const result = await query(sql, params);
     
@@ -1714,7 +1714,7 @@ app.get("/api/admin/export/withdrawals", auth, adminOnly, async (req, res) => {
       sql += " WHERE w.created_at >= $1 AND w.created_at <= $2";
       params.push(new Date(startDate + " 00:00:00"), new Date(endDate + " 23:59:59"));
     }
-    sql += " ORDER BY w.id DESC";
+    sql += " ORDER BY u.username ASC, w.created_at ASC";
     
     const result = await query(sql, params);
     
@@ -1762,7 +1762,7 @@ app.get("/api/admin/export/transactions", auth, adminOnly, async (req, res) => {
       sql += " WHERE t.created_at >= $1 AND t.created_at <= $2";
       params.push(new Date(startDate + " 00:00:00"), new Date(endDate + " 23:59:59"));
     }
-    sql += " ORDER BY t.id DESC";
+    sql += " ORDER BY u.username ASC, t.created_at ASC";
     
     const result = await query(sql, params);
     
