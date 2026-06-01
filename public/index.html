@@ -3301,23 +3301,6 @@
           <div class="nav-actions-vertical" id="navActions"></div>
         </div>
         
-        <!-- Language Selector inside Side Menu -->
-        <div class="side-menu-section">
-          <h4 data-i18n="menuLanguage">اللغة / Language</h4>
-          <select id="langSelect" onchange="changeLang(this.value)" class="lang-select full-width">
-            <option value="ar">العربية</option>
-            <option value="en">English</option>
-          </select>
-        </div>
-        
-        <!-- Theme Selector inside Side Menu -->
-        <div class="side-menu-section">
-          <h4 data-i18n="menuAppearance">المظهر / Theme</h4>
-          <button id="themeToggleBtn" onclick="toggleTheme()" class="theme-toggle-btn-wide" title="Toggle Theme">
-            <span id="themeToggleIcon" style="margin-left: 8px;">🌙</span>
-            <span id="themeToggleText">الوضع الليلي</span>
-          </button>
-        </div>
       </div>
     </div>
   </div>
@@ -3730,24 +3713,20 @@
           }
 
           window.t = function(key) {
-            const lang = localStorage.getItem("taskora_lang") || "ar";
-            return i18n[lang][key] || i18n["ar"][key] || key;
+            return i18n["ar"][key] || key;
           };
 
           window.changeLang = function(lang) {
-            localStorage.setItem("taskora_lang", lang);
+            // Force Arabic
+            lang = "ar";
+            localStorage.setItem("taskora_lang", "ar");
             const htmlEl = document.documentElement;
-            htmlEl.lang = lang;
-            if (lang === "ar") {
-              htmlEl.dir = "rtl";
-              document.body.style.fontFamily = "Tajawal, sans-serif";
-            } else {
-              htmlEl.dir = "ltr";
-              document.body.style.fontFamily = "Inter, Tajawal, sans-serif";
-            }
+            htmlEl.lang = "ar";
+            htmlEl.dir = "rtl";
+            document.body.style.fontFamily = "Tajawal, sans-serif";
             
             const select = document.getElementById("langSelect");
-            if (select) select.value = lang;
+            if (select) select.value = "ar";
             
             // Translate all static keys on page
             document.querySelectorAll("[data-i18n]").forEach(el => {
@@ -3757,7 +3736,7 @@
             });
 
             // Translate entire DOM recursively
-            translateElementText(document.body, lang);
+            translateElementText(document.body, "ar");
             
             // Re-render nav controls
             if (typeof renderNav === "function") {
@@ -3766,19 +3745,7 @@
           };
 
           window.toggleTheme = function() {
-            const body = document.body;
-            const isLight = body.classList.toggle("light-mode");
-            document.documentElement.classList.toggle("light-mode", isLight);
-            localStorage.setItem("taskora_theme", isLight ? "light" : "dark");
-            
-            const icon = document.getElementById("themeToggleIcon");
-            const text = document.getElementById("themeToggleText");
-            if (icon) {
-              icon.textContent = isLight ? "☀️" : "🌙";
-            }
-            if (text) {
-              text.textContent = isLight ? "الوضع النهاري" : "الوضع الليلي";
-            }
+            // Light mode has been removed, always stay in dark mode
           };
 
           window.toggleSideMenu = function() {
@@ -3810,18 +3777,13 @@
 
           // Initialize theme and language on DOMContentLoaded
           window.addEventListener("DOMContentLoaded", () => {
-            const savedTheme = localStorage.getItem("taskora_theme");
-            if (savedTheme === "light") {
-              document.body.classList.add("light-mode");
-              document.documentElement.classList.add("light-mode");
-              const icon = document.getElementById("themeToggleIcon");
-              const text = document.getElementById("themeToggleText");
-              if (icon) icon.textContent = "☀️";
-              if (text) text.textContent = "الوضع النهاري";
-            }
+            // Force dark mode and remove light mode residues
+            localStorage.setItem("taskora_theme", "dark");
+            document.body.classList.remove("light-mode");
+            document.documentElement.classList.remove("light-mode");
             
-            const savedLang = localStorage.getItem("taskora_lang") || "ar";
-            window.changeLang(savedLang);
+            // Force Arabic
+            window.changeLang("ar");
           });
         </script>
       </div>
@@ -4463,12 +4425,16 @@
       <div class="footer-top">
         <!-- SOCIALS ON LEFT (Instagram and Telegram monochrome outline circular icons) -->
         <div class="footer-socials">
+          <!-- Facebook -->
+          <a href="https://www.facebook.com/share/1Ev8NcqpYC/?mibextid=wwXIfr" target="_blank" title="فيسبوك" class="footer-social-link">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+          </a>
           <!-- Instagram -->
-          <a href="https://instagram.com/taskora" target="_blank" title="انستجرام" class="footer-social-link">
+          <a href="https://www.instagram.com/tas.kora?igsh=MWt6NGwxNGNrdXBm&utm_source=qr" target="_blank" title="انستجرام" class="footer-social-link">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051C.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
           </a>
           <!-- Telegram -->
-          <a href="https://t.me/taskora_official" target="_blank" title="تليجرام" class="footer-social-link">
+          <a href="https://t.me/tas_kora" target="_blank" title="تليجرام" class="footer-social-link">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M20.665 3.717l-17.73 6.837c-1.21.486-1.203 1.161-.222 1.462l4.552 1.42 10.532-6.645c.498-.303.953-.14.578.192l-8.533 7.701-.332 4.965c.487 0 .702-.223.974-.486l2.338-2.27 4.862 3.593c.896.495 1.543.239 1.766-.83l3.19-15.025c.326-1.307-.492-1.896-1.353-1.503z"/></svg>
           </a>
         </div>
@@ -6415,7 +6381,7 @@ async function renderAdmin(){
           <button data-admin-nav="wallets" onclick="adminWallets()">المحافظ <span>🔐</span></button>
           <button data-admin-nav="golden" onclick="adminGolden()">المهام الذهبية <span>⭐</span></button>
           <button data-admin-nav="adjustments" onclick="adminAdjustments()">تعديلات الرصيد <span>🧾</span></button>
-          <button data-admin-nav="transactions" onclick="adminTransactions()">كل المعاملات <span>📚</span></button><button data-admin-nav="audit" onclick="adminAuditLogs()">سجل التدقيق <span>🕵️</span></button><button data-admin-nav="reports" onclick="adminReports()">التقارير <span>📈</span></button><button data-admin-nav="support" onclick="adminSupportTickets()">الدعم <span>💬</span></button><button data-admin-nav="support_emails" onclick="adminSupportEmails()">بريد support@ <span>📬</span></button>
+          <button data-admin-nav="transactions" onclick="adminTransactions()">كل المعاملات <span>📚</span></button><button data-admin-nav="audit" onclick="adminAuditLogs()">سجل التدقيق <span>🕵️</span></button><button data-admin-nav="reports" onclick="adminReports()">التقارير <span>📈</span></button><button data-admin-nav="export" onclick="adminExportData()">تصدير البيانات <span>📥</span></button><button data-admin-nav="support" onclick="adminSupportTickets()">الدعم <span>💬</span></button><button data-admin-nav="support_emails" onclick="adminSupportEmails()">بريد support@ <span>📬</span></button>
         </div>
       </aside>
       <section class="admin-main">
@@ -6451,6 +6417,7 @@ async function renderAdmin(){
   else if(currentAdminScreen==="transactions") adminTransactions();
   else if(currentAdminScreen==="audit") adminAuditLogs();
   else if(currentAdminScreen==="reports") adminReports();
+  else if(currentAdminScreen==="export") adminExportData();
   else if(currentAdminScreen==="support") adminSupportTickets();
   else if(currentAdminScreen==="support_emails") adminSupportEmails();
   else adminOverview();
@@ -6498,6 +6465,123 @@ async function adminOverview(){
       </div>
     </div>`;
 }
+async function adminExportData() {
+  markAdminNav("export");
+  
+  adminBox.innerHTML = `
+    <h3>تصدير البيانات كملفات Excel (CSV)</h3>
+    <p class="muted" style="margin-bottom: 24px;">يمكنك تحديد فترة زمنية لتصدير البيانات، أو ترك الحقول فارغة لتصدير كافة البيانات من بداية عمل المنصة.</p>
+    
+    <div class="card" style="margin-bottom: 24px; border: 1px solid rgba(139, 92, 246, 0.25); background: rgba(20, 20, 25, 0.85);">
+      <h4 style="margin-bottom: 16px; color: #fff; font-weight: 700; font-size: 15px;">📅 تحديد الفترة الزمنية للتصدير</h4>
+      <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px;">
+        <div>
+          <label style="display: block; margin-bottom: 8px; font-size: 13px; color: #a1a1aa;">من تاريخ (Start Date)</label>
+          <input type="date" id="exportStartDate" class="admin-input" style="width: 100%; height: 42px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; color: #fff; padding: 0 14px; outline: none;">
+        </div>
+        <div>
+          <label style="display: block; margin-bottom: 8px; font-size: 13px; color: #a1a1aa;">إلى تاريخ (End Date)</label>
+          <input type="date" id="exportEndDate" class="admin-input" style="width: 100%; height: 42px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; color: #fff; padding: 0 14px; outline: none;">
+        </div>
+      </div>
+      
+      <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+        <button class="btn primary" onclick="clearExportDates()">تفريغ التواريخ (تصدير الكل)</button>
+      </div>
+    </div>
+
+    <div class="stats" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
+      <div class="stat" onclick="triggerExport('users')" style="border-color: rgba(99, 102, 241, 0.2); background: radial-gradient(circle at top left, rgba(99, 102, 241, 0.05), transparent 70%), rgba(20, 20, 25, 0.65);">
+        <div class="stat-header">
+          <span style="font-weight: 700; color: #fff;">المستخدمون والأرصدة</span>
+          <div class="stat-icon" style="background: rgba(99, 102, 241, 0.08); border-color: rgba(99, 102, 241, 0.2); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 14px;">👥</div>
+        </div>
+        <strong style="font-size: 20px; color: #fff; margin-top: 12px; display: block;">تحميل المستخدمين 📥</strong>
+        <p style="font-size: 12px; margin-top: 8px; color: var(--muted); line-height: 1.5;">تصدير قائمة المستخدمين بالكامل مع أرصدتهم وحالاتهم.</p>
+      </div>
+
+      <div class="stat" onclick="triggerExport('deposits')" style="border-color: rgba(16, 185, 129, 0.2); background: radial-gradient(circle at top left, rgba(16, 185, 129, 0.05), transparent 70%), rgba(20, 20, 25, 0.65);">
+        <div class="stat-header">
+          <span style="font-weight: 700; color: #fff;">طلبات الإيداع</span>
+          <div class="stat-icon" style="background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.2); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 14px;">📥</div>
+        </div>
+        <strong style="font-size: 20px; color: #fff; margin-top: 12px; display: block;">تحميل الإيداعات 📥</strong>
+        <p style="font-size: 12px; margin-top: 8px; color: var(--muted); line-height: 1.5;">تصدير كافة طلبات الإيداع، المقبولة والمرفوضة والمعلقة.</p>
+      </div>
+
+      <div class="stat" onclick="triggerExport('withdrawals')" style="border-color: rgba(239, 68, 68, 0.2); background: radial-gradient(circle at top left, rgba(239, 68, 68, 0.05), transparent 70%), rgba(20, 20, 25, 0.65);">
+        <div class="stat-header">
+          <span style="font-weight: 700; color: #fff;">طلبات السحب</span>
+          <div class="stat-icon" style="background: rgba(239, 68, 68, 0.08); border-color: rgba(239, 68, 68, 0.2); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 14px;">📤</div>
+        </div>
+        <strong style="font-size: 20px; color: #fff; margin-top: 12px; display: block;">تحميل السحوبات 📥</strong>
+        <p style="font-size: 12px; margin-top: 8px; color: var(--muted); line-height: 1.5;">تصدير قائمة طلبات السحب وعناوين محافظ العملات وحالات الطلبات.</p>
+      </div>
+
+      <div class="stat" onclick="triggerExport('transactions')" style="border-color: rgba(245, 158, 11, 0.2); background: radial-gradient(circle at top left, rgba(245, 158, 11, 0.05), transparent 70%), rgba(20, 20, 25, 0.65);">
+        <div class="stat-header">
+          <span style="font-weight: 700; color: #fff;">المعاملات المالية</span>
+          <div class="stat-icon" style="background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.2); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 14px;">🧾</div>
+        </div>
+        <strong style="font-size: 20px; color: #fff; margin-top: 12px; display: block;">تحميل المعاملات 📥</strong>
+        <p style="font-size: 12px; margin-top: 8px; color: var(--muted); line-height: 1.5;">تصدير تفاصيل كافة الحركات والقيود المالية التي جرت داخل النظام.</p>
+      </div>
+    </div>
+  `;
+}
+
+window.clearExportDates = function() {
+  const start = document.getElementById("exportStartDate");
+  const end = document.getElementById("exportEndDate");
+  if(start) start.value = "";
+  if(end) end.value = "";
+  toast("تم تفريغ التواريخ، سيتم تصدير كافة البيانات المتاحة", "info");
+};
+
+window.triggerExport = function(type) {
+  const start = document.getElementById("exportStartDate")?.value || "";
+  const end = document.getElementById("exportEndDate")?.value || "";
+  
+  if ((start && !end) || (!start && end)) {
+    toast("يرجى تحديد كلا التاريخين (البداية والنهاية) أو تركهما فارغين", "warning");
+    return;
+  }
+  
+  let url = `/api/admin/export/${type}`;
+  if (start && end) {
+    url += `?startDate=${start}&endDate=${end}`;
+  }
+  
+  toast("جاري تحضير وتصدير الملف...", "info");
+  
+  fetch(url, {
+    headers: headers()
+  })
+  .then(async res => {
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || "فشل تصدير الملف");
+    }
+    return res.blob();
+  })
+  .then(blob => {
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = downloadUrl;
+    const dateSuffix = start && end ? `-${start}-to-${end}` : "-all-time";
+    a.download = `taskora-${type}${dateSuffix}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(downloadUrl);
+    toast("تم تصدير وتحميل الملف بنجاح! 🚀", "success");
+  })
+  .catch(e => {
+    console.error(e);
+    toast(e.message || "حدث خطأ أثناء تصدير الملف", "error");
+  });
+};
+
 async function adminUsers(){
   markAdminNav("users");
   const d=await api("/api/admin/users",{headers:headers()});

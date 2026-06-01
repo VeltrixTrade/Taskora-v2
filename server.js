@@ -1607,14 +1607,193 @@ app.get("/api/admin/reports", auth, adminOnly, async (_req, res) => {
   });
 });
 
-app.get("/api/admin/export/users.csv", auth, adminOnly, async (_req, res) => {
-  const result = await query("SELECT id, username, email, phone, balance, package_balance, package_profit, kyc_status, bonus_claimed, status, created_at FROM users ORDER BY id DESC");
-  const headers = ["id","username","email","phone","balance","package_balance","package_profit","kyc_status","bonus_claimed","status","created_at"];
-  const escape = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-  const csv = [headers.join(","), ...result.rows.map(r => headers.map(h => escape(r[h])).join(","))].join("\\n");
-  res.setHeader("Content-Type", "text/csv; charset=utf-8");
-  res.setHeader("Content-Disposition", "attachment; filename=taskora-users.csv");
-  res.send(csv);
+app.get("/api/admin/export/users", auth, adminOnly, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    let sql = "SELECT id, username, email, phone, balance, package_balance, package_profit, kyc_status, status, created_at FROM users";
+    const params = [];
+    
+    if (startDate && endDate) {
+      sql += " WHERE created_at >= $1 AND created_at <= $2";
+      params.push(new Date(startDate + " 00:00:00"), new Date(endDate + " 23:59:59"));
+    }
+    sql += " ORDER BY id DESC";
+    
+    const result = await query(sql, params);
+    
+    // Arabic Headers
+    const headers = ["المعرف (ID)", "اسم المستخدم", "البريد الإلكتروني", "رقم الهاتف", "الرصيد المتاح (USD)", "رصيد الباقة (USD)", "أرباح الباقة (USD)", "حالة التوثيق (KYC)", "حالة الحساب", "تاريخ التسجيل"];
+    const dbKeys = ["id", "username", "email", "phone", "balance", "package_balance", "package_profit", "kyc_status", "status", "created_at"];
+    
+    const formatDate = (dateVal) => {
+      if (!dateVal) return "";
+      try {
+        const d = new Date(dateVal);
+        if (isNaN(d.getTime())) return String(dateVal);
+        const pad = (n) => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+      } catch (e) { return String(dateVal); }
+    };
+    
+    const escape = (v, k) => {
+      if (k === "created_at") v = formatDate(v);
+      return `"${String(v ?? "").replace(/"/g, '""')}"`;
+    };
+    
+    // Add UTF-8 BOM (\uFEFF) for Excel Arabic support
+    const csvContent = "\uFEFF" + [headers.join(","), ...result.rows.map(r => dbKeys.map(k => escape(r[k], k)).join(","))].join("\n");
+    
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename=taskora-users.csv`);
+    res.send(csvContent);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to export users." });
+  }
+});
+
+app.get("/api/admin/export/deposits", auth, adminOnly, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    let sql = `
+      SELECT d.id, d.user_id, u.username, u.email, d.amount, d.coin, d.txid, d.status, d.created_at, d.reviewed_at, d.admin_note
+      FROM deposits d
+      LEFT JOIN users u ON u.id = d.user_id
+    `;
+    const params = [];
+    
+    if (startDate && endDate) {
+      sql += " WHERE d.created_at >= $1 AND d.created_at <= $2";
+      params.push(new Date(startDate + " 00:00:00"), new Date(endDate + " 23:59:59"));
+    }
+    sql += " ORDER BY d.id DESC";
+    
+    const result = await query(sql, params);
+    
+    // Arabic Headers
+    const headers = ["معرف الإيداع (ID)", "معرف المستخدم", "اسم المستخدم", "البريد الإلكتروني", "المبلغ (USD)", "العملة", "رقم المعاملة (TXID)", "الحالة", "تاريخ الطلب", "تاريخ المراجعة", "ملاحظة الأدمن"];
+    const dbKeys = ["id", "user_id", "username", "email", "amount", "coin", "txid", "status", "created_at", "reviewed_at", "admin_note"];
+    
+    const formatDate = (dateVal) => {
+      if (!dateVal) return "";
+      try {
+        const d = new Date(dateVal);
+        if (isNaN(d.getTime())) return String(dateVal);
+        const pad = (n) => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+      } catch (e) { return String(dateVal); }
+    };
+    
+    const escape = (v, k) => {
+      if (k === "created_at" || k === "reviewed_at") v = formatDate(v);
+      return `"${String(v ?? "").replace(/"/g, '""')}"`;
+    };
+    
+    const csvContent = "\uFEFF" + [headers.join(","), ...result.rows.map(r => dbKeys.map(k => escape(r[k], k)).join(","))].join("\n");
+    
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename=taskora-deposits.csv`);
+    res.send(csvContent);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to export deposits." });
+  }
+});
+
+app.get("/api/admin/export/withdrawals", auth, adminOnly, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    let sql = `
+      SELECT w.id, w.user_id, u.username, u.email, w.amount, w.coin, w.wallet_address, w.status, w.created_at, w.reviewed_at, w.admin_note
+      FROM withdrawals w
+      LEFT JOIN users u ON u.id = w.user_id
+    `;
+    const params = [];
+    
+    if (startDate && endDate) {
+      sql += " WHERE w.created_at >= $1 AND w.created_at <= $2";
+      params.push(new Date(startDate + " 00:00:00"), new Date(endDate + " 23:59:59"));
+    }
+    sql += " ORDER BY w.id DESC";
+    
+    const result = await query(sql, params);
+    
+    // Arabic Headers
+    const headers = ["معرف السحب (ID)", "معرف المستخدم", "اسم المستخدم", "البريد الإلكتروني", "المبلغ المسحوب (USD)", "العملة", "عنوان المحفظة", "الحالة", "تاريخ الطلب", "تاريخ المراجعة", "ملاحظة الأدمن"];
+    const dbKeys = ["id", "user_id", "username", "email", "amount", "coin", "wallet_address", "status", "created_at", "reviewed_at", "admin_note"];
+    
+    const formatDate = (dateVal) => {
+      if (!dateVal) return "";
+      try {
+        const d = new Date(dateVal);
+        if (isNaN(d.getTime())) return String(dateVal);
+        const pad = (n) => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+      } catch (e) { return String(dateVal); }
+    };
+    
+    const escape = (v, k) => {
+      if (k === "created_at" || k === "reviewed_at") v = formatDate(v);
+      return `"${String(v ?? "").replace(/"/g, '""')}"`;
+    };
+    
+    const csvContent = "\uFEFF" + [headers.join(","), ...result.rows.map(r => dbKeys.map(k => escape(r[k], k)).join(","))].join("\n");
+    
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename=taskora-withdrawals.csv`);
+    res.send(csvContent);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to export withdrawals." });
+  }
+});
+
+app.get("/api/admin/export/transactions", auth, adminOnly, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    let sql = `
+      SELECT t.id, t.user_id, u.username, u.email, t.type, t.amount, t.description, t.balance_before, t.balance_after, t.created_at
+      FROM transactions t
+      LEFT JOIN users u ON u.id = t.user_id
+    `;
+    const params = [];
+    
+    if (startDate && endDate) {
+      sql += " WHERE t.created_at >= $1 AND t.created_at <= $2";
+      params.push(new Date(startDate + " 00:00:00"), new Date(endDate + " 23:59:59"));
+    }
+    sql += " ORDER BY t.id DESC";
+    
+    const result = await query(sql, params);
+    
+    // Arabic Headers
+    const headers = ["معرف المعاملة (ID)", "معرف المستخدم", "اسم المستخدم", "البريد الإلكتروني", "نوع المعاملة", "المبلغ (USD)", "الوصف / البيان", "الرصيد قبل", "الرصيد بعد", "التاريخ والوقت"];
+    const dbKeys = ["id", "user_id", "username", "email", "type", "amount", "description", "balance_before", "balance_after", "created_at"];
+    
+    const formatDate = (dateVal) => {
+      if (!dateVal) return "";
+      try {
+        const d = new Date(dateVal);
+        if (isNaN(d.getTime())) return String(dateVal);
+        const pad = (n) => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+      } catch (e) { return String(dateVal); }
+    };
+    
+    const escape = (v, k) => {
+      if (k === "created_at") v = formatDate(v);
+      return `"${String(v ?? "").replace(/"/g, '""')}"`;
+    };
+    
+    const csvContent = "\uFEFF" + [headers.join(","), ...result.rows.map(r => dbKeys.map(k => escape(r[k], k)).join(","))].join("\n");
+    
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename=taskora-transactions.csv`);
+    res.send(csvContent);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to export transactions." });
+  }
 });
 
 
