@@ -85,16 +85,8 @@ const pool = new Pool({
 const uploadDir = path.resolve(process.env.UPLOAD_DIR || path.join(__dirname, "uploads"));
 fs.mkdirSync(uploadDir, { recursive: true });
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadDir),
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname || "").toLowerCase();
-    cb(null, `${Date.now()}-${crypto.randomBytes(8).toString("hex")}${ext}`);
-  }
-});
-
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 6 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     const allowed = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
@@ -102,6 +94,17 @@ const upload = multer({
     cb(null, true);
   }
 });
+
+async function saveFileToDb(file) {
+  if (!file) return null;
+  const ext = path.extname(file.originalname || "").toLowerCase();
+  const filename = `${Date.now()}-${crypto.randomBytes(8).toString("hex")}${ext}`;
+  await query(
+    "INSERT INTO stored_files (filename, mime_type, file_data) VALUES ($1, $2, $3)",
+    [filename, file.mimetype, file.buffer]
+  );
+  return filename;
+}
 
 app.set("trust proxy", 1);
 app.use(helmet({
@@ -178,6 +181,16 @@ async function sendMail(to, subject, html) {
 
 
 async function migrate() {
+  await query(`
+    CREATE TABLE IF NOT EXISTS stored_files (
+      id BIGSERIAL PRIMARY KEY,
+      filename VARCHAR(255) UNIQUE NOT NULL,
+      mime_type VARCHAR(100) NOT NULL,
+      file_data BYTEA NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
   await query(`
     CREATE TABLE IF NOT EXISTS users (
       id BIGSERIAL PRIMARY KEY,
@@ -994,7 +1007,8 @@ app.post("/api/profile/avatar", auth, upload.single("avatar"), async (req, res) 
     if (!(file.mimetype || "").startsWith("image/")) {
       return res.status(422).json({ error: "Avatar must be an image file." });
     }
-    const avatarUrl = `/api/public/avatar/${file.filename}`;
+    const filename = await saveFileToDb(file);
+    const avatarUrl = `/api/public/avatar/${filename}`;
     await query("UPDATE users SET avatar_url=$1, avatar_updated_at=NOW() WHERE id=$2", [avatarUrl, req.user.id]);
     res.json({ success: true, avatar_url: avatarUrl });
   } catch (err) {
@@ -1042,6 +1056,11 @@ app.post("/api/kyc", auth, upload.fields([
 
     const back = req.files?.back_image?.[0];
     const selfie = req.files?.selfie_image?.[0];
+
+    const frontFilename = await saveFileToDb(front);
+    const backFilename = back ? await saveFileToDb(back) : null;
+    const selfieFilename = selfie ? await saveFileToDb(selfie) : null;
+
     const result = await query(`
       INSERT INTO user_kyc (user_id, document_type, full_name, document_number, document_hash, front_image, back_image, selfie_image)
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
@@ -1052,9 +1071,9 @@ app.post("/api/kyc", auth, upload.fields([
       fullName,
       documentNumber,
       hash,
-      `/api/files/${front.filename}`,
-      back ? `/api/files/${back.filename}` : null,
-      selfie ? `/api/files/${selfie.filename}` : null
+      `/api/files/${frontFilename}`,
+      backFilename ? `/api/files/${backFilename}` : null,
+      selfieFilename ? `/api/files/${selfieFilename}` : null
     ]);
 
     await query("UPDATE users SET kyc_status='pending' WHERE id=$1", [req.user.id]);
@@ -1430,7 +1449,7 @@ app.post("/api/deposits", auth, upload.single("proof_image"), async (req, res) =
     const coin = lower(req.body.coin);
     const txid = normalize(req.body.txid);
     if (!amount || amount <= 0) return res.status(422).json({ error: "Invalid amount." });
-  if (amount < MIN_WITHDRAWAL_AMOUNT) return res.status(422).json({ error: `Minimum withdrawal amount is ${MIN_WITHDRAWAL_AMOUNT}.` });
+    if (amount < MIN_WITHDRAWAL_AMOUNT) return res.status(422).json({ error: `Minimum withdrawal amount is ${MIN_WITHDRAWAL_AMOUNT}.` });
     if (!["usdt_trc20", "usdt_erc20", "btc", "sol"].includes(coin)) return res.status(422).json({ error: "Invalid coin." });
     if (!txid || txid.length < 4) return res.status(422).json({ error: "TXID is required." });
 
@@ -1442,7 +1461,8 @@ app.post("/api/deposits", auth, upload.single("proof_image"), async (req, res) =
     if (!req.file) {
       return res.status(422).json({ error: "إثبات الدفع (لقطة الشاشة) مطلوب وإجباري لإتمام الإيداع." });
     }
-    const proof = `/api/files/${req.file.filename}`;
+    const filename = await saveFileToDb(req.file);
+    const proof = `/api/files/${filename}`;
     const result = await query(`
       INSERT INTO deposits (user_id, amount, coin, txid, proof_image)
       VALUES ($1,$2,$3,$4,$5) RETURNING *
@@ -1459,6 +1479,15 @@ app.post("/api/withdrawals", auth, async (req, res) => {
   const coin = lower(req.body.coin);
   const wallet = normalize(req.body.wallet_address);
   const confirmWallet = normalize(req.body.confirm_wallet_address || req.body.wallet_confirm);
+
+  // Check if user has bought and completed at least one package
+  const pkgCheck = await query(
+    "SELECT id FROM user_packages WHERE user_id=$1 AND status='completed' LIMIT 1",
+    [req.user.id]
+  );
+  if (pkgCheck.rowCount === 0) {
+    return res.status(422).json({ error: "عذراً، السحب معطل لحسابك. يجب أولاً شراء باقة استثمارية وإكمال جميع مهامها الـ 12 بنجاح لتفعيل إمكانية السحب." });
+  }
 
   if (req.user.kyc_status !== "verified") return res.status(403).json({ error: "KYC verification is required before withdrawals." });
   if (!amount || amount <= 0) return res.status(422).json({ error: "Invalid amount." });
@@ -1880,6 +1909,15 @@ app.get("/api/transactions", auth, async (req, res) => {
 app.get("/api/public/avatar/:filename", async (req, res) => {
   try {
     const filename = path.basename(req.params.filename);
+    
+    // Try to retrieve from database first
+    const fileRes = await query("SELECT mime_type, file_data FROM stored_files WHERE filename=$1", [filename]);
+    if (fileRes.rowCount > 0) {
+      res.setHeader("Content-Type", fileRes.rows[0].mime_type);
+      return res.send(fileRes.rows[0].file_data);
+    }
+
+    // Fallback to local files if it was from before the DB storage migration
     const filePath = path.join(uploadDir, filename);
     if (!filePath.toLowerCase().startsWith(uploadDir.toLowerCase()) || !fs.existsSync(filePath)) {
       return res.status(404).json({ error: "Avatar file not found." });
@@ -1894,20 +1932,31 @@ app.get("/api/public/avatar/:filename", async (req, res) => {
 app.get("/api/files/:filename", auth, async (req, res) => {
   try {
     const filename = path.basename(req.params.filename);
-    const filePath = path.join(uploadDir, filename);
-    if (!filePath.toLowerCase().startsWith(uploadDir.toLowerCase()) || !fs.existsSync(filePath)) {
-      return res.status(404).json({ error: "File not found." });
-    }
+    const apiPath = `/api/files/${filename}`;
 
     if (req.user.role !== "admin") {
-      const apiPath = `/api/files/${filename}`;
       const allowed = await query(`
         SELECT id FROM user_kyc WHERE user_id=$1 AND (front_image=$2 OR back_image=$2 OR selfie_image=$2)
         UNION
         SELECT id FROM deposits WHERE user_id=$1 AND proof_image=$2
+        UNION
+        SELECT id FROM golden_tasks WHERE user_id=$1 AND proof_image=$2
         LIMIT 1
       `, [req.user.id, apiPath]);
       if (allowed.rowCount === 0) return res.status(403).json({ error: "Forbidden file." });
+    }
+
+    // Try to retrieve from database first
+    const fileRes = await query("SELECT mime_type, file_data FROM stored_files WHERE filename=$1", [filename]);
+    if (fileRes.rowCount > 0) {
+      res.setHeader("Content-Type", fileRes.rows[0].mime_type);
+      return res.send(fileRes.rows[0].file_data);
+    }
+
+    // Fallback to local files if it was from before the DB storage migration
+    const filePath = path.join(uploadDir, filename);
+    if (!filePath.toLowerCase().startsWith(uploadDir.toLowerCase()) || !fs.existsSync(filePath)) {
+      return res.status(404).json({ error: "File not found." });
     }
 
     return res.sendFile(filePath);
@@ -1934,44 +1983,54 @@ app.get("/api/admin/diagnose-files", auth, adminOnly, async (req, res) => {
     const deposits = await query("SELECT id, user_id, proof_image FROM deposits");
     const results = [];
     
+    // Helper to check if file exists in DB or disk
+    const checkFileExists = async (imagePath) => {
+      if (!imagePath) return false;
+      const filename = path.basename(imagePath);
+      const dbCheck = await query("SELECT 1 FROM stored_files WHERE filename=$1 LIMIT 1", [filename]);
+      if (dbCheck.rowCount > 0) return true;
+      const localPath = path.join(uploadDir, filename);
+      return fs.existsSync(localPath);
+    };
+
     for (const row of kyc.rows) {
       if (row.front_image) {
-        const frontName = path.basename(row.front_image);
-        const frontPath = path.join(uploadDir, frontName);
         results.push({
           type: 'kyc_front',
           id: row.id,
           user_id: row.user_id,
           db_value: row.front_image,
-          resolved_path: frontPath,
-          exists: fs.existsSync(frontPath)
+          exists: await checkFileExists(row.front_image)
         });
       }
       if (row.back_image) {
-        const backName = path.basename(row.back_image);
-        const backPath = path.join(uploadDir, backName);
         results.push({
           type: 'kyc_back',
           id: row.id,
           user_id: row.user_id,
           db_value: row.back_image,
-          resolved_path: backPath,
-          exists: fs.existsSync(backPath)
+          exists: await checkFileExists(row.back_image)
+        });
+      }
+      if (row.selfie_image) {
+        results.push({
+          type: 'kyc_selfie',
+          id: row.id,
+          user_id: row.user_id,
+          db_value: row.selfie_image,
+          exists: await checkFileExists(row.selfie_image)
         });
       }
     }
 
     for (const row of deposits.rows) {
       if (row.proof_image) {
-        const proofName = path.basename(row.proof_image);
-        const proofPath = path.join(uploadDir, proofName);
         results.push({
           type: 'deposit_proof',
           id: row.id,
           user_id: row.user_id,
           db_value: row.proof_image,
-          resolved_path: proofPath,
-          exists: fs.existsSync(proofPath)
+          exists: await checkFileExists(row.proof_image)
         });
       }
     }
@@ -2682,7 +2741,8 @@ app.post("/api/golden/:id/submit-proof", auth, upload.single("proof_image"), asy
     if (!req.file) {
       return res.status(422).json({ error: "صورة الإثبات (لقطة الشاشة) مطلوبة ومهمة للتأكيد." });
     }
-    const proofUrl = `/api/files/${req.file.filename}`;
+    const filename = await saveFileToDb(req.file);
+    const proofUrl = `/api/files/${filename}`;
     const result = await query(`
       UPDATE golden_tasks 
       SET status='pending_review', proof_image=$1, user_note=$2, completed_at=NULL

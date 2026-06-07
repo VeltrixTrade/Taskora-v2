@@ -559,6 +559,7 @@
 
     /* v3 admin pro + v10 feel */
     .admin-shell{display:grid;grid-template-columns:280px minmax(0,1fr);gap:18px;align-items:start}
+    .admin-shell.admin-single-layout{grid-template-columns:minmax(0,1fr)}
     .admin-side{position:sticky;top:92px;background:linear-gradient(180deg,rgba(10,10,12,.95),rgba(5,5,6,.88));border:1px solid rgba(255,255,255,0.08);border-radius:30px;padding:16px;box-shadow:var(--shadow);backdrop-filter:blur(20px)}
     .admin-brand{display:flex;align-items:center;gap:12px;padding:12px;border-radius:22px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,0.08);margin-bottom:14px}
     .admin-brand img{width:46px;height:46px;border-radius:15px;object-fit:cover}
@@ -1313,6 +1314,61 @@
         transform: scale(1) translateY(0) rotateX(0deg);
         opacity: 1;
       }
+    }
+
+    /* Premium Sidebar Tabs Segmented Control */
+    .sidebar-tabs {
+      display: flex;
+      gap: 6px;
+      margin: 14px 12px;
+      padding: 4px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+    }
+    .sidebar-tab {
+      flex: 1;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      border-radius: 16px;
+      padding: 10px;
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .sidebar-tab:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .sidebar-tab.active {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02));
+      border-color: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    body.light-mode .sidebar-tabs {
+      background: rgba(0, 0, 0, 0.04);
+      border-color: rgba(0, 0, 0, 0.06);
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+    }
+    body.light-mode .sidebar-tab {
+      color: #5C666E;
+    }
+    body.light-mode .sidebar-tab:hover {
+      color: #0D0E12;
+      background: rgba(0, 0, 0, 0.02);
+    }
+    body.light-mode .sidebar-tab.active {
+      background: #0D0E12;
+      border-color: #0D0E12;
+      color: #ffffff;
     }
 
     /* Light Mode Theme Variables */
@@ -4308,8 +4364,17 @@
               </div>
             </div>
           </div>
+          <!-- Segmented control for admins to switch between User Account and Admin Controls -->
+          <div class="sidebar-tabs adminOnly hidden" id="sidebarTabs">
+            <button class="sidebar-tab" id="sbTabUser" onclick="selectSidebarTab('user')">
+              <span>👤</span> لوحة الحساب
+            </button>
+            <button class="sidebar-tab" id="sbTabAdmin" onclick="selectSidebarTab('admin')">
+              <span>🛡️</span> لوحة الإدارة
+            </button>
+          </div>
           <div class="side-title">لوحة الحساب</div>
-          <div class="user-menu">
+          <div class="user-menu" id="sidebarMenuContainer">
             <button class="user-nav" data-dash="overview" onclick="setDash('overview')">نظرة عامة <svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></button>
             <button class="user-nav" data-dash="profile" onclick="setDash('profile')">الملف والتوثيق <svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></button>
             <button class="user-nav" data-dash="status" onclick="setDash('status')">حالة الحساب <svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></button>
@@ -4425,12 +4490,8 @@
       <div class="footer-top">
         <!-- SOCIALS ON LEFT (Instagram and Telegram monochrome outline circular icons) -->
         <div class="footer-socials">
-          <!-- Facebook -->
-          <a href="https://www.facebook.com/share/1Ev8NcqpYC/?mibextid=wwXIfr" target="_blank" title="فيسبوك" class="footer-social-link">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-          </a>
           <!-- Instagram -->
-          <a href="https://www.instagram.com/tas.kora?igsh=MWt6NGwxNGNrdXBm&utm_source=qr" target="_blank" title="انستجرام" class="footer-social-link">
+          <a href="https://www.instagram.com/tas.kora2/" target="_blank" title="انستجرام" class="footer-social-link">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051C.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
           </a>
           <!-- Telegram -->
@@ -5088,18 +5149,120 @@ async function renderDashboard(dataFromMe){
   else if(dash === "overview") setDash("overview");
   else setDash(dash);
 }
+function updateSidebarMenu(t) {
+  const container = document.getElementById("sidebarMenuContainer");
+  if (!container) return;
+
+  const isCurrentAdmin = (t === "admin");
+  const sideTitleEl = document.querySelector("#userSide .side-title");
+
+  // Show segmented control tabs if the user is an admin
+  const userRoleIsAdmin = me && me.role === "admin";
+  const tabsContainer = document.getElementById("sidebarTabs");
+  if (tabsContainer) {
+    tabsContainer.classList.toggle("hidden", !userRoleIsAdmin);
+    if (userRoleIsAdmin) {
+      document.getElementById("sbTabUser").classList.toggle("active", !isCurrentAdmin);
+      document.getElementById("sbTabAdmin").classList.toggle("active", isCurrentAdmin);
+    }
+  }
+
+  if (isCurrentAdmin) {
+    if (sideTitleEl) sideTitleEl.textContent = "لوحة الإدارة المركزية";
+    container.innerHTML = `
+      <button class="user-nav" data-admin-nav="overview" onclick="switchAdminScreen('overview')">نظرة عامة <span>📊</span></button>
+      <button class="user-nav" data-admin-nav="users" onclick="switchAdminScreen('users')">المستخدمون والأرصدة <span>👥</span></button>
+      <button class="user-nav" data-admin-nav="kyc_pending" onclick="switchAdminScreen('kyc_pending')">طلبات التوثيق <span>🛡️</span></button>
+      <button class="user-nav" data-admin-nav="kyc_verified" onclick="switchAdminScreen('kyc_verified')">المستخدمون الموثقون <span>✅</span></button>
+      <button class="user-nav" data-admin-nav="kyc_unverified" onclick="switchAdminScreen('kyc_unverified')">المستخدمون غير الموثقين <span>⛔</span></button>
+      <button class="user-nav" data-admin-nav="deposits" onclick="switchAdminScreen('deposits')">الإيداعات <span>📥</span></button>
+      <button class="user-nav" data-admin-nav="withdrawals" onclick="switchAdminScreen('withdrawals')">السحوبات <span>📤</span></button>
+      <button class="user-nav" data-admin-nav="wallets" onclick="switchAdminScreen('wallets')">المحافظ <span>🔐</span></button>
+      <button class="user-nav" data-admin-nav="golden" onclick="switchAdminScreen('golden')">المهام الذهبية <span>⭐</span></button>
+      <button class="user-nav" data-admin-nav="adjustments" onclick="switchAdminScreen('adjustments')">تعديلات الرصيد <span>🧾</span></button>
+      <button class="user-nav" data-admin-nav="transactions" onclick="switchAdminScreen('transactions')">كل المعاملات <span>📚</span></button>
+      <button class="user-nav" data-admin-nav="audit" onclick="switchAdminScreen('audit')">سجل التدقيق <span>🕵️</span></button>
+      <button class="user-nav" data-admin-nav="reports" onclick="switchAdminScreen('reports')">التقارير <span>📈</span></button>
+      <button class="user-nav" data-admin-nav="export" onclick="switchAdminScreen('export')">تصدير البيانات <span>📥</span></button>
+      <button class="user-nav" data-admin-nav="support" onclick="switchAdminScreen('support')">الدعم <span>💬</span></button>
+      <button class="user-nav" data-admin-nav="support_emails" onclick="switchAdminScreen('support_emails')">بريد support@ <span>📬</span></button>
+      
+      <div style="border-top: 1px solid rgba(255,255,255,0.08); margin: 10px 0; padding-top: 10px;"></div>
+      
+      <button class="user-nav" onclick="selectSidebarTab('user')" style="color: #a78bfa; border-color: rgba(139, 92, 246, 0.2); background: rgba(139, 92, 246, 0.02); display: flex; align-items: center; justify-content: space-between; text-align: right;">العودة للوحة الحساب <svg class="nav-svg-icon" viewBox="0 0 24 24" style="stroke: #a78bfa;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></button>
+      <button class="user-nav" onclick="showView('home')">الرئيسية <svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></button>
+      <button class="user-nav logout-btn" onclick="logout()" style="color: #fca5a5; border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.02);">تسجيل الخروج <svg class="nav-svg-icon" viewBox="0 0 24 24" style="stroke: #ef4444;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
+    `;
+    
+    // Highlight the active admin screen
+    document.querySelectorAll("[data-admin-nav]").forEach(b => {
+      b.classList.toggle("active", b.dataset.adminNav === currentAdminScreen);
+    });
+  } else {
+    if (sideTitleEl) sideTitleEl.textContent = "لوحة الحساب";
+    const isAdmin = me && me.role === "admin";
+    container.innerHTML = `
+      <button class="user-nav" data-dash="overview" onclick="setDash('overview')">نظرة عامة <svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></button>
+      <button class="user-nav" data-dash="profile" onclick="setDash('profile')">الملف والتوثيق <svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></button>
+      <button class="user-nav" data-dash="status" onclick="setDash('status')">حالة الحساب <svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></button>
+      <button class="user-nav" data-dash="packages" onclick="setDash('packages')">الباقات <svg class="nav-svg-icon" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></button>
+      <button class="user-nav" data-dash="tasks" onclick="setDash('tasks')">المهام اليومية <svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></button>
+      <button class="user-nav" data-dash="wallet" onclick="setDash('wallet')">الإيداع والسحب <svg class="nav-svg-icon" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></button>
+      <button class="user-nav" data-dash="transactions" onclick="setDash('transactions')">السجل <svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></button>
+      <button class="user-nav" data-dash="referrals" onclick="setDash('referrals')">الدعوات <svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></button>
+      <button class="user-nav notif-button" data-dash="notifications" onclick="setDash('notifications')">الإشعارات <svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span id="sideNotifBadge" class="notif-badge ${(!window.__unreadCount) ? 'hidden' : ''}">${window.__unreadCount || 0}</span></button>
+      <button class="user-nav" data-dash="settings" onclick="setDash('settings')">الأمان <svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></button>
+      <button class="user-nav" data-dash="support" onclick="setDash('support')">الدعم <svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
+      ${isAdmin ? `<button class="user-nav" data-dash="admin" onclick="setDash('admin')">لوحة الإدارة <svg class="nav-svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>` : ''}
+      <button class="user-nav" onclick="showView('home')">الرئيسية <svg class="nav-svg-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></button>
+      <button class="user-nav logout-btn" onclick="logout()" style="color: #fca5a5; border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.02);">تسجيل الخروج <svg class="nav-svg-icon" viewBox="0 0 24 24" style="stroke: #ef4444;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
+    `;
+    document.querySelectorAll(".user-nav").forEach(b => b.classList.toggle("active", b.dataset.dash === t));
+  }
+}
+window.selectSidebarTab = function(tab) {
+  if (tab === "admin") {
+    setDash("admin");
+  } else {
+    setDash("overview");
+  }
+};
+
+function switchAdminScreen(screen) {
+  currentAdminScreen = screen;
+  document.querySelectorAll("[data-admin-nav]").forEach(b => {
+    b.classList.toggle("active", b.dataset.adminNav === screen);
+  });
+  
+  if(screen==="users") adminUsers();
+  else if(screen==="kyc_pending") adminKycPending();
+  else if(screen==="kyc_verified") adminKycVerified();
+  else if(screen==="kyc_unverified") adminKycUnverified();
+  else if(screen==="deposits") adminDeposits();
+  else if(screen==="withdrawals") adminWithdrawals();
+  else if(screen==="wallets") adminWallets();
+  else if(screen==="golden") adminGolden();
+  else if(screen==="adjustments") adminAdjustments();
+  else if(screen==="transactions") adminTransactions();
+  else if(screen==="audit") adminAuditLogs();
+  else if(screen==="reports") adminReports();
+  else if(screen==="export") adminExportData();
+  else if(screen==="support") adminSupportTickets();
+  else if(screen==="support_emails") adminSupportEmails();
+  else adminOverview();
+}
+
 function setDash(t){
   dash=t;
   document.getElementById("dashMsg").classList.toggle("hidden", t !== "wallet");
   
-  // Hide the stats banner (dashStats) on specific pages: profile, transactions, referrals, notifications
-  const hiddenStatsPages = ["profile", "transactions", "referrals", "notifications", "support", "help", "settings"];
+  const hiddenStatsPages = ["profile", "transactions", "referrals", "notifications", "support", "help", "settings", "admin"];
   const dashStatsEl = document.getElementById("dashStats");
   if (dashStatsEl) {
     dashStatsEl.style.display = hiddenStatsPages.includes(t) ? "none" : "";
   }
 
-  document.querySelectorAll(".user-nav").forEach(b=>b.classList.toggle("active",b.dataset.dash===t));
+  updateSidebarMenu(t);
   document.querySelectorAll("[data-mobile-dash]").forEach(b=>b.classList.toggle("active",b.dataset.mobileDash===t));
   const titles = {
     overview:["نظرة عامة","ملخص حسابك ونشاطك داخل Taskora."],
@@ -6364,26 +6527,7 @@ let cachedAdminUsers = [];
 async function renderAdmin(){
   const s = await api("/api/admin/stats",{headers:headers()});
   document.getElementById("dashContent").innerHTML = `
-    <div class="admin-shell">
-      <aside class="admin-side">
-        <div class="admin-brand" style="display:flex; align-items:center; gap:12px; padding:12px; border-radius:22px; background:rgba(255,255,255,0.06); margin-bottom:14px;">
-          <img class="brand-logo-svg" src="assets/taskora-icon.png" alt="Taskora Logo" style="width: 38px; height: 38px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4)); border-radius: 8px; object-fit: contain;">
-          <div><b style="font-size: 15px; color: var(--text); line-height: 1.1; display: block;">Taskora Admin</b><span class="muted" style="font-size: 11px; color: var(--muted); margin-top: 2px; display: block;">لوحة التحكم المركزية</span></div>
-        </div>
-        <div class="admin-nav">
-          <button data-admin-nav="overview" onclick="adminOverview()">نظرة عامة <span>📊</span></button>
-          <button data-admin-nav="users" onclick="adminUsers()">المستخدمون والأرصدة <span>👥</span></button>
-          <button data-admin-nav="kyc_pending" onclick="adminKycPending()">طلبات التوثيق <span>🛡️</span></button>
-          <button data-admin-nav="kyc_verified" onclick="adminKycVerified()">المستخدمون الموثقون <span>✅</span></button>
-          <button data-admin-nav="kyc_unverified" onclick="adminKycUnverified()">المستخدمون غير الموثقين <span>⛔</span></button>
-          <button data-admin-nav="deposits" onclick="adminDeposits()">الإيداعات <span>📥</span></button>
-          <button data-admin-nav="withdrawals" onclick="adminWithdrawals()">السحوبات <span>📤</span></button>
-          <button data-admin-nav="wallets" onclick="adminWallets()">المحافظ <span>🔐</span></button>
-          <button data-admin-nav="golden" onclick="adminGolden()">المهام الذهبية <span>⭐</span></button>
-          <button data-admin-nav="adjustments" onclick="adminAdjustments()">تعديلات الرصيد <span>🧾</span></button>
-          <button data-admin-nav="transactions" onclick="adminTransactions()">كل المعاملات <span>📚</span></button><button data-admin-nav="audit" onclick="adminAuditLogs()">سجل التدقيق <span>🕵️</span></button><button data-admin-nav="reports" onclick="adminReports()">التقارير <span>📈</span></button><button data-admin-nav="export" onclick="adminExportData()">تصدير البيانات <span>📥</span></button><button data-admin-nav="support" onclick="adminSupportTickets()">الدعم <span>💬</span></button><button data-admin-nav="support_emails" onclick="adminSupportEmails()">بريد support@ <span>📬</span></button>
-        </div>
-      </aside>
+    <div class="admin-shell admin-single-layout">
       <section class="admin-main">
         <div class="admin-hero">
           <div>
@@ -7092,8 +7236,161 @@ async function rejectGoldenProof(id) {
 }
 async function adminAdjustments(){
   markAdminNav("adjustments");
-  const d=await api("/api/admin/balance-adjustments",{headers:headers()});
-  adminBox.innerHTML=`<h3>سجل تعديلات الأرصدة</h3><div class="table-wrap"><table><thead><tr><th>المستخدم</th><th>الحقل</th><th>الإجراء</th><th>المبلغ</th><th>قبل</th><th>بعد</th><th>المشرف</th><th>الملاحظة</th><th>التاريخ</th></tr></thead><tbody>${d.adjustments.map(a=>`<tr><td>${a.username}<br>${a.email}</td><td>${a.field}</td><td>${a.action}</td><td class="money-cell">${money(a.amount)}</td><td class="money-cell">${money(a.balance_before)}</td><td class="money-cell">${money(a.balance_after)}</td><td>${a.admin_username||"-"}</td><td>${a.note||""}</td><td>${new Date(a.created_at).toLocaleString("ar")}</td></tr>`).join("")}</tbody></table></div>`;
+  setLoading(true);
+  try {
+    const [adjData, usersData] = await Promise.all([
+      api("/api/admin/balance-adjustments", {headers:headers()}),
+      api("/api/admin/users", {headers:headers()})
+    ]);
+    
+    const usersOptions = usersData.users.map(u => `<option value="${u.id}">${escapeHtml(u.username)} (${escapeHtml(u.email)}) - الرصيد: ${money(u.balance)}</option>`).join("");
+    
+    adminBox.innerHTML = `
+      <h3>تعديل رصيد مستخدم</h3>
+      <div class="card" style="margin-bottom: 24px; background: rgba(20, 20, 25, 0.85); border: 1px solid rgba(139, 92, 246, 0.2); text-align: right; direction: rtl;">
+        <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+          <div>
+            <label>اختر المستخدم</label>
+            <select id="adjUserId" class="admin-input" style="width: 100%; height: 42px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; color: #fff; padding: 0 14px;">
+              <option value="">-- اختر مستخدماً --</option>
+              ${usersOptions}
+            </select>
+          </div>
+          <div>
+            <label>نوع الرصيد (الحقل)</label>
+            <select id="adjField" class="admin-input" style="width: 100%; height: 42px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; color: #fff; padding: 0 14px;">
+              <option value="balance">الرصيد المتاح (Spot)</option>
+              <option value="package_balance">رصيد الباقة</option>
+              <option value="package_profit">أرباح الباقة</option>
+            </select>
+          </div>
+          <div>
+            <label>الإجراء</label>
+            <select id="adjAction" class="admin-input" style="width: 100%; height: 42px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; color: #fff; padding: 0 14px;">
+              <option value="add">إضافة رصيد (+)</option>
+              <option value="subtract">خصم رصيد (-)</option>
+              <option value="set">تعيين رصيد محدد (=)</option>
+            </select>
+          </div>
+          <div>
+            <label>المبلغ ($)</label>
+            <input id="adjAmount" type="number" step="0.01" min="0" placeholder="0.00" class="admin-input" style="width: 100%; height: 42px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; color: #fff; padding: 0 14px;">
+          </div>
+          <div style="grid-column: span 2;">
+            <label>ملاحظة / سبب التعديل</label>
+            <input id="adjNote" type="text" placeholder="اكتب سبب تعديل الرصيد هنا..." class="admin-input" style="width: 100%; height: 42px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; color: #fff; padding: 0 14px;">
+          </div>
+        </div>
+        <button class="btn primary mt" onclick="executeBalanceAdjustment()" style="background: var(--primary); font-weight: bold; margin-top: 20px;">تطبيق تعديل الرصيد 💰</button>
+      </div>
+
+      <h3>سجل تعديلات الأرصدة</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>المستخدم</th>
+              <th>الحقل</th>
+              <th>الإجراء</th>
+              <th>المبلغ</th>
+              <th>قبل</th>
+              <th>بعد</th>
+              <th>المشرف</th>
+              <th>الملاحظة</th>
+              <th>التاريخ</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${adjData.adjustments.map(a => `
+              <tr>
+                <td><b>${escapeHtml(a.username)}</b><br><span class="muted">${escapeHtml(a.email)}</span></td>
+                <td>${escapeHtml(a.field)}</td>
+                <td>${escapeHtml(a.action)}</td>
+                <td class="money-cell">${money(a.amount)}</td>
+                <td class="money-cell">${money(a.balance_before)}</td>
+                <td class="money-cell">${money(a.balance_after)}</td>
+                <td>${escapeHtml(a.admin_username || "-")}</td>
+                <td>${escapeHtml(a.note || "")}</td>
+                <td>${new Date(a.created_at).toLocaleString("ar")}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
+  } catch (e) {
+    toast(e.message, "error");
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function executeBalanceAdjustment(){
+  const userId = document.getElementById("adjUserId").value;
+  const field = document.getElementById("adjField").value;
+  const action = document.getElementById("adjAction").value;
+  const amount = parseFloat(document.getElementById("adjAmount").value);
+  const note = document.getElementById("adjNote").value.trim();
+  
+  if(!userId){
+    toast("يرجى اختيار المستخدم.", "error");
+    return;
+  }
+  if(isNaN(amount) || amount < 0){
+    toast("يرجى إدخال مبلغ صحيح أكبر من أو يساوي الصفر.", "error");
+    return;
+  }
+  if(!note){
+    toast("يرجى كتابة سبب التعديل.", "error");
+    return;
+  }
+  
+  try {
+    setLoading(true);
+    await api(`/api/admin/users/${userId}/balance`, {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify({ field, action, amount, note })
+    });
+    toast("تم تعديل الرصيد بنجاح!", "success");
+    await adminAdjustments();
+  } catch(e) {
+    toast(e.message, "error");
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function executeUserBalanceAdjustment(userId){
+  const field = document.getElementById("userAdjField").value;
+  const action = document.getElementById("userAdjAction").value;
+  const amount = parseFloat(document.getElementById("userAdjAmount").value);
+  const note = document.getElementById("userAdjNote").value.trim();
+  
+  if(isNaN(amount) || amount < 0){
+    toast("يرجى إدخال مبلغ صحيح.", "error");
+    return;
+  }
+  if(!note){
+    toast("يرجى كتابة سبب التعديل.", "error");
+    return;
+  }
+  
+  try {
+    setLoading(true);
+    await api(`/api/admin/users/${userId}/balance`, {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify({ field, action, amount, note })
+    });
+    toast("تم تعديل الرصيد بنجاح!", "success");
+    await openUserDetail(userId);
+    renderUserDetailTab("adjustments");
+  } catch(e) {
+    toast(e.message, "error");
+  } finally {
+    setLoading(false);
+  }
 }
 
 
@@ -7196,7 +7493,40 @@ function renderUserDetailTab(tab){
     box.innerHTML = d.login_activity && d.login_activity.length ? `<div class="table-wrap"><table><thead><tr><th>IP</th><th>الجهاز</th><th>التاريخ</th></tr></thead><tbody>${d.login_activity.map(l=>`<tr><td>${escapeHtml(l.ip_address||"")}</td><td>${escapeHtml(l.user_agent||"")}</td><td>${new Date(l.created_at).toLocaleString("ar")}</td></tr>`).join("")}</tbody></table></div>` : `<div class="empty-state">لا يوجد سجل دخول.</div>`;
   }
   if(tab === "adjustments"){
-    box.innerHTML = d.adjustments.length ? `<div class="table-wrap"><table><thead><tr><th>الحقل</th><th>الإجراء</th><th>المبلغ</th><th>قبل</th><th>بعد</th><th>الملاحظة</th></tr></thead><tbody>${d.adjustments.map(a=>`<tr><td>${a.field}</td><td>${a.action}</td><td>${money(a.amount)}</td><td>${money(a.balance_before)}</td><td>${money(a.balance_after)}</td><td>${escapeHtml(a.note||"")}</td></tr>`).join("")}</tbody></table></div>` : empty;
+    box.innerHTML = `
+      <div class="card" style="margin-bottom: 20px; background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.05); padding: 16px; text-align: right; direction: rtl;">
+        <h4 style="margin-bottom: 12px; color: #fff;">تعديل رصيد هذا المستخدم</h4>
+        <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px;">
+          <div>
+            <label style="font-size:12px; display:block; margin-bottom:4px;">نوع الرصيد</label>
+            <select id="userAdjField" class="admin-input" style="width: 100%; height: 36px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: #fff; padding: 0 8px; font-size:13px;">
+              <option value="balance">الرصيد المتاح (Spot)</option>
+              <option value="package_balance">رصيد الباقة</option>
+              <option value="package_profit">أرباح الباقة</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:12px; display:block; margin-bottom:4px;">الإجراء</label>
+            <select id="userAdjAction" class="admin-input" style="width: 100%; height: 36px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: #fff; padding: 0 8px; font-size:13px;">
+              <option value="add">إضافة (+)</option>
+              <option value="subtract">خصم (-)</option>
+              <option value="set">تعيين (=)</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:12px; display:block; margin-bottom:4px;">المبلغ ($)</label>
+            <input id="userAdjAmount" type="number" step="0.01" min="0" placeholder="0.00" class="admin-input" style="width: 100%; height: 36px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: #fff; padding: 0 8px; font-size:13px;">
+          </div>
+          <div style="grid-column: span 2;">
+            <label style="font-size:12px; display:block; margin-bottom:4px;">الملاحظة / السبب</label>
+            <input id="userAdjNote" type="text" placeholder="اكتب السبب..." class="admin-input" style="width: 100%; height: 36px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; color: #fff; padding: 0 8px; font-size:13px;">
+          </div>
+        </div>
+        <button class="btn primary mt" onclick="executeUserBalanceAdjustment(${d.user.id})" style="height: 36px; padding: 0 16px; font-size: 13px; margin-top: 14px; background: var(--primary);">تطبيق التعديل 💰</button>
+      </div>
+
+      <h4 style="margin-bottom: 12px; color: #fff;">سجل تعديلات المستخدم</h4>
+    ` + (d.adjustments.length ? `<div class="table-wrap"><table><thead><tr><th>الحقل</th><th>الإجراء</th><th>المبلغ</th><th>قبل</th><th>بعد</th><th>الملاحظة</th></tr></thead><tbody>${d.adjustments.map(a=>`<tr><td>${a.field}</td><td>${a.action}</td><td>${money(a.amount)}</td><td>${money(a.balance_before)}</td><td>${money(a.balance_after)}</td><td>${escapeHtml(a.note||"")}</td></tr>`).join("")}</tbody></table></div>` : empty);
   }
 }
 
