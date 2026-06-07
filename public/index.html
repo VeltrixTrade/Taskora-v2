@@ -6187,7 +6187,10 @@ async function adminSupportEmails(){
       <div class="admin-panel" style="backdrop-filter: blur(16px); background: rgba(18, 20, 29, 0.65); border: 1px solid rgba(108, 77, 255, 0.1);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
           <h3 style="margin:0; color:#fff; display:flex; align-items:center; gap:8px;">📬 صندوق الرسائل الواردة لـ support@taskora.live</h3>
-          <button class="btn primary" onclick="adminSupportEmails()" style="height:34px; padding:0 12px; font-size:12px;">تحديث البريد 🔄</button>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <button class="btn green" onclick="openSendEmailModal()" style="height:34px; padding:0 12px; font-size:12px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">إرسال بريد جديد ✉️</button>
+            <button class="btn primary" onclick="adminSupportEmails()" style="height:34px; padding:0 12px; font-size:12px;">تحديث البريد 🔄</button>
+          </div>
         </div>
         <div class="table-wrap">
           <table>
@@ -6203,7 +6206,7 @@ async function adminSupportEmails(){
             <tbody>
               ${d.emails.length ? d.emails.map(e=>`
                 <tr id="email-row-${e.id}">
-                  <td style="direction:rtl;">
+                   <td style="direction:rtl;">
                     <b>${escapeHtml(e.sender_name || "زائر")}</b><br>
                     <span class="muted" style="font-size:12px; font-family:monospace;">${escapeHtml(e.sender_email)}</span>
                   </td>
@@ -6237,6 +6240,145 @@ async function deleteSupportEmail(id){
     else adminSupportEmails();
   } catch(e) {
     toast(e.message, "error");
+  }
+}
+
+async function openSendEmailModal() {
+  window.selectedEmailRecipients = new Set();
+  window.emailUsersData = [];
+  
+  // Render loading state inside modal first
+  document.getElementById("adminModal").innerHTML = `
+    <div class="modal" style="width: min(600px, 95%); text-align: center;">
+      <h3>جاري تحميل قائمة المستخدمين...</h3>
+      <div class="loader" style="margin: 20px auto;"></div>
+    </div>
+  `;
+  document.getElementById("adminModal").classList.add("open");
+
+  try {
+    const res = await api("/api/admin/users", {headers:headers()});
+    window.emailUsersData = res.users;
+    
+    // Now render the full modal
+    document.getElementById("adminModal").innerHTML = `
+      <div class="modal" style="width: min(800px, 95%); max-height: 90vh; overflow-y: auto;">
+        <h3 style="margin-top:0; color:#fff; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom:10px;">✉️ إرسال بريد إلكتروني جديد</h3>
+        
+        <div style="margin-bottom: 14px;">
+          <label style="display:block; margin-bottom:6px; color:#fff;">الموضوع</label>
+          <input id="emailSubject" type="text" class="admin-input" placeholder="أدخل موضوع الرسالة..." style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); height: 42px; border-radius: 12px;">
+        </div>
+        
+        <div class="form-grid" style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 16px; margin-top: 12px;">
+          <div>
+            <label style="display:block; margin-bottom:6px; color:#fff;">محتوى الرسالة (HTML)</label>
+            <textarea id="emailHtml" class="admin-input" style="min-height: 250px; font-family: monospace; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; resize: vertical;" placeholder="&lt;p&gt;اكتب نص الرسالة هنا (يدعم أكواد HTML)...&lt;/p&gt;"></textarea>
+          </div>
+          
+          <div style="display: flex; flex-direction: column;">
+            <label style="display:block; margin-bottom:6px; color:#fff;">المستلمون المحددون (<span id="emailSelectCount">0</span>)</label>
+            <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 10px; height: 250px; display: flex; flex-direction: column; gap: 8px;">
+              <input id="emailUserSearch" type="text" class="admin-input" placeholder="ابحث عن مستخدم..." oninput="filterEmailUsers()" style="height: 36px; padding: 8px; font-size: 13px; margin-bottom: 4px; background: rgba(0,0,0,0.25);">
+              <div id="emailUsersList" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 4px; border-top: 1px solid rgba(255,255,255,0.04);">
+                <!-- user checkboxes go here -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top: 14px; margin-bottom: 20px;">
+          <label style="display:block; margin-bottom:6px; color:#fff;">إرسال إلى بريد إلكتروني مخصص (اختياري، يفصل بينهما بفاصلة ,)</label>
+          <input id="emailCustomTo" type="text" class="admin-input" placeholder="example1@mail.com, example2@mail.com" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); height: 42px; border-radius: 12px;">
+        </div>
+
+        <div class="admin-actions mt" style="display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid rgba(255,255,255,0.08); padding-top:14px;">
+          <button class="btn primary" onclick="sendAdminCustomEmail()" style="font-weight: bold;">إرسال البريد 🚀</button>
+          <button class="btn" onclick="closeAdminModal()">إلغاء</button>
+        </div>
+      </div>
+    `;
+    filterEmailUsers();
+  } catch(e) {
+    toast(e.message, "error");
+    closeAdminModal();
+  }
+}
+
+window.filterEmailUsers = function() {
+  const q = (document.getElementById("emailUserSearch")?.value || "").toLowerCase();
+  const listEl = document.getElementById("emailUsersList");
+  if (!listEl) return;
+
+  const filtered = window.emailUsersData.filter(u => 
+    `${u.username} ${u.email}`.toLowerCase().includes(q)
+  );
+
+  listEl.innerHTML = filtered.map(u => {
+    const checked = window.selectedEmailRecipients.has(u.email) ? "checked" : "";
+    return `
+      <label style="display: flex; align-items: center; gap: 10px; margin: 0; font-size: 13px; font-weight: normal; cursor: pointer; user-select: none; color: #e2e8f0; padding: 4px; border-radius: 6px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
+        <input type="checkbox" value="${u.email}" ${checked} onchange="toggleEmailUserSelect(this)" style="width: 16px; height: 16px; margin: 0; accent-color: var(--primary); cursor: pointer;">
+        <div style="min-width: 0; flex: 1;">
+          <b style="color: #fff; font-size: 13px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(u.username)}</b>
+          <span class="muted" style="font-size: 11px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: monospace;">${escapeHtml(u.email)}</span>
+        </div>
+      </label>
+    `;
+  }).join("") || `<div style="text-align: center; color: var(--muted); font-size: 12px; margin-top: 20px;">لا يوجد مستخدمين مطابقين للبحث</div>`;
+};
+
+window.toggleEmailUserSelect = function(checkbox) {
+  if (checkbox.checked) {
+    window.selectedEmailRecipients.add(checkbox.value);
+  } else {
+    window.selectedEmailRecipients.delete(checkbox.value);
+  }
+  const countEl = document.getElementById("emailSelectCount");
+  if (countEl) countEl.textContent = window.selectedEmailRecipients.size;
+};
+
+window.sendAdminCustomEmail = async function() {
+  const subject = document.getElementById("emailSubject")?.value?.trim();
+  const html = document.getElementById("emailHtml")?.value?.trim();
+  const customTo = document.getElementById("emailCustomTo")?.value?.trim();
+
+  if (!subject || !html) {
+    toast("يرجى إدخال الموضوع ومحتوى الرسالة أولاً", "error");
+    return;
+  }
+
+  // Combine selected users from checkboxes + custom text input
+  const allRecipients = new Set(window.selectedEmailRecipients);
+  if (customTo) {
+    customTo.split(",").forEach(email => {
+      const cleaned = email.trim();
+      if (cleaned) allRecipients.add(cleaned);
+    });
+  }
+
+  if (allRecipients.size === 0) {
+    toast("يرجى تحديد مستلم واحد على الأقل للمراسلة", "error");
+    return;
+  }
+
+  setLoading(true);
+  try {
+    const res = await api("/api/admin/send-email", {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify({
+        to: Array.from(allRecipients),
+        subject,
+        html
+      })
+    });
+    toast(res.message || "تم إرسال البريد الإلكتروني بنجاح", "success");
+    closeAdminModal();
+  } catch(e) {
+    toast(e.message, "error");
+  } finally {
+    setLoading(false);
   }
 }
 

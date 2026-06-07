@@ -28,7 +28,7 @@ Content: ${html.replace(/<[^>]*>/g, " ").trim().slice(0, 300)}...`);
   try {
     const data = await resend.emails.send({
       from: MAIL_FROM,
-      to: [to],
+      to: Array.isArray(to) ? to : [to],
       subject: subject,
       html: html,
     });

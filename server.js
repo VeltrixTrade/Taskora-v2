@@ -2415,6 +2415,39 @@ app.delete("/api/admin/support-emails/:id", auth, adminOnly, async (req, res) =>
   }
 });
 
+app.post("/api/admin/send-email", auth, adminOnly, async (req, res) => {
+  const { to, subject, html } = req.body;
+  if (!to || !subject || !html) {
+    return res.status(400).json({ error: "جميع الحقول (المستلمون، الموضوع، المحتوى) مطلوبة." });
+  }
+
+  let recipients = [];
+  if (Array.isArray(to)) {
+    recipients = to.map(e => String(e).trim()).filter(Boolean);
+  } else if (typeof to === "string") {
+    recipients = to.split(",").map(e => e.trim()).filter(Boolean);
+  }
+
+  if (recipients.length === 0) {
+    return res.status(400).json({ error: "لا يوجد مستلمون صالحون." });
+  }
+
+  try {
+    const result = await emailService.sendEmail(recipients, subject, html);
+    
+    // Log the admin action
+    await logAdminAction(pool, req.user.id, "send_support_email", "users", null, {
+      recipients,
+      subject
+    });
+
+    res.json({ success: true, message: "تم إرسال البريد الإلكتروني بنجاح.", data: result });
+  } catch (err) {
+    console.error("Error in admin send-email endpoint:", err);
+    res.status(500).json({ error: err.message || "فشل إرسال البريد الإلكتروني." });
+  }
+});
+
 app.post("/api/support/incoming-email", async (req, res) => {
   try {
     const fromVal = req.body.from || req.body.sender_email || req.body.sender || "";
