@@ -457,6 +457,18 @@ async function migrate() {
   `);
   await query(`CREATE INDEX IF NOT EXISTS support_emails_created_idx ON support_emails (created_at DESC);`);
 
+  await query(`
+    CREATE TABLE IF NOT EXISTS sent_emails (
+      id BIGSERIAL PRIMARY KEY,
+      recipient_email VARCHAR(255) NOT NULL,
+      subject VARCHAR(255) NOT NULL,
+      content TEXT NOT NULL,
+      status VARCHAR(30) NOT NULL DEFAULT 'sent',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+  await query(`CREATE INDEX IF NOT EXISTS sent_emails_created_idx ON sent_emails (created_at DESC);`);
+
 
 
   await query(`
@@ -996,7 +1008,17 @@ app.get("/api/me", auth, async (req, res) => {
   const pkg = await query("SELECT * FROM user_packages WHERE user_id=$1 ORDER BY id DESC LIMIT 1", [req.user.id]);
   const kyc = await query("SELECT id, document_type, full_name, document_number, status, admin_note, created_at, reviewed_at FROM user_kyc WHERE user_id=$1 ORDER BY id DESC LIMIT 1", [req.user.id]);
   const unread = await query("SELECT COUNT(*)::int AS count FROM notifications WHERE user_id=$1 AND is_read=false", [req.user.id]);
-  res.json({ user: publicUser(req.user), package: pkg.rows[0] || null, kyc: kyc.rows[0] || null, unread_notifications: unread.rows[0].count, server_time: new Date().toISOString() });
+  const hasCompleted = await query("SELECT id FROM user_packages WHERE user_id=$1 AND status='completed' LIMIT 1", [req.user.id]);
+  const pendingWd = await query("SELECT amount, coin, wallet_address, created_at FROM withdrawals WHERE user_id=$1 AND status='pending' ORDER BY id DESC LIMIT 1", [req.user.id]);
+  res.json({
+    user: publicUser(req.user),
+    package: pkg.rows[0] || null,
+    kyc: kyc.rows[0] || null,
+    unread_notifications: unread.rows[0].count,
+    has_completed_package: hasCompleted.rowCount > 0,
+    pending_withdrawal: pendingWd.rows[0] || null,
+    server_time: new Date().toISOString()
+  });
 });
 
 
@@ -1356,8 +1378,9 @@ app.post("/api/golden/:id/complete-instant", auth, async (req, res) => {
       [taskId]
     );
 
-    // 3. Credit the custom task reward to available balance
-    if (taskReward > 0) {
+    // 3. Credit the custom task reward to available balance ONLY if it is a standalone admin bonus task.
+    // Package tasks will have their rewards released when the package is completed (along with the package balance).
+    if (taskReward > 0 && gt.is_bonus) {
       await addTransaction(client, req.user.id, "golden_task_instant", taskReward, `أرباح إكمال مهمة: ${gt.title}`);
     }
 
@@ -1422,6 +1445,11 @@ app.post("/api/golden/:id/complete-instant", auth, async (req, res) => {
             "UPDATE user_packages SET completed_tasks=$1, completed_count=$2 WHERE id=$3",
             [JSON.stringify(newCompleted), newCount, pkg.id]
           );
+          // Insert progress transaction (without altering available balance)
+          await client.query(`
+            INSERT INTO transactions (user_id, type, amount, description, balance_before, balance_after)
+            VALUES ($1, 'golden_task_package_progress', $2, $3, (SELECT balance FROM users WHERE id=$1), (SELECT balance FROM users WHERE id=$1))
+          `, [req.user.id, packageTaskReward, `إكمال مهمة الباقة الفورية: ${gt.title}`]);
         }
       }
     }
@@ -1480,15 +1508,6 @@ app.post("/api/withdrawals", auth, async (req, res) => {
   const wallet = normalize(req.body.wallet_address);
   const confirmWallet = normalize(req.body.confirm_wallet_address || req.body.wallet_confirm);
 
-  // Check if user has bought and completed at least one package
-  const pkgCheck = await query(
-    "SELECT id FROM user_packages WHERE user_id=$1 AND status='completed' LIMIT 1",
-    [req.user.id]
-  );
-  if (pkgCheck.rowCount === 0) {
-    return res.status(422).json({ error: "عذراً، السحب معطل لحسابك. يجب أولاً شراء باقة استثمارية وإكمال جميع مهامها الـ 12 بنجاح لتفعيل إمكانية السحب." });
-  }
-
   if (req.user.kyc_status !== "verified") return res.status(403).json({ error: "KYC verification is required before withdrawals." });
   if (!amount || amount <= 0) return res.status(422).json({ error: "Invalid amount." });
   if (!["usdt_trc20", "usdt_erc20", "btc", "sol"].includes(coin)) return res.status(422).json({ error: "Invalid coin." });
@@ -1516,19 +1535,40 @@ app.post("/api/withdrawals", auth, async (req, res) => {
       return res.status(422).json({ error: "Insufficient balance." });
     }
 
+    // Check if user has bought and completed at least one package
+    const pkgCheck = await client.query(
+      "SELECT id FROM user_packages WHERE user_id=$1 AND status='completed' LIMIT 1",
+      [req.user.id]
+    );
+    const hasCompletedPackage = pkgCheck.rowCount > 0;
+
     let withdrawableBalance = balance;
     let isBonusWithdrawal = false;
 
     if (bonusClaimed) {
-      isBonusWithdrawal = true;
-      // 50% of the welcome bonus ($5.00) is permanently locked/deleted.
-      // The withdrawable balance is their total balance minus $5.00.
-      withdrawableBalance = balance - 5.00;
+      if (hasCompletedPackage) {
+        isBonusWithdrawal = true;
+        // User has completed a package. The welcome bonus is unlocked. 50% ($5) is permanently locked, user can withdraw the rest.
+        withdrawableBalance = balance - 5.00;
+      } else {
+        // User has NOT completed a package. The welcome bonus ($10) is fully locked. Only amount above $10 (deposits) can be withdrawn.
+        withdrawableBalance = balance - 10.00;
+      }
     }
 
     if (amount > withdrawableBalance) {
       await client.query("ROLLBACK");
-      return res.status(422).json({ error: "رصيدك غير متاح للسحب" });
+      if (bonusClaimed && !hasCompletedPackage) {
+        return res.status(422).json({
+          error: `عذراً، لا يمكنك سحب البونص الترحيبي ($10.00) إلا بعد شراء باقة استثمارية وإكمال جميع مهامها الـ 12 بنجاح. رصيدك المتاح للسحب حالياً (رصيد الإيداع فقط) هو $${Math.max(0, withdrawableBalance).toFixed(2)}.`
+        });
+      } else if (bonusClaimed && hasCompletedPackage) {
+        return res.status(422).json({
+          error: `عذراً، المبلغ المطلوب يتجاوز الرصيد المتاح للسحب. رصيدك المتاح للسحب هو $${Math.max(0, withdrawableBalance).toFixed(2)} (بعد خصم 50% من البونص الترحيبي عند السحب الأول).`
+        });
+      } else {
+        return res.status(422).json({ error: "المبلغ المطلوب يتجاوز رصيدك المتاح للسحب." });
+      }
     }
 
     if (isBonusWithdrawal) {
@@ -2415,6 +2455,26 @@ app.delete("/api/admin/support-emails/:id", auth, adminOnly, async (req, res) =>
   }
 });
 
+app.get("/api/admin/sent-emails", auth, adminOnly, async (_req, res) => {
+  try {
+    const result = await query("SELECT * FROM sent_emails ORDER BY id DESC LIMIT 500");
+    res.json({ emails: result.rows });
+  } catch (err) {
+    console.error("Error fetching sent emails:", err);
+    res.status(500).json({ error: "فشل تحميل الرسائل الصادرة." });
+  }
+});
+
+app.delete("/api/admin/sent-emails/:id", auth, adminOnly, async (req, res) => {
+  try {
+    await query("DELETE FROM sent_emails WHERE id=$1", [req.params.id]);
+    res.json({ success: true, message: "تم حذف الرسالة الصادرة بنجاح." });
+  } catch (err) {
+    console.error("Error deleting sent email:", err);
+    res.status(500).json({ error: "فشل حذف الرسالة الصادرة." });
+  }
+});
+
 app.post("/api/admin/send-email", auth, adminOnly, async (req, res) => {
   const { to, subject, html } = req.body;
   if (!to || !subject || !html) {
@@ -2450,17 +2510,57 @@ app.post("/api/admin/send-email", auth, adminOnly, async (req, res) => {
 
 app.post("/api/support/incoming-email", async (req, res) => {
   try {
-    const fromVal = req.body.from || req.body.sender_email || req.body.sender || "";
-    const nameVal = req.body.name || req.body.sender_name || "";
-    const subjectVal = req.body.subject || "بدون عنوان";
-    const messageVal = req.body.message || req.body.text || req.body.html || "";
+    let email = "";
+    let name = "";
+    let subjectVal = "بدون عنوان";
+    let messageVal = "";
 
-    let email = String(fromVal).trim();
-    let name = String(nameVal).trim();
-    const emailMatch = email.match(/([^<]+)<([^>]+)>/);
-    if (emailMatch) {
-      name = name || emailMatch[1].trim();
-      email = emailMatch[2].trim();
+    // Check if it's a Resend Webhook payload
+    if (req.body && req.body.type === "email.received" && req.body.data && req.body.data.email_id) {
+      const emailId = req.body.data.email_id;
+      const apiKey = process.env.RESEND_API_KEY || "re_g5992ZKQ_P2mSa72diVDaUfqCNQ3jmBwL";
+      
+      // Fetch full email content from Resend API using global fetch (Node.js >= 18)
+      const response = await fetch(`https://api.resend.com/emails/${emailId}`, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${apiKey}`,
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch email details from Resend API: ${response.statusText}`);
+      }
+
+      const emailData = await response.json();
+      
+      const fromVal = emailData.from || "";
+      subjectVal = emailData.subject || "بدون عنوان";
+      messageVal = emailData.html || emailData.text || "";
+
+      email = String(fromVal).trim();
+      const emailMatch = email.match(/([^<]+)<([^>]+)>/);
+      if (emailMatch) {
+        name = emailMatch[1].trim();
+        email = emailMatch[2].trim();
+      } else {
+        name = email;
+      }
+    } else {
+      // Fallback to direct parsing
+      const fromVal = req.body.from || req.body.sender_email || req.body.sender || "";
+      const nameVal = req.body.name || req.body.sender_name || "";
+      subjectVal = req.body.subject || "بدون عنوان";
+      messageVal = req.body.message || req.body.text || req.body.html || "";
+
+      email = String(fromVal).trim();
+      name = String(nameVal).trim();
+      const emailMatch = email.match(/([^<]+)<([^>]+)>/);
+      if (emailMatch) {
+        name = name || emailMatch[1].trim();
+        email = emailMatch[2].trim();
+      }
     }
 
     if (!email) {

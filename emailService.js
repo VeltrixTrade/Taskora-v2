@@ -1,15 +1,34 @@
 const { Resend } = require("resend");
+const { Pool } = require("pg");
 
 // Initialize Resend with the environment API Key
 const apiKey = process.env.RESEND_API_KEY || "re_g5992ZKQ_P2mSa72diVDaUfqCNQ3jmBwL";
 const resend = apiKey ? new Resend(apiKey) : null;
 const MAIL_FROM = process.env.MAIL_FROM || "onboarding@resend.dev";
 
+const dbPool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false
+});
+
 /**
  * Base email sending utility using official Resend API client.
  * Falls back to console logging in development mode if no key is present.
  */
 async function sendEmail(to, subject, html) {
+  // Log to database first, so that we have a copy of all outbound emails
+  try {
+    const recipients = Array.isArray(to) ? to : [to];
+    for (const rec of recipients) {
+      await dbPool.query(
+        "INSERT INTO sent_emails (recipient_email, subject, content, status) VALUES ($1, $2, $3, $4)",
+        [rec, subject, html, "sent"]
+      );
+    }
+  } catch (dbErr) {
+    console.error("[db logging of sent email failed]:", dbErr);
+  }
+
   if (!resend) {
     console.log(`[EMAIL DEV MODE]
 To: ${to}
