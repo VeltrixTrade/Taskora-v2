@@ -4761,6 +4761,111 @@ function taskoraInitAdsenseBlocks(){
 function taskoraAfterRenderAds(){
 }
 function prettyKycStatus(status){ return ({verified:"موثق",pending:"قيد المراجعة",rejected:"مرفوض",not_verified:"غير موثق"})[status || "not_verified"] || status; }
+function isBonusActiveForUser(user) {
+  if (!user || !user.created_at) return false;
+  const cutoff = new Date("2026-06-10T23:30:00.000Z");
+  return new Date(user.created_at) < cutoff;
+}
+function openWelcomeBonusModal() {
+  const modal = document.getElementById("welcomeBonusModal");
+  if (!modal) return;
+  const isNew = !me || !isBonusActiveForUser(me);
+  if (isNew) {
+    modal.innerHTML = `
+      <div class="welcome-modal">
+        <div class="welcome-modal-close" onclick="closeWelcomeBonusModal();">×</div>
+        <div class="welcome-gift-container" style="background: rgba(239, 68, 68, 0.05); border-color: rgba(239, 68, 68, 0.2);">
+          <div class="welcome-gift-glow" style="background: radial-gradient(circle, rgba(239, 68, 68, 0.4) 0%, transparent 70%);"></div>
+          <div class="welcome-gift-3d">
+            <svg viewBox="0 0 24 24" width="60" height="60" fill="none" stroke="#ef4444" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.45)); transform: translateY(4px);">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+        </div>
+        <h3 class="welcome-modal-title" style="color: #ef4444;">انتهت فترة البونص الترحيبي</h3>
+        <div class="welcome-modal-value" style="color: #94a3b8; font-size: 24px; margin: 10px 0;">
+          عرض منتهي
+        </div>
+        <p class="welcome-modal-desc">
+          نود إفادتكم بأن فترة عرض البونص الترحيبي المجاني ($10) عند التسجيل الجديد قد انتهت بشكل رسمي للمسجلين الجدد.
+        </p>
+        <div class="welcome-features-list">
+          <div class="welcome-feature-item">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#ef4444" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            لا يتوفر البونص الترحيبي للحسابات المسجلة حديثاً.
+          </div>
+          <div class="welcome-feature-item">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            يمكنك التسجيل والبدء بالاستثمار في الباقات اليومية مباشرة.
+          </div>
+          <div class="welcome-feature-item">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            عائد ربح يصل إلى 10% وسحوبات آمنة وموثقة.
+          </div>
+        </div>
+        <div class="welcome-modal-actions">
+          <button class="welcome-btn-primary" style="background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);" onclick="showView('auth'); setAuthMode('register'); closeWelcomeBonusModal();">سجل الآن وابدأ الاستثمار</button>
+          <button class="welcome-btn-secondary" onclick="closeWelcomeBonusModal();">استكشف الباقات الاستثمارية أولاً</button>
+        </div>
+      </div>
+    `;
+  } else {
+    modal.innerHTML = `
+      <div class="welcome-modal">
+        <div class="welcome-modal-close" onclick="closeWelcomeBonusModal();">×</div>
+        <div class="welcome-gift-container">
+          <div class="welcome-gift-glow"></div>
+          <div class="welcome-gift-3d">
+            <svg viewBox="0 0 24 24" width="60" height="60" fill="none" stroke="url(#goldGradient)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.45)); transform: translateY(4px);">
+              <defs>
+                <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#FFE082" />
+                  <stop offset="50%" stop-color="#FBBF24" />
+                  <stop offset="100%" stop-color="#D97706" />
+                </linearGradient>
+              </defs>
+              <path d="M20 12v10H4V12M2 7h20v5H2zM12 22V7" />
+              <path d="M12 7c-1.5-2.5-4-2.5-4-1.25S9.5 7 12 7c2.5 0 4-1.75 4-3s-2.5-1.25-4 1.25z" />
+            </svg>
+          </div>
+        </div>
+        <h3 class="welcome-modal-title">بونص ترحيبي مجاني!</h3>
+        <div class="welcome-modal-value">
+          <span>$</span>10.00
+        </div>
+        <p class="welcome-modal-desc">
+          هدية ترحيبية فورية تضاف لحسابك عند تسجيل الدخول أو إنشاء حساب جديد! ابدأ استثمارك الأول الآن وحقق أهدافك اليومية.
+        </p>
+        <div class="welcome-features-list">
+          <div class="welcome-feature-item">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            البونص يضاف تلقائياً فور إتمام عملية التسجيل.
+          </div>
+          <div class="welcome-feature-item">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            يمكنك سحب 50% من البونص.
+          </div>
+          <div class="welcome-feature-item">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            يتطلب توثيق الحساب (KYC) بالكامل لحماية الأرصاد وضمان الأمان.
+          </div>
+        </div>
+        <div class="welcome-modal-actions">
+          <button class="welcome-btn-primary" onclick="showView('auth'); setAuthMode('register'); closeWelcomeBonusModal();">سجل الآن واحصل على 10$</button>
+          <button class="welcome-btn-secondary" onclick="closeWelcomeBonusModal();">استكشف الباقات الاستثمارية أولاً</button>
+        </div>
+      </div>
+    `;
+  }
+  modal.classList.add("open");
+}
+function closeWelcomeBonusModal() {
+  const modal = document.getElementById("welcomeBonusModal");
+  if (modal) {
+    modal.classList.remove("open");
+  }
+}
 function setAvatarElements(avatarUrl, username){
   const img = document.getElementById("userAvatarImg");
   const initial = document.getElementById("userAvatarInitial");
@@ -5147,7 +5252,13 @@ async function renderDashboard(dataFromMe){
       }
     </div>
   `;
-  document.getElementById("dashMsg").innerHTML = me.kyc_status==="verified" ? `<div class="success">حسابك موثق. يمكنك طلب السحب عند توفر رصيد متاح.</div>` : `<div class="notice"><div>قم بتوثيق الحساب للحصول على بونص 10$</div><div class="mt">لايمكن سحب الأرباح إلا بعد توثيق الحساب</div></div>`;
+  const hasBonus = isBonusActiveForUser(me);
+  document.getElementById("dashMsg").innerHTML = me.kyc_status==="verified" 
+    ? `<div class="success">حسابك موثق. يمكنك طلب السحب عند توفر رصيد متاح.</div>` 
+    : `<div class="notice">
+        <div>${hasBonus ? "قم بتوثيق الحساب للحصول على بونص 10$" : "تنبيه: لقد انتهت فترة البونص الترحيبي للمسجلين الجدد."}</div>
+        <div class="mt">${hasBonus ? "لايمكن سحب الأرباح إلا بعد توثيق الحساب" : "يرجى توثيق الحساب لتفعيل كامل صلاحيات السحب والأمان."}</div>
+       </div>`;
   if(dash === "packages") setDash("packages");
   else if(dash === "tasks") setDash("tasks");
   else if(dash === "overview") setDash("overview");
@@ -5176,6 +5287,7 @@ function updateSidebarMenu(t) {
     container.innerHTML = `
       <button class="user-nav" data-admin-nav="overview" onclick="switchAdminScreen('overview')">نظرة عامة <span>📊</span></button>
       <button class="user-nav" data-admin-nav="users" onclick="switchAdminScreen('users')">المستخدمون والأرصدة <span>👥</span></button>
+      <button class="user-nav" data-admin-nav="agents" onclick="switchAdminScreen('agents')">الوكلاء والدعوات <span>🔗</span></button>
       <button class="user-nav" data-admin-nav="kyc_pending" onclick="switchAdminScreen('kyc_pending')">طلبات التوثيق <span>🛡️</span></button>
       <button class="user-nav" data-admin-nav="kyc_verified" onclick="switchAdminScreen('kyc_verified')">المستخدمون الموثقون <span>✅</span></button>
       <button class="user-nav" data-admin-nav="kyc_unverified" onclick="switchAdminScreen('kyc_unverified')">المستخدمون غير الموثقين <span>⛔</span></button>
@@ -5239,6 +5351,7 @@ function switchAdminScreen(screen) {
   });
   
   if(screen==="users") adminUsers();
+  else if(screen==="agents") adminAgents();
   else if(screen==="kyc_pending") adminKycPending();
   else if(screen==="kyc_verified") adminKycVerified();
   else if(screen==="kyc_unverified") adminKycUnverified();
@@ -5342,7 +5455,7 @@ function renderProfile(){
         <div class="realistic-details mt">
           <div class="detail-chip"><b>الحساب</b>يمكنك تخصيص حسابك عبر صورة شخصية.</div>
           <div class="detail-chip"><b>حالة التوثيق</b>${prettyKycStatus(me.kyc_status)}</div>
-          <div class="detail-chip"><b>البونص</b>${me.bonus_claimed ? "تم استخدامه" : "لم يستخدم بعد"}</div>
+          ${isBonusActiveForUser(me) ? `<div class="detail-chip"><b>البونص</b>${me.bonus_claimed ? "تم استخدامه" : "لم يستخدم بعد"}</div>` : ""}
         </div>
       </div></div>
       ${kycInfo}
@@ -6853,6 +6966,7 @@ async function renderAdmin(){
       </section>
     </div>`;
   if(currentAdminScreen==="users") adminUsers();
+  else if(currentAdminScreen==="agents") adminAgents();
   else if(currentAdminScreen==="kyc_pending") adminKycPending();
   else if(currentAdminScreen==="kyc_verified") adminKycVerified();
   else if(currentAdminScreen==="kyc_unverified") adminKycUnverified();
@@ -7054,6 +7168,70 @@ window.triggerExport = function(type) {
     toast(e.message || "حدث خطأ أثناء تصدير الملف", "error");
   });
 };
+
+let cachedAdminAgents = [];
+async function adminAgents() {
+  markAdminNav("agents");
+  try {
+    const d = await api("/api/admin/agents", { headers: headers() });
+    cachedAdminAgents = d.agents;
+    adminBox.innerHTML = `<h3>الوكلاء ودعوات المستخدمين 🔗</h3>
+      <div class="admin-toolbar">
+        <div><label>بحث بالوكيل أو المستخدم الجديد</label><input id="adminAgentSearch" class="admin-input" placeholder="اسم الوكيل أو المستخدم الجديد..." oninput="filterAdminAgents()"></div>
+      </div>
+      <div id="adminAgentsTable"></div>`;
+    filterAdminAgents();
+  } catch (err) {
+    adminBox.innerHTML = `<h3>الوكلاء ودعوات المستخدمين 🔗</h3>
+      <div class="error">تعذر تحميل بيانات الوكلاء: ${escapeHtml(err.message || err)}</div>`;
+  }
+}
+
+function filterAdminAgents() {
+  const q = (document.getElementById("adminAgentSearch")?.value || "").toLowerCase();
+  const rows = cachedAdminAgents.filter(a => {
+    return !q || `${a.username} ${a.referred_by_username || ''} ${a.email} ${a.phone}`.toLowerCase().includes(q);
+  });
+  
+  document.getElementById("adminAgentsTable").innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>الوكيل (صاحب الدعوة)</th>
+            <th>إجمالي دعوات الوكيل</th>
+            <th>المستخدم الجديد</th>
+            <th>البريد/الهاتف</th>
+            <th>إجمالي الإيداعات</th>
+            <th>إجمالي السحوبات</th>
+            <th>تاريخ التسجيل</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.length === 0 ? `<tr><td colspan="7" style="text-align:center;">لا يوجد نتائج تطابق البحث</td></tr>` : rows.map(a => `
+            <tr>
+              <td>
+                ${a.referred_by_username 
+                  ? `<b style="color:#a78bfa;">${escapeHtml(a.referred_by_username)}</b>` 
+                  : `<span class="muted" style="color:#64748b;">تسجيل مباشر 🌐</span>`}
+              </td>
+              <td>
+                ${a.referred_by_username 
+                  ? `<span class="mini-verify-badge verified" style="font-size:12px; padding: 2px 6px;">${a.referrer_total_referrals} دعوات</span>` 
+                  : `<span class="muted">-</span>`}
+              </td>
+              <td><b>${escapeHtml(a.username)}</b><br><span class="muted">ID: ${a.id}</span></td>
+              <td>${escapeHtml(a.email)}<br>${escapeHtml(a.phone)}</td>
+              <td class="money-cell" style="color: #10b981; font-weight: bold;">${money(a.total_deposits)}</td>
+              <td class="money-cell" style="color: #ef4444; font-weight: bold;">${money(a.total_withdrawals)}</td>
+              <td style="font-size:12px;">${a.registration_date ? new Date(a.registration_date).toLocaleString("ar") : "-"}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
 
 async function adminUsers(){
   markAdminNav("users");
@@ -8768,7 +8946,9 @@ function openInteractiveTask(taskNumber, taskId = null, taskTitle = null, taskRe
     const refCode = (me && me.referral_code) ? me.referral_code : "";
     const siteUrl = "https://taskora.live";
     const refLink = `${siteUrl}/?ref=${refCode}`;
-    const rawMessage = `انضم الى تاسكورة و ابدا استثمارك بعائد 10% اسبوعيا و 75% يمكنن البدء بالبونص الترحبيبي 10$ \nرابط الموقع: ${refLink}`;
+    const rawMessage = isBonusActiveForUser(me)
+      ? `انضم الى تاسكورة و ابدا استثمارك بعائد 10% اسبوعيا و 75% يمكنن البدء بالبونص الترحبيبي 10$ \nرابط الموقع: ${refLink}`
+      : `انضم إلى تاسكورا وابدأ استثمارك اليومي بعوائد ممتازة وسحب آمن وموثوق. \nرابط الموقع: ${refLink}`;
     const encodedMessage = encodeURIComponent(rawMessage);
 
     const modal = document.getElementById("adminModal");

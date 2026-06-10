@@ -135,6 +135,13 @@ function makeReferral(username) {
   return `${prefix}${Math.floor(10000 + Math.random() * 89999)}`;
 }
 
+function isBonusActiveForUser(user) {
+  if (!user || !user.created_at) return false;
+  const cutoff = new Date("2026-06-10T23:30:00.000Z");
+  return new Date(user.created_at) < cutoff;
+}
+
+
 function documentHash(type, number) {
   return crypto.createHash("sha256")
     .update(`${lower(type)}:${lower(number)}`)
@@ -725,7 +732,7 @@ app.post("/api/auth/register", async (req, res) => {
     `, [email, otpCode]);
 
     // Send styled welcome and verification email using Resend
-    await emailService.sendOTPEmail(email, username, otpCode, "email_verification");
+    await emailService.sendOTPEmail(email, username, otpCode, "email_verification", isBonusActiveForUser(user));
 
     res.status(201).json({ token: signToken(user), user: publicUser(user), verification_url: `/api/auth/verify-email/${verificationToken}` });
   } catch (err) {
@@ -1107,7 +1114,11 @@ app.post("/api/kyc", auth, upload.fields([
     const hash = documentHash(documentType, documentNumber);
     const duplicate = await query("SELECT id FROM user_kyc WHERE document_hash=$1 OR document_number=$2 LIMIT 1", [hash, documentNumber]);
     if (duplicate.rowCount > 0) {
-      return res.status(409).json({ error: "This identity document has already been used. One identity can receive one account bonus only." });
+      const hasBonus = isBonusActiveForUser(req.user);
+      const errorMsg = hasBonus 
+        ? "This identity document has already been used. One identity can receive one account bonus only." 
+        : "This identity document has already been used by another account.";
+      return res.status(409).json({ error: errorMsg });
     }
 
     const back = req.files?.back_image?.[0];
@@ -2424,6 +2435,35 @@ app.get("/api/admin/users", auth, adminOnly, async (_req, res) => {
   res.json({ users: result.rows });
 });
 
+app.get("/api/admin/agents", auth, adminOnly, async (_req, res) => {
+  try {
+    const sql = `
+      SELECT 
+        u.id,
+        u.username,
+        u.email,
+        u.phone,
+        u.created_at AS registration_date,
+        r.username AS referred_by_username,
+        CASE 
+          WHEN u.referred_by IS NULL THEN 0 
+          ELSE (SELECT COUNT(*) FROM users WHERE referred_by = u.referred_by) 
+        END AS referrer_total_referrals,
+        COALESCE((SELECT SUM(amount) FROM deposits WHERE user_id = u.id AND status = 'approved'), 0) AS total_deposits,
+        COALESCE((SELECT SUM(amount) FROM withdrawals WHERE user_id = u.id AND status = 'approved'), 0) AS total_withdrawals
+      FROM users u
+      LEFT JOIN users r ON u.referred_by = r.id
+      ORDER BY u.id DESC
+    `;
+    const result = await query(sql);
+    res.json({ agents: result.rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch agents data." });
+  }
+});
+
+
 app.delete("/api/admin/users/all", auth, adminOnly, async (req, res) => {
   try {
     // 1. Clear referral references for non-admins to prevent foreign key issues
@@ -2659,8 +2699,10 @@ app.post("/api/admin/kyc/:id/approve", auth, adminOnly, async (req, res) => {
     await client.query("UPDATE users SET kyc_status='verified' WHERE id=$1", [kyc.user_id]);
 
     const bonusExists = await client.query("SELECT id FROM welcome_bonuses WHERE document_hash=$1 LIMIT 1", [kyc.document_hash]);
-    const userRes = await client.query("SELECT username, email, bonus_claimed FROM users WHERE id=$1 FOR UPDATE", [kyc.user_id]);
-    if (bonusExists.rowCount === 0 && !userRes.rows[0].bonus_claimed) {
+    const userRes = await client.query("SELECT username, email, bonus_claimed, created_at FROM users WHERE id=$1 FOR UPDATE", [kyc.user_id]);
+    const user = userRes.rows[0];
+    const canReceiveBonus = isBonusActiveForUser(user);
+    if (canReceiveBonus && bonusExists.rowCount === 0 && !user.bonus_claimed) {
       await client.query("INSERT INTO welcome_bonuses (user_id, document_hash, amount, status) VALUES ($1,$2,10,'active')", [kyc.user_id, kyc.document_hash]);
       await addTransaction(client, kyc.user_id, "welcome_bonus", 10, "بونص ترحيبي بعد قبول التوثيق");
       await client.query("UPDATE users SET bonus_claimed=true WHERE id=$1", [kyc.user_id]);
@@ -2670,7 +2712,7 @@ app.post("/api/admin/kyc/:id/approve", auth, adminOnly, async (req, res) => {
 
     // Send KYC Approved Email via Resend safely
     try {
-      await emailService.sendKYCStatusEmail(kyc.email, kyc.username, true);
+      await emailService.sendKYCStatusEmail(kyc.email, kyc.username, true, "", canReceiveBonus);
     } catch (emailErr) {
       console.error("[KYC Approval Email Error]:", emailErr);
     }

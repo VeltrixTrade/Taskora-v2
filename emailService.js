@@ -225,13 +225,16 @@ function getEmailWrapper(title, contentHtml) {
 /**
  * Sends a clean 6-digit OTP verification email.
  */
-async function sendOTPEmail(email, username, code, type = "email_verification") {
+async function sendOTPEmail(email, username, code, type = "email_verification", isBonusActive = true) {
   const isRegister = type === "email_verification";
   const title = isRegister ? "تأكيد الحساب والبريد الإلكتروني" : "استعادة كلمة المرور";
   
   const welcomeText = isRegister 
-    ? `<p>مرحبًا <strong>${username}</strong>، سعداء للغاية بانضمامك إلى عائلة Taskora!</p>
-       <p>لتفعيل حسابك بالكامل بنجاح والحصول على <strong>مكافأة ترحيبية فورية بقيمة $10.00</strong>، يرجى إدخال رمز التحقق التالي في صفحة تأكيد البريد:</p>`
+    ? (isBonusActive 
+        ? `<p>مرحبًا <strong>${username}</strong>، سعداء للغاية بانضمامك إلى عائلة Taskora!</p>
+           <p>لتفعيل حسابك بالكامل بنجاح والحصول على <strong>مكافأة ترحيبية فورية بقيمة $10.00</strong>، يرجى إدخال رمز التحقق التالي في صفحة تأكيد البريد:</p>`
+        : `<p>مرحبًا <strong>${username}</strong>، سعداء للغاية بانضمامك إلى عائلة Taskora!</p>
+           <p>لتفعيل حسابك بالكامل بنجاح، يرجى إدخال رمز التحقق التالي في صفحة تأكيد البريد:</p>`)
     : `<p>مرحبًا <strong>${username}</strong>، لقد تلقينا طلبًا لإعادة تعيين كلمة المرور الخاصة بحسابك.</p>
        <p>يرجى استخدام رمز الاستعادة التالي لإكمال تعيين كلمة المرور الجديدة لحسابك بأمان:</p>`;
 
@@ -252,7 +255,7 @@ async function sendOTPEmail(email, username, code, type = "email_verification") 
 /**
  * Sends a notification regarding the KYC verification status.
  */
-async function sendKYCStatusEmail(email, username, approved, reason = "") {
+async function sendKYCStatusEmail(email, username, approved, reason = "", isBonusActive = true) {
   const title = approved ? "🎉 تم توثيق حسابك بنجاح!" : "⚠️ تحديث بخصوص طلب توثيق حسابك";
   
   const content = approved
@@ -262,7 +265,7 @@ async function sendKYCStatusEmail(email, username, approved, reason = "") {
          <strong style="display: block; font-size: 16px; margin-bottom: 8px; color: #ffffff;">مزايا الترقية الحالية:</strong>
          <ul style="margin: 0; padding-right: 20px; line-height: 1.8;">
            <li>تمت ترقية حسابك رسميًا وتفعيل كامل صلاحيات السحب والإيداع.</li>
-           <li>تم إيداع بونص التوثيق بقيمة <strong>$10.00</strong> بنجاح في رصيدك المتاح!</li>
+           ${isBonusActive ? `<li>تم إيداع بونص التوثيق بقيمة <strong>$10.00</strong> بنجاح في رصيدك المتاح!</li>` : ""}
            <li>دورة إكمال المهام والاستثمار أصبحت تعمل بكفاءة كاملة.</li>
          </ul>
        </div>
