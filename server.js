@@ -404,6 +404,27 @@ async function migrate() {
     WHERE gt.user_package_id IS NULL AND gt.is_bonus = FALSE;
   `);
 
+  await query(`
+    WITH ranked_tasks AS (
+      SELECT id, ROW_NUMBER() OVER(PARTITION BY user_package_id ORDER BY id ASC) as rn
+      FROM golden_tasks
+      WHERE user_package_id IS NOT NULL AND is_bonus = FALSE
+    )
+    UPDATE golden_tasks gt
+    SET title = CASE 
+          WHEN rt.rn = 3 THEN '📢 مشاركة رابط الدعوة على الواتساب (المجموعة الأولى)'
+          WHEN rt.rn = 6 THEN '📢 مشاركة رابط الدعوة على الواتساب (المجموعة الثانية)'
+          WHEN rt.rn = 9 THEN '📢 مشاركة رابط الدعوة على الواتساب (المجموعة الثالثة)'
+        END,
+        description = CASE 
+          WHEN rt.rn = 3 THEN 'قم بمشاركة رسالة دعوتنا ورابط موقعنا مع شخصين (2) مختلفين على تطبيق الواتساب لدعوتهم للتسجيل والاستثمار.'
+          WHEN rt.rn = 6 THEN 'قم بمشاركة رسالة دعوتنا ورابط موقعنا مع شخصين (2) مختلفين آخرين على تطبيق الواتساب لدعوتهم للتسجيل والاستثمار.'
+          WHEN rt.rn = 9 THEN 'قم بمشاركة رسالة دعوتنا ورابط موقعنا مع شخصين (2) مختلفين آخرين على تطبيق الواتساب لدعوتهم للتسجيل والاستثمار.'
+        END
+    FROM ranked_tasks rt
+    WHERE gt.id = rt.id AND rt.rn IN (3, 6, 9) AND gt.status = 'active';
+  `);
+
 
 
   await query(`CREATE INDEX IF NOT EXISTS transactions_user_created_idx ON transactions (user_id, created_at DESC);`);
