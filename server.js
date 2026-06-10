@@ -390,6 +390,19 @@ async function migrate() {
   await query(`ALTER TABLE golden_tasks ADD COLUMN IF NOT EXISTS admin_note TEXT;`);
   await query(`ALTER TABLE golden_tasks ADD COLUMN IF NOT EXISTS task_link VARCHAR(500);`);
   await query(`ALTER TABLE golden_tasks ADD COLUMN IF NOT EXISTS is_bonus BOOLEAN DEFAULT FALSE;`);
+  await query(`ALTER TABLE golden_tasks ADD COLUMN IF NOT EXISTS user_package_id BIGINT REFERENCES user_packages(id) ON DELETE CASCADE;`);
+  await query(`
+    UPDATE golden_tasks gt
+    SET user_package_id = (
+      SELECT up.id 
+      FROM user_packages up 
+      WHERE up.user_id = gt.user_id 
+        AND up.started_at <= gt.sent_at 
+      ORDER BY up.started_at DESC 
+      LIMIT 1
+    )
+    WHERE gt.user_package_id IS NULL AND gt.is_bonus = FALSE;
+  `);
 
 
 
@@ -1131,10 +1144,12 @@ app.post("/api/packages/:id/buy", auth, async (req, res) => {
     }
 
     await client.query("UPDATE users SET balance=balance-$1, package_balance=$1, package_profit=0 WHERE id=$2", [pkg.price, req.user.id]);
-    await client.query(`
+    const insertPkgRes = await client.query(`
       INSERT INTO user_packages (user_id, package_id, package_name, price, profit_target)
-      VALUES ($1,$2,$3,$4,$5)
+      VALUES ($1,$2,$3,$4,$5) RETURNING id
     `, [req.user.id, pkg.id, pkg.name, pkg.price, pkg.price * 0.10]);
+    const userPackageId = insertPkgRes.rows[0].id;
+
     await client.query(`
       INSERT INTO transactions (user_id, type, amount, description, balance_before, balance_after)
       VALUES ($1,'package_purchase',$2,$3,$4,$5)
@@ -1158,9 +1173,9 @@ app.post("/api/packages/:id/buy", auth, async (req, res) => {
     ];
     for (const t of taskDetails) {
       await client.query(`
-        INSERT INTO golden_tasks (user_id, title, description, reward, sent_by, status)
-        VALUES ($1, $2, $3, $4, 1, 'active')
-      `, [req.user.id, t.title, t.desc, taskReward]);
+        INSERT INTO golden_tasks (user_id, title, description, reward, sent_by, status, user_package_id)
+        VALUES ($1, $2, $3, $4, 1, 'active', $5)
+      `, [req.user.id, t.title, t.desc, taskReward, userPackageId]);
     }
 
     await client.query("COMMIT");
@@ -1179,7 +1194,7 @@ app.get("/api/dashboard", auth, async (req, res) => {
   
   if (pkg.rowCount > 0 && pkg.rows[0].status === "active") {
     const activePkg = pkg.rows[0];
-    const goldenCheck = await query("SELECT id FROM golden_tasks WHERE user_id=$1 LIMIT 1", [req.user.id]);
+    const goldenCheck = await query("SELECT id FROM golden_tasks WHERE user_id=$1 AND user_package_id=$2 LIMIT 1", [req.user.id, activePkg.id]);
     
     if (goldenCheck.rowCount === 0) {
       // Self-healing: automatically generate 12 realistic logistics tasks for active package
@@ -1207,9 +1222,9 @@ app.get("/api/dashboard", auth, async (req, res) => {
         await client.query("BEGIN");
         for (const t of taskDetails) {
           await client.query(`
-            INSERT INTO golden_tasks (user_id, title, description, reward, sent_by, status)
-            VALUES ($1, $2, $3, $4, 1, 'active')
-          `, [req.user.id, t.title, t.desc, taskReward]);
+            INSERT INTO golden_tasks (user_id, title, description, reward, sent_by, status, user_package_id)
+            VALUES ($1, $2, $3, $4, 1, 'active', $5)
+          `, [req.user.id, t.title, t.desc, taskReward, activePkg.id]);
         }
         await client.query("COMMIT");
       } catch (err) {
@@ -1222,7 +1237,16 @@ app.get("/api/dashboard", auth, async (req, res) => {
   }
 
   const transactions = await query("SELECT * FROM transactions WHERE user_id=$1 ORDER BY id DESC LIMIT 20", [req.user.id]);
-  const golden = await query("SELECT * FROM golden_tasks WHERE user_id=$1 ORDER BY id DESC", [req.user.id]);
+  
+  let golden;
+  if (pkg.rowCount > 0) {
+    golden = await query(
+      "SELECT * FROM golden_tasks WHERE user_id=$1 AND (user_package_id=$2 OR is_bonus=true) ORDER BY id DESC",
+      [req.user.id, pkg.rows[0].id]
+    );
+  } else {
+    golden = await query("SELECT * FROM golden_tasks WHERE user_id=$1 ORDER BY id DESC", [req.user.id]);
+  }
   
   res.json({
     user: publicUser(req.user),
