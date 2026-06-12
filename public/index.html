@@ -8097,11 +8097,11 @@ window.addEventListener('load',()=>{
       intro.classList.add('hide');
       setTimeout(()=>{
         intro.style.display='none';
-        // Auto-show Welcome Bonus Modal on page load if user is not logged in
-        const currentToken = localStorage.getItem("taskora_token") || window.token || "";
-        if (!currentToken) {
-          openWelcomeBonusModal();
-        }
+        // Auto-show Welcome Bonus Modal on page load if user is not logged in - Disabled per user request
+        // const currentToken = localStorage.getItem("taskora_token") || window.token || "";
+        // if (!currentToken) {
+        //   openWelcomeBonusModal();
+        // }
       },1200);
     }
   },2500);
