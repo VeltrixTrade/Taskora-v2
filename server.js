@@ -2578,7 +2578,8 @@ app.post("/api/admin/send-email", auth, adminOnly, async (req, res) => {
   }
 
   try {
-    const result = await emailService.sendEmail(recipients, subject, html);
+    const finalHtml = emailService.getEmailWrapper(subject, html);
+    const result = await emailService.sendEmail(recipients, subject, finalHtml);
     
     // Log the admin action
     await logAdminAction(pool, req.user.id, "send_support_email", "users", null, {

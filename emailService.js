@@ -260,7 +260,7 @@ async function sendKYCStatusEmail(email, username, approved, reason = "", isBonu
   
   const content = approved
     ? `<p>مرحبًا <strong>${username}</strong>،</p>
-       <p>يسعدنا للغاية إبلاغك بأن فريق المراجعة والامتثال لدينا قد **وافق على طلب توثيق هويتك (KYC) بنجاح**!</p>
+       <p>يسعدنا للغاية إبلاغك بأن فريق المراجعة والامتثال لدينا قد <strong>وافق على طلب توثيق هويتك (KYC) بنجاح</strong>!</p>
        <div style="background: rgba(16, 185, 129, 0.06); border-right: 4px solid #10b981; border-radius: 12px; padding: 20px; margin: 25px 0; color: #a7f3d0;">
          <strong style="display: block; font-size: 16px; margin-bottom: 8px; color: #ffffff;">مزايا الترقية الحالية:</strong>
          <ul style="margin: 0; padding-right: 20px; line-height: 1.8;">
@@ -323,7 +323,7 @@ async function sendPackagePurchaseEmail(email, username, packageName, price) {
       </tbody>
     </table>
     
-    <p style="margin-top: 25px;">يرجى التوجه إلى صفحة **المهام اليومية** للبدء بتنفيذ المهام وإكمالها لتحويل رأس المال والأرباح إلى رصيدك المتاح للسحب فورًا.</p>
+    <p style="margin-top: 25px;">يرجى التوجه إلى صفحة <strong>المهام اليومية</strong> للبدء بتنفيذ المهام وإكمالها لتحويل رأس المال والأرباح إلى رصيدك المتاح للسحب فورًا.</p>
     <div style="text-align: center; margin: 30px 0;">
       <a href="https://taskora.live" class="btn">الذهاب لصفحة المهام</a>
     </div>
@@ -375,7 +375,7 @@ async function sendWithdrawalStatusEmail(email, username, approved, amount, coin
        
        <p style="margin-top: 25px; font-size: 13px; color: #94a3b8;">تنويه: قد تستغرق المعاملة بضع دقائق إضافية لتظهر في رصيد محفظتك الخارجية بناءً على تأكيدات شبكة البلوكشين النشطة.</p>`
     : `<p>مرحبًا <strong>${username}</strong>،</p>
-       <p>نود إبلاغك بأنه بعد مراجعة طلب السحب بقيمة <strong>$${Number(amount).toFixed(2)}</strong> للعملة <strong>${String(coin).toUpperCase()}</strong>، قد **تم رفض الطلب** نظراً للسبب التالي:</p>
+       <p>نود إبلاغك بأنه بعد مراجعة طلب السحب بقيمة <strong>$${Number(amount).toFixed(2)}</strong> للعملة <strong>${String(coin).toUpperCase()}</strong>، قد <strong>تم رفض الطلب</strong> نظراً للسبب التالي:</p>
        <div style="padding: 18px; background: rgba(239, 68, 68, 0.06); border-right: 4px solid #ef4444; border-radius: 12px; color: #fecaca; margin: 25px 0;">
          <strong>سبب الرفض:</strong> ${extra.reason || "يرجى مراجعة عنوان المحفظة المدخل أو التأكد من سلامة المعاملة."}
        </div>
@@ -455,4 +455,5 @@ module.exports = {
   sendPackagePurchaseEmail,
   sendWithdrawalStatusEmail,
   sendSupportTicketNotificationEmail,
+  getEmailWrapper,
 };

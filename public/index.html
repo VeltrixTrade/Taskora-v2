@@ -7514,7 +7514,7 @@ async function adminWithdrawals(){
   };
   adminBox.innerHTML=`<h3>مراجعة السحوبات</h3>
     <div style="margin-bottom: 24px; font-weight: 700; color: #fff; font-size: 15px;">📤 طلبات السحب المعلقة (${pending.length})</div>
-    ${pending.length ? `<div class="table-wrap"><table><thead><tr><th>المستخدم</th><th>المبلغ</th><th>العملة</th><th>المحفظة</th><th>KYC</th><th>تاريخ الطلب</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>${pending.map(x=>`<tr><td><b>${x.username}</b><br><span class="muted">${x.email}</span></td><td class="money-cell" style="font-weight:700;">${money(x.amount)}</td><td><span style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; font-size:11px;">${getCoinLabel(x.coin)}</span></td><td style="direction:ltr;text-align:left; font-family:monospace; font-size:11px;">${x.wallet_address}</td><td><span class="status ${x.kyc_status==='verified'?'verified':'rejected'}">${x.kyc_status}</span></td><td>${new Date(x.created_at).toLocaleString("ar")}</td><td><span class="status pending">معلق</span></td><td><div class="admin-actions"><button class="mini-btn green" onclick="approveWithdrawal(${x.id})">قبول</button><button class="mini-btn red" onclick="adminAction('/api/admin/withdrawals/${x.id}/reject')">رفض</button></div></td></tr>`).join("")}</tbody></table></div>` : `<div class="admin-empty" style="margin-bottom:24px;">لا توجد طلبات سحب معلقة حاليًا.</div>`}
+    ${pending.length ? `<div class="table-wrap"><table><thead><tr><th>المستخدم</th><th>المبلغ</th><th>العملة</th><th>المحفظة</th><th>KYC</th><th>تاريخ الطلب</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>${pending.map(x=>`<tr><td><b>${x.username}</b><br><span class="muted">${x.email}</span></td><td class="money-cell" style="font-weight:700;">${money(x.amount)}</td><td><span style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; font-size:11px;">${getCoinLabel(x.coin)}</span></td><td style="direction:ltr;text-align:left; font-family:monospace; font-size:11px;">${x.wallet_address}</td><td><span class="status ${x.kyc_status==='verified'?'verified':'rejected'}">${x.kyc_status}</span></td><td>${new Date(x.created_at).toLocaleString("ar")}</td><td><span class="status pending">معلق</span></td><td><div class="admin-actions"><button class="mini-btn green" onclick="approveWithdrawal(${x.id})">قبول</button><button class="mini-btn red" onclick="rejectWithdrawal(${x.id})">رفض</button></div></td></tr>`).join("")}</tbody></table></div>` : `<div class="admin-empty" style="margin-bottom:24px;">لا توجد طلبات سحب معلقة حاليًا.</div>`}
     
     <div style="margin-top: 36px; margin-bottom: 24px; font-weight: 700; color: #a1a1aa; font-size: 15px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 24px;">📚 أرشيف السحوبات السابقة (${archived.length})</div>
     ${archived.length ? `<div class="table-wrap"><table style="opacity:0.9;"><thead><tr><th>المستخدم</th><th>المبلغ</th><th>العملة</th><th>المحفظة</th><th>تاريخ الطلب</th><th>تاريخ المعالجة</th><th>الحالة</th><th>TXID التحويل</th><th>ملاحظة الأدمن</th></tr></thead><tbody>${archived.map(x=>`<tr><td><b>${x.username}</b><br><span class="muted">${x.email}</span></td><td class="money-cell" style="color:#ffffff;">${money(x.amount)}</td><td><span style="background:rgba(255,255,255,0.05); padding:2px 6px; border-radius:4px; font-size:11px;">${getCoinLabel(x.coin)}</span></td><td style="direction:ltr;text-align:left; font-family:monospace; font-size:11px; color:#8e8e93;">${x.wallet_address}</td><td>${new Date(x.created_at).toLocaleString("ar")}</td><td>${x.reviewed_at ? new Date(x.reviewed_at).toLocaleString("ar") : "-"}</td><td><span class="status ${x.status==='approved'?'verified':'rejected'}">${x.status==='approved'?'مقبول':'مرفوض'}</span></td><td style="direction:ltr;text-align:left; font-family:monospace; font-size:11px; color:#8e8e93;">${x.txid||"-"}</td><td style="font-size:12px; color:#8e8e93;">${x.admin_note||"-"}</td></tr>`).join("")}</tbody></table></div>` : `<div class="admin-empty">الأرشيف فارغ حالياً.</div>`}`;
@@ -7529,6 +7529,44 @@ async function saveApproveWithdrawal(id){
     closeAdminModal();
     await renderAdmin();
   }catch(e){ toast(e.message, "error"); }
+}
+function rejectWithdrawal(id){
+  document.getElementById("adminModal").innerHTML = `
+    <div class="modal" style="width: min(500px, 95%); direction: rtl; text-align: right;">
+      <h3 style="margin-top:0; color:#fff; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:10px;">❌ رفض طلب السحب</h3>
+      <div style="margin-bottom: 14px;">
+        <label style="display:block; margin-bottom:6px; color:#fff; font-weight: 600;">سبب الرفض (سيتم إرساله في البريد الإلكتروني الفوري للمشترك)</label>
+        <textarea id="withdrawRejectReason" class="admin-input" style="min-height: 120px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; resize: vertical;" placeholder="اكتب هنا سبب الرفض بالتفصيل لكي تصله رسالة احترافية..."></textarea>
+      </div>
+      <div class="admin-actions mt" style="display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid rgba(255,255,255,0.08); padding-top:14px;">
+        <button class="btn red" onclick="saveRejectWithdrawal(${id})" style="font-weight: bold; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border:none;">تأكيد الرفض ❌</button>
+        <button class="btn" onclick="closeAdminModal()">إلغاء</button>
+      </div>
+    </div>
+  `;
+  document.getElementById("adminModal").classList.add("open");
+}
+async function saveRejectWithdrawal(id){
+  const reason = document.getElementById("withdrawRejectReason")?.value?.trim();
+  if(!reason) {
+    toast("يرجى كتابة سبب الرفض أولاً لتوضيحه للمستخدم في البريد الإلكتروني.", "warning");
+    return;
+  }
+  setLoading(true);
+  try{
+    await api(`/api/admin/withdrawals/${id}/reject`,{
+      method:"POST",
+      headers:headers(),
+      body:JSON.stringify({note:reason})
+    });
+    closeAdminModal();
+    await renderAdmin();
+    toast("تم رفض طلب السحب بنجاح وإرسال البريد الإلكتروني للعميل.", "success");
+  }catch(e){ 
+    toast(e.message, "error"); 
+  }finally{
+    setLoading(false);
+  }
 }
 async function adminWallets(){
   markAdminNav("wallets");
