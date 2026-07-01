@@ -3896,38 +3896,6 @@
           <p>اختر الخطة التمويلية التي تناسب أهدافك وابدأ في جني الأرباح اليومية فوراً.</p>
         </div>
         <div class="landing-packages-grid">
-          <!-- 10$ Bronze -->
-          <div class="landing-package-card bronze-pkg">
-            <div class="package-card-header">
-              <span class="package-card-badge bronze">برونزية</span>
-              <canvas class="pkg-icon3d package-card-3d-canvas" data-pkg-id="bronze" width="64" height="64"></canvas>
-            </div>
-            <h4 class="package-card-name">الباقة البرونزية</h4>
-            <div class="package-card-price">
-              <strong>$10</strong>
-              <span>/ تفعيل الباقة</span>
-            </div>
-            <div class="package-card-features">
-              <div class="package-card-feature">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                الربح المستهدف: $1.00 (10%)
-              </div>
-              <div class="package-card-feature">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                العائد لكل مهمة: $0.08
-              </div>
-              <div class="package-card-feature">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                المهام اليومية: 3 مهام
-              </div>
-              <div class="package-card-feature">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                مدة الباقة: 4 أيام
-              </div>
-            </div>
-            <button class="package-card-action" onclick="showView('auth');">تفعيل الباقة</button>
-          </div>
-
           <!-- 25$ Silver -->
           <div class="landing-package-card silver-pkg">
             <div class="package-card-header">
@@ -5480,7 +5448,6 @@ async function submitKyc(){
 
 function getFallbackPackages(){
   return [
-    {id:"bronze",name:"البرونزية",price:10,profit:1,per_task:0.08},
     {id:"silver",name:"الفضية",price:25,profit:2.5,per_task:0.21},
     {id:"gold",name:"الذهبية",price:50,profit:5,per_task:0.42},
     {id:"platinum",name:"البلاتينيوم",price:100,profit:10,per_task:0.83},
@@ -8688,7 +8655,6 @@ async function simulateOfflineApi(path, opts = {}) {
   if (path === "/api/packages") {
     return {
       packages: [
-        { id: "bronze", name: "البرونزية (Bronze)", price: 100, profit: 10, per_task: 0.83 },
         { id: "silver", name: "الفضية (Silver)", price: 300, profit: 30, per_task: 2.50 },
         { id: "gold", name: "الذهبية (Gold)", price: 800, profit: 80, per_task: 6.67 },
         { id: "platinum", name: "البلاتينية (Platinum)", price: 1500, profit: 150, per_task: 12.50 },
@@ -8700,9 +8666,9 @@ async function simulateOfflineApi(path, opts = {}) {
   if (path.startsWith("/api/packages/") && path.endsWith("/buy")) {
     const pkgId = path.split("/")[3];
     const user = getMockUser();
-    const prices = { bronze: 100, silver: 300, gold: 800, platinum: 1500, vip: 3000 };
-    const names = { bronze: "البرونزية (Bronze)", silver: "الفضية (Silver)", gold: "الذهبية (Gold)", platinum: "البلاتينية (Platinum)", vip: "كبار الشخصيات (VIP)" };
-    const price = prices[pkgId] || 100;
+    const prices = { silver: 300, gold: 800, platinum: 1500, vip: 3000 };
+    const names = { silver: "الفضية (Silver)", gold: "الذهبية (Gold)", platinum: "البلاتينية (Platinum)", vip: "كبار الشخصيات (VIP)" };
+    const price = prices[pkgId] || 300;
     
     if (user.balance < price) {
       throw new Error("رصيدك التجريبي غير كافٍ! يرجى تقديم طلب إيداع تجريبي من المحفظة أولاً.");
